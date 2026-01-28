@@ -1,0 +1,208 @@
+// Captain's Log - Database Types
+
+export type UserRole = 'user' | 'admin';
+export type PermissionLevel = 'read' | 'edit' | 'admin';
+export type Currency = 'AED' | 'USD' | 'EUR';
+export type DocumentCategory = 'registration' | 'insurance' | 'berth' | 'warranty' | 'invoice' | 'manual' | 'other';
+export type AlertType = 'document_expiry' | 'maintenance_due_date' | 'maintenance_due_hours';
+export type AlertStatus = 'pending' | 'sent' | 'acknowledged' | 'dismissed';
+
+// Component types
+export type ComponentCategory = 'propulsion' | 'systems' | 'hvac';
+export type ComponentType = 
+  | 'engine' 
+  | 'generator' 
+  | 'shaft' 
+  | 'propeller' 
+  | 'hydraulic' 
+  | 'bow_thruster' 
+  | 'ac_chiller' 
+  | 'ac_air_handler';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar_url?: string;
+  auth_provider: 'email' | 'google';
+  role: UserRole;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Engine {
+  brand?: string;
+  model?: string;
+}
+
+export interface BoatComponent {
+  id: string;
+  boat_id: string;
+  category: ComponentCategory;
+  type: ComponentType;
+  name: string;
+  position?: string;
+  brand?: string;
+  model?: string;
+  serial_number?: string;
+  install_date?: string;
+  current_hours?: number;
+  notes?: string;
+  sort_order: number;
+  // Service schedule
+  service_interval_days?: number;
+  service_interval_hours?: number;
+  last_service_date?: string;
+  last_service_hours?: number;
+  next_service_date?: string;
+  next_service_hours?: number;
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Part {
+  id: string;
+  boat_id: string;
+  component_id?: string;
+  component_name?: string; // Joined from component
+  name: string;
+  brand?: string;
+  part_number?: string;
+  size_specs?: string;
+  supplier?: string;
+  notes?: string;
+  photo_url?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type HealthCheckType = 'oil_level' | 'fluid_level' | 'grease' | 'visual' | 'other';
+
+export interface HealthCheck {
+  id: string;
+  boat_id: string;
+  component_id?: string;
+  component_name?: string; // Joined from component
+  check_type: HealthCheckType;
+  title: string;
+  quantity?: string;
+  notes?: string;
+  date: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface Boat {
+  id: string;
+  owner_id: string;
+  name: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  length?: number;
+  hull_id?: string;
+  registration_number?: string;
+  home_port?: string;
+  photo_url?: string;
+  number_of_engines: number; // 1-6
+  engines?: Engine[]; // Brand/model for each engine
+  generator_brand?: string;
+  generator_model?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LogType {
+  id: string;
+  name: string;
+  icon?: string;
+  tracks_hours: boolean;
+  default_interval_days?: number;
+  default_interval_hours?: number;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface LogEntry {
+  id: string;
+  boat_id: string;
+  log_type_id: string;
+  log_type?: LogType;
+  date: string;
+  description: string;
+  cost?: number;
+  currency: Currency;
+  vendor_id?: string;
+  vendor?: ServiceProvider;
+  engine_hours_at_service?: number;
+  generator_hours_at_service?: number;
+  parts_replaced?: string;
+  notes?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Document {
+  id: string;
+  boat_id: string;
+  category: DocumentCategory;
+  subcategory?: string;
+  name: string;
+  file_url: string;
+  file_type: string;
+  file_size: number;
+  expiry_date?: string;
+  linked_log_entry_id?: string;
+  uploaded_by: string;
+  uploaded_at: string;
+  notes?: string;
+}
+
+export interface ServiceProvider {
+  id: string;
+  name: string;
+  contact_person?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  address?: string;
+  services_offered: string[];
+  personal_rating?: number;
+  notes?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Alert {
+  id: string;
+  boat_id: string;
+  type: AlertType;
+  reference_id: string;
+  due_date?: string;
+  due_hours?: number;
+  reminder_days_before: number;
+  status: AlertStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BoatAccess {
+  id: string;
+  boat_id: string;
+  user_id: string;
+  permission_level: PermissionLevel;
+  granted_by: string;
+  granted_at: string;
+  revoked_at?: string;
+}
+
+// Form types for creating/editing
+export type BoatFormData = Omit<Boat, 'id' | 'owner_id' | 'created_at' | 'updated_at'>;
+export type LogEntryFormData = Omit<LogEntry, 'id' | 'created_by' | 'created_at' | 'updated_at' | 'log_type' | 'vendor'>;
+export type DocumentFormData = Omit<Document, 'id' | 'uploaded_by' | 'uploaded_at'>;
+export type ServiceProviderFormData = Omit<ServiceProvider, 'id' | 'created_by' | 'created_at' | 'updated_at'>;
