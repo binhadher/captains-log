@@ -18,13 +18,15 @@ import {
   Cog
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Boat, BoatComponent, Part, HealthCheck } from '@/types/database';
+import { Boat, BoatComponent, Part, HealthCheck, Document } from '@/types/database';
 import { ComponentList } from '@/components/boats/ComponentList';
 import { ComponentSetupModal } from '@/components/boats/ComponentSetupModal';
 import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
 import { HealthCheckList } from '@/components/health/HealthCheckList';
 import { AddHealthCheckModal } from '@/components/health/AddHealthCheckModal';
+import { DocumentsList } from '@/components/documents/DocumentsList';
+import { AddDocumentModal } from '@/components/documents/AddDocumentModal';
 import { AlertsList } from '@/components/alerts/AlertsList';
 import { Alert } from '@/lib/alerts';
 import { Package, Activity, AlertTriangle } from 'lucide-react';
@@ -43,6 +45,8 @@ export default function BoatDetailPage() {
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
   const [showAddHealthCheck, setShowAddHealthCheck] = useState(false);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [showAddDocument, setShowAddDocument] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -51,6 +55,7 @@ export default function BoatDetailPage() {
       fetchParts(params.id as string);
       fetchHealthChecks(params.id as string);
       fetchAlerts(params.id as string);
+      fetchDocuments(params.id as string);
     }
   }, [params.id]);
 
@@ -102,6 +107,33 @@ export default function BoatDetailPage() {
     }
   };
 
+  const fetchDocuments = async (boatId: string) => {
+    try {
+      const response = await fetch(`/api/boats/${boatId}/documents`);
+      if (response.ok) {
+        const data = await response.json();
+        setDocuments(data.documents || []);
+      }
+    } catch (err) {
+      console.error('Error fetching documents:', err);
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    try {
+      const response = await fetch(`/api/boats/${params.id}/documents?docId=${docId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setDocuments(documents.filter(d => d.id !== docId));
+        // Refresh alerts since a document with expiry might have been deleted
+        fetchAlerts(params.id as string);
+      }
+    } catch (err) {
+      console.error('Error deleting document:', err);
+    }
+  };
+
   const fetchBoat = async (id: string) => {
     try {
       setLoading(true);
@@ -149,18 +181,18 @@ export default function BoatDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="min-h-screen bg-dubai flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
       </div>
     );
   }
 
   if (error || !boat) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-dubai flex items-center justify-center">
         <div className="text-center">
           <Ship className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-lg font-medium text-gray-900 mb-2">{error || 'Boat not found'}</h2>
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{error || 'Boat not found'}</h2>
           <Link href="/">
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -175,19 +207,19 @@ export default function BoatDetailPage() {
   const engineLabels = getEngineLabels(boat.number_of_engines || 2);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dubai">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="glass-header sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="p-2 hover:bg-gray-100 rounded-lg">
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
+              <Link href="/" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{boat.name}</h1>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">{boat.name}</h1>
                 {boat.make && boat.model && (
-                  <p className="text-sm text-gray-500">{boat.make} {boat.model}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{boat.make} {boat.model}</p>
                 )}
               </div>
             </div>
@@ -201,37 +233,37 @@ export default function BoatDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Boat Info Card */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Ship className="w-5 h-5" />
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <Ship className="w-4 h-4" />
             Boat Details
           </h2>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {boat.year && (
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Year</p>
-                <p className="text-gray-900 font-medium">{boat.year}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Year</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.year}</p>
               </div>
             )}
             {boat.length && (
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Length</p>
-                <p className="text-gray-900 font-medium">{boat.length} ft</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Length</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.length} ft</p>
               </div>
             )}
             {boat.hull_id && (
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Hull ID</p>
-                <p className="text-gray-900 font-medium">{boat.hull_id}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Hull ID</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.hull_id}</p>
               </div>
             )}
             {boat.home_port && (
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Home Port</p>
-                <p className="text-gray-900 font-medium flex items-center gap-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Home Port</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   {boat.home_port}
                 </p>
@@ -242,24 +274,24 @@ export default function BoatDetailPage() {
 
         {/* Engines Card */}
         {boat.engines && boat.engines.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Settings className="w-5 h-5" />
+          <div className="glass-card rounded-xl p-4 mb-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <Settings className="w-4 h-4" />
               Engines
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {boat.engines.map((engine, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                <div key={index} className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                     {engineLabels[index]}
                   </p>
                   {engine.brand || engine.model ? (
-                    <p className="text-gray-900 font-medium">
+                    <p className="text-gray-900 dark:text-white font-medium text-sm">
                       {[engine.brand, engine.model].filter(Boolean).join(' ')}
                     </p>
                   ) : (
-                    <p className="text-gray-400 italic">Not specified</p>
+                    <p className="text-gray-400 dark:text-gray-500 italic text-sm">Not specified</p>
                   )}
                 </div>
               ))}
@@ -267,9 +299,9 @@ export default function BoatDetailPage() {
 
             {/* Generator */}
             {(boat.generator_brand || boat.generator_model) && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Generator</p>
-                <p className="text-gray-900 font-medium">
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Generator</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm">
                   {[boat.generator_brand, boat.generator_model].filter(Boolean).join(' ')}
                 </p>
               </div>
@@ -279,12 +311,12 @@ export default function BoatDetailPage() {
 
         {/* Alerts Section */}
         {alerts.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
+          <div className="glass-card rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
                 Upcoming
-                <span className="text-sm font-normal text-gray-500">({alerts.length})</span>
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({alerts.length})</span>
               </h2>
             </div>
             <AlertsList alerts={alerts} boatId={boat.id} compact />
@@ -292,10 +324,10 @@ export default function BoatDetailPage() {
         )}
 
         {/* Components Section */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Cog className="w-5 h-5" />
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Cog className="w-4 h-4" />
               Systems & Components
             </h2>
           </div>
@@ -307,10 +339,10 @@ export default function BoatDetailPage() {
         </div>
 
         {/* Boat Health */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Activity className="w-5 h-5" />
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Activity className="w-4 h-4" />
               Boat Health
             </h2>
             <Button size="sm" onClick={() => setShowAddHealthCheck(true)}>
@@ -322,10 +354,10 @@ export default function BoatDetailPage() {
         </div>
 
         {/* Parts Catalog */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Package className="w-5 h-5" />
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Package className="w-4 h-4" />
               Parts Catalog
             </h2>
             <Button size="sm" onClick={() => setShowAddPart(true)}>
@@ -337,18 +369,24 @@ export default function BoatDetailPage() {
         </div>
 
         {/* Boat-level Documents (registration, insurance, etc.) */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <FileText className="w-4 h-4" />
               Boat Documents
+              {documents.length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({documents.length})</span>
+              )}
             </h2>
-            <Button size="sm" disabled>
+            <Button size="sm" onClick={() => setShowAddDocument(true)}>
               <Plus className="w-4 h-4 mr-1" />
               Upload
             </Button>
           </div>
-          <p className="text-gray-500 text-sm">Store boat-level documents here: registration, insurance, berth contracts.</p>
+          <DocumentsList 
+            documents={documents} 
+            onDelete={handleDeleteDocument}
+          />
         </div>
       </main>
 
@@ -380,6 +418,17 @@ export default function BoatDetailPage() {
         boatId={boat.id}
         components={components}
         onSuccess={() => fetchHealthChecks(boat.id)}
+      />
+
+      {/* Add Document Modal */}
+      <AddDocumentModal
+        isOpen={showAddDocument}
+        onClose={() => setShowAddDocument(false)}
+        boatId={boat.id}
+        onSuccess={() => {
+          fetchDocuments(boat.id);
+          fetchAlerts(boat.id); // Refresh alerts for new expiry dates
+        }}
       />
     </div>
   );

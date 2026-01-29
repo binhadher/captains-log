@@ -31,6 +31,9 @@ export async function POST(request: NextRequest) {
     const boatId = formData.get('boat_id') as string | null;
     const category = formData.get('category') as string || 'other';
     const name = formData.get('name') as string || file.name;
+    const expiryDate = formData.get('expiry_date') as string | null;
+    const reminderDays = formData.get('reminder_days') as string | null;
+    const notes = formData.get('notes') as string | null;
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -96,6 +99,9 @@ export async function POST(request: NextRequest) {
         file_url: urlData.publicUrl,
         file_type: file.type,
         file_size: file.size,
+        expiry_date: expiryDate || null,
+        reminder_days: reminderDays ? parseInt(reminderDays) : 30,
+        notes: notes || null,
         uploaded_by: dbUser.id,
       })
       .select()

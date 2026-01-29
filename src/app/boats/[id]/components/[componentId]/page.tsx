@@ -122,17 +122,17 @@ export default function ComponentDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="min-h-screen bg-dubai flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
       </div>
     );
   }
 
   if (error || !component) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-dubai flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Component not found'}</p>
+          <p className="text-red-600 dark:text-red-400 mb-4">{error || 'Component not found'}</p>
           <Link href={`/boats/${params.id}`}>
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -147,18 +147,18 @@ export default function ComponentDetailPage() {
   const maintenanceItems = getMaintenanceItems(component.type);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dubai">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="glass-header sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link href={`/boats/${params.id}`} className="p-2 hover:bg-gray-100 rounded-lg">
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
+              <Link href={`/boats/${params.id}`} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{component.name}</h1>
-                <p className="text-sm text-gray-500">{boatName}</p>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">{component.name}</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{boatName}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -166,7 +166,7 @@ export default function ComponentDetailPage() {
                 <Settings className="w-4 h-4 mr-1" />
                 Schedule
               </Button>
-              <Button onClick={() => setShowAddLog(true)}>
+              <Button size="sm" onClick={() => setShowAddLog(true)}>
                 <Plus className="w-4 h-4 mr-1" />
                 Add Log
               </Button>
@@ -175,71 +175,71 @@ export default function ComponentDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Component Info */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Details</h2>
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Details</h2>
             {component.current_hours !== undefined && component.current_hours > 0 && (
-              <div className="flex items-center gap-2 text-gray-700">
+              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                 <Clock className="w-4 h-4" />
-                <span className="font-medium">{component.current_hours.toLocaleString()} hours</span>
+                <span className="font-medium text-sm">{component.current_hours.toLocaleString()} hours</span>
               </div>
             )}
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {component.brand && (
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Brand</p>
-                <p className="text-gray-900 font-medium">{component.brand}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Brand</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm">{component.brand}</p>
               </div>
             )}
             {component.model && (
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Model</p>
-                <p className="text-gray-900 font-medium">{component.model}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Model</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm">{component.model}</p>
               </div>
             )}
             {component.serial_number && (
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Serial Number</p>
-                <p className="text-gray-900 font-medium">{component.serial_number}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Serial Number</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm">{component.serial_number}</p>
               </div>
             )}
             {component.install_date && (
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Install Date</p>
-                <p className="text-gray-900 font-medium">{formatDate(component.install_date)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Install Date</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm">{formatDate(component.install_date)}</p>
               </div>
             )}
           </div>
 
           {component.notes && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Notes</p>
-              <p className="text-gray-700">{component.notes}</p>
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Notes</p>
+              <p className="text-gray-700 dark:text-gray-300 text-sm">{component.notes}</p>
             </div>
           )}
         </div>
 
         {/* Maintenance Items Quick Stats */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Service Items</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Service Items</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {maintenanceItems.filter(item => item.id !== 'other').map((item) => {
               const itemLogs = logs.filter(l => l.maintenance_item === item.id);
               const lastService = itemLogs[0];
               
               return (
-                <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
-                  <p className="font-medium text-gray-900 text-sm">{item.label}</p>
+                <div key={item.id} className="p-2 bg-gray-50/50 dark:bg-gray-800/50 rounded-lg">
+                  <p className="font-medium text-gray-900 dark:text-white text-xs">{item.label}</p>
                   {lastService ? (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       Last: {formatDate(lastService.date)}
                     </p>
                   ) : (
-                    <p className="text-xs text-gray-400 mt-1">No records</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">No records</p>
                   )}
                 </div>
               );
@@ -248,20 +248,20 @@ export default function ComponentDetailPage() {
         </div>
 
         {/* Maintenance History */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Maintenance History</h2>
-            <span className="text-sm text-gray-500">{logs.length} entries</span>
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Maintenance History</h2>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{logs.length} entries</span>
           </div>
 
           {logs.length === 0 ? (
-            <div className="text-center py-8">
-              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No maintenance records yet</p>
+            <div className="text-center py-6">
+              <Calendar className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No maintenance records yet</p>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="mt-3"
+                className="mt-2"
                 onClick={() => setShowAddLog(true)}
               >
                 <Plus className="w-4 h-4 mr-1" />
@@ -269,22 +269,22 @@ export default function ComponentDetailPage() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {logs.map((log) => (
-                <div key={log.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+                <div key={log.id} className="flex items-start gap-3 p-3 bg-gray-50/50 dark:bg-gray-800/50 rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-gray-900 dark:text-white text-sm">
                         {getMaintenanceItemLabel(component.type, log.maintenance_item)}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         {formatDate(log.date)}
                       </span>
                     </div>
                     {log.description && (
-                      <p className="text-sm text-gray-600 mb-2">{log.description}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">{log.description}</p>
                     )}
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                       {log.hours_at_service && (
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
@@ -299,11 +299,11 @@ export default function ComponentDetailPage() {
                       )}
                     </div>
                     {log.notes && (
-                      <p className="text-xs text-gray-500 mt-2 italic">{log.notes}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">{log.notes}</p>
                     )}
                     {/* Attached Photos/Documents */}
                     {log.documents && log.documents.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
+                      <div className="flex flex-wrap gap-2 mt-2">
                         {log.documents.map((doc) => (
                           <a 
                             key={doc.id} 
@@ -316,11 +316,11 @@ export default function ComponentDetailPage() {
                               <img 
                                 src={doc.file_url} 
                                 alt={doc.name}
-                                className="w-20 h-20 object-cover rounded-lg border border-gray-200 hover:border-blue-400 transition-all"
+                                className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-700 hover:border-cyan-400 transition-all"
                               />
                             ) : (
-                              <div className="w-20 h-20 bg-gray-100 rounded-lg border border-gray-200 hover:border-blue-400 transition-all flex flex-col items-center justify-center">
-                                <FileText className="w-6 h-6 text-gray-400" />
+                              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-cyan-400 transition-all flex flex-col items-center justify-center">
+                                <FileText className="w-5 h-5 text-gray-400" />
                                 <span className="text-xs text-gray-500 mt-1 truncate max-w-full px-1">
                                   {doc.name.split('.').pop()?.toUpperCase()}
                                 </span>
@@ -338,10 +338,10 @@ export default function ComponentDetailPage() {
         </div>
 
         {/* Parts for this Component */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Package className="w-5 h-5" />
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Package className="w-4 h-4" />
               Parts
             </h2>
             <Button size="sm" onClick={() => setShowAddPart(true)}>
@@ -353,15 +353,15 @@ export default function ComponentDetailPage() {
         </div>
 
         {/* Documents Section - Placeholder */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Documents & Photos</h2>
+        <div className="glass-card rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Documents & Photos</h2>
             <Button size="sm" disabled>
               <Plus className="w-4 h-4 mr-1" />
               Upload
             </Button>
           </div>
-          <p className="text-gray-500 text-sm text-center py-4">
+          <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-3">
             Document uploads coming soon
           </p>
         </div>
