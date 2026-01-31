@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { BoatCard } from '@/components/boats/BoatCard';
 import { AddBoatModal } from '@/components/boats/AddBoatModal';
+import { BoatSetupWizard } from '@/components/boats/BoatSetupWizard';
 import { Boat } from '@/types/database';
 import { Alert, formatDueIn, formatHoursDue, SEVERITY_COLORS } from '@/lib/alerts';
 import { ActivityFeed, ActivityItem } from '@/components/activity/ActivityFeed';
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [costsLoading, setCostsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddBoat, setShowAddBoat] = useState(false);
+  const [setupWizardBoat, setSetupWizardBoat] = useState<Boat | null>(null);
 
   useEffect(() => {
     fetchBoats();
@@ -97,6 +99,8 @@ export default function Dashboard() {
   const handleAddBoat = (boat: Boat) => {
     setBoats([...boats, boat]);
     setShowAddBoat(false);
+    // Show setup wizard for the new boat
+    setSetupWizardBoat(boat);
   };
 
   const getAlertIcon = (alert: Alert) => {
@@ -308,6 +312,21 @@ export default function Dashboard() {
         onClose={() => setShowAddBoat(false)}
         onSubmit={handleAddBoat}
       />
+
+      {/* Boat Setup Wizard */}
+      {setupWizardBoat && (
+        <BoatSetupWizard
+          isOpen={true}
+          onClose={() => setSetupWizardBoat(null)}
+          boatId={setupWizardBoat.id}
+          boatName={setupWizardBoat.name}
+          onComplete={() => {
+            setSetupWizardBoat(null);
+            // Refresh boats to get updated data
+            fetchBoats();
+          }}
+        />
+      )}
     </div>
   );
 }

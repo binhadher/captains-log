@@ -8,16 +8,37 @@ export type AlertType = 'document_expiry' | 'maintenance_due_date' | 'maintenanc
 export type AlertStatus = 'pending' | 'sent' | 'acknowledged' | 'dismissed';
 
 // Component types
-export type ComponentCategory = 'propulsion' | 'systems' | 'hvac';
+export type ComponentCategory = 'propulsion' | 'power' | 'maneuvering' | 'hydraulics' | 'hvac' | 'electrical' | 'tender' | 'systems';
 export type ComponentType = 
-  | 'engine' 
-  | 'generator' 
+  // Propulsion
+  | 'engine'           // Legacy - maps to inboard
+  | 'inboard_engine' 
+  | 'outboard_engine'
+  | 'drive_pod'
   | 'shaft' 
   | 'propeller' 
-  | 'hydraulic' 
+  // Power
+  | 'generator'
+  // Electrical / Batteries
+  | 'engine_battery'
+  | 'generator_battery'
+  | 'house_battery'
+  | 'thruster_battery'
+  // Maneuvering
   | 'bow_thruster' 
+  | 'stern_thruster'
+  // Hydraulics
+  | 'hydraulic'        // Legacy - maps to hydraulic_system
+  | 'hydraulic_system'
+  | 'swim_platform'
+  | 'tender_crane'
+  | 'passerelle'
+  // HVAC
   | 'ac_chiller' 
-  | 'ac_air_handler';
+  | 'ac_air_handler'
+  // Tender
+  | 'tender_outboard'
+  | 'tender_jet';
 
 export interface User {
   id: string;

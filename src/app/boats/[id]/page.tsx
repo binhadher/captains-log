@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Boat, BoatComponent, Part, HealthCheck, Document } from '@/types/database';
 import { ComponentList } from '@/components/boats/ComponentList';
 import { ComponentSetupModal } from '@/components/boats/ComponentSetupModal';
+import { BoatSetupWizard } from '@/components/boats/BoatSetupWizard';
 import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
 import { HealthCheckList } from '@/components/health/HealthCheckList';
@@ -40,6 +41,7 @@ export default function BoatDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [parts, setParts] = useState<Part[]>([]);
   const [showAddPart, setShowAddPart] = useState(false);
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
@@ -334,7 +336,7 @@ export default function BoatDetailPage() {
           <ComponentList 
             components={components} 
             boatId={boat.id}
-            onSetupClick={() => setShowSetup(true)}
+            onSetupClick={() => setShowWizard(true)}
           />
         </div>
 
@@ -390,7 +392,19 @@ export default function BoatDetailPage() {
         </div>
       </main>
 
-      {/* Component Setup Modal */}
+      {/* Boat Setup Wizard (new guided flow) */}
+      <BoatSetupWizard
+        isOpen={showWizard}
+        onClose={() => setShowWizard(false)}
+        boatId={boat.id}
+        boatName={boat.name}
+        onComplete={() => {
+          setShowWizard(false);
+          fetchComponents(boat.id);
+        }}
+      />
+
+      {/* Component Setup Modal (legacy quick setup) */}
       <ComponentSetupModal
         isOpen={showSetup}
         onClose={() => setShowSetup(false)}

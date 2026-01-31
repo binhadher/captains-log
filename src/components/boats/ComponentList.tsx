@@ -1,6 +1,6 @@
 'use client';
 
-import { Cog, Gauge, Wind, Plus } from 'lucide-react';
+import { Cog, Gauge, Wind, Plus, Battery, Navigation, Droplets, Ship } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ComponentCard } from './ComponentCard';
 import { BoatComponent, ComponentCategory } from '@/types/database';
@@ -15,17 +15,42 @@ const CATEGORY_INFO: Record<ComponentCategory, { label: string; icon: React.Reac
   propulsion: {
     label: 'Propulsion',
     icon: <Cog className="w-5 h-5" />,
-    description: 'Engines, generator, shafts & propellers',
+    description: 'Engines, pods, shafts & propellers',
   },
-  systems: {
-    label: 'Systems',
-    icon: <Gauge className="w-5 h-5" />,
-    description: 'Hydraulics, bow thruster',
+  power: {
+    label: 'Power',
+    icon: <Battery className="w-5 h-5" />,
+    description: 'Generators',
+  },
+  maneuvering: {
+    label: 'Maneuvering',
+    icon: <Navigation className="w-5 h-5" />,
+    description: 'Bow & stern thrusters',
+  },
+  hydraulics: {
+    label: 'Hydraulics',
+    icon: <Droplets className="w-5 h-5" />,
+    description: 'Swim platform, crane, passerelle',
   },
   hvac: {
     label: 'HVAC',
     icon: <Wind className="w-5 h-5" />,
     description: 'Air conditioning & climate control',
+  },
+  electrical: {
+    label: 'Electrical',
+    icon: <Battery className="w-5 h-5" />,
+    description: 'Batteries & power systems',
+  },
+  tender: {
+    label: 'Tender',
+    icon: <Ship className="w-5 h-5" />,
+    description: 'Tenders & jet skis',
+  },
+  systems: {
+    label: 'Systems',
+    icon: <Gauge className="w-5 h-5" />,
+    description: 'Other systems (legacy)',
   },
 };
 
@@ -39,7 +64,7 @@ export function ComponentList({ components, boatId, onSetupClick }: ComponentLis
     return acc;
   }, {} as Record<ComponentCategory, BoatComponent[]>);
 
-  const categories: ComponentCategory[] = ['propulsion', 'systems', 'hvac'];
+  const categories: ComponentCategory[] = ['propulsion', 'power', 'maneuvering', 'hydraulics', 'hvac', 'electrical', 'tender', 'systems'];
 
   if (components.length === 0) {
     return (
