@@ -563,6 +563,32 @@ export function BoatSetupWizard({
                 </div>
               </div>
             )}
+
+            {/* Batteries */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Battery Voltage
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { value: '12v', label: '12V' },
+                  { value: '24v', label: '24V' },
+                  { value: 'mixed', label: 'Mixed' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleFormAnswer('batteries', opt.value)}
+                    className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                      answers.batteries === opt.value
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             
             {/* HVAC */}
             <div>
@@ -607,6 +633,34 @@ export function BoatSetupWizard({
                     onClick={() => handleFormAnswer('tender', opt.value)}
                     className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
                       answers.tender === opt.value
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Hydraulics */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Hydraulic Systems
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { value: 'none', label: 'None' },
+                  { value: 'platform', label: 'Swim Platform' },
+                  { value: 'crane', label: 'Tender Crane' },
+                  { value: 'passerelle', label: 'Passerelle' },
+                  { value: 'multiple', label: 'Multiple' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleFormAnswer('hydraulics', opt.value)}
+                    className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                      answers.hydraulics === opt.value
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                     }`}
