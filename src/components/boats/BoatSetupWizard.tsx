@@ -361,13 +361,27 @@ export function BoatSetupWizard({
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
               {currentStepId === 'complete' ? (
                 <div className="space-y-3">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                    {previewComponents.length > 0 ? (
-                      <>Creating {previewComponents.length} components</>
-                    ) : (
-                      <>No components to create — you can add them manually later</>
-                    )}
-                  </div>
+                  {previewComponents.length > 0 ? (
+                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 max-h-24 overflow-y-auto">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        Creating {previewComponents.length} components:
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {previewComponents.map((comp, i) => (
+                          <span 
+                            key={i} 
+                            className="text-xs bg-white dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"
+                          >
+                            {comp.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                      No components to create — you can add them manually later
+                    </div>
+                  )}
                   <Button
                     onClick={handleSubmit}
                     loading={loading}
@@ -606,13 +620,29 @@ export function BoatSetupWizard({
           
           {/* Preview & Submit */}
           <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              {previewComponents.length > 0 ? (
-                <>Will create {previewComponents.length} components</>
-              ) : (
-                <>Select options above or skip to add components later</>
-              )}
-            </div>
+            {previewComponents.length > 0 ? (
+              <div className="mb-4">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Will create {previewComponents.length} components:
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 max-h-32 overflow-y-auto">
+                  <div className="flex flex-wrap gap-1.5">
+                    {previewComponents.map((comp, i) => (
+                      <span 
+                        key={i} 
+                        className="text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                      >
+                        {comp.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Select options above or skip to add components later
+              </div>
+            )}
             
             <div className="flex gap-3">
               <Button
