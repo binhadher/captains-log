@@ -84,4 +84,12 @@ git push origin main
 
 ---
 
+---
+
+## Additional Improvements (overnight)
+
+- ✅ **Component preview** — Before creating, shows all component names as tags
+- ✅ **Form mode parity** — Added batteries and hydraulics questions to form mode
+- ✅ Both chat and form modes now have identical feature sets
+
 *Built overnight while you slept — Dave 🖖*
