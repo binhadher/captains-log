@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { TermsCheck } from '@/components/providers/TermsCheck';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -31,7 +32,9 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className="min-h-screen bg-gray-50 dark:bg-gray-900 antialiased transition-colors">
           <ThemeProvider>
-            {children}
+            <TermsCheck>
+              {children}
+            </TermsCheck>
           </ThemeProvider>
         </body>
       </html>
