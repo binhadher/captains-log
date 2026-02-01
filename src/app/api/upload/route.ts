@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 
+// Note: For files > 4MB, use /api/upload/signed-url for direct upload to bypass Vercel limits
+
 // POST /api/upload - Upload a file
 export async function POST(request: NextRequest) {
   try {

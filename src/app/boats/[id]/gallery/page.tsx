@@ -111,25 +111,89 @@ export default function GalleryPage() {
       throw new Error('File is empty (0 bytes)');
     }
 
-    // Upload to storage
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('boat_id', params.id as string);
-    formData.append('name', file.name);
-    formData.append('category', 'other');
+    // For files > 4MB, use direct upload to Supabase (bypasses Vercel limit)
+    const useDirectUpload = file.size > 4 * 1024 * 1024;
+    
+    let document;
+    
+    if (useDirectUpload) {
+      console.log('Using direct upload for large file');
+      
+      // Step 1: Get signed URL
+      const signedRes = await fetch('/api/upload/signed-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type || (isVideo ? 'video/webm' : 'image/jpeg'),
+          fileSize: file.size,
+          boatId: params.id,
+        }),
+      });
+      
+      if (!signedRes.ok) {
+        const errorData = await signedRes.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to get upload URL');
+      }
+      
+      const { signedUrl, publicUrl } = await signedRes.json();
+      
+      // Step 2: Upload directly to Supabase Storage
+      const uploadRes = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type || (isVideo ? 'video/webm' : 'image/jpeg'),
+        },
+        body: file,
+      });
+      
+      if (!uploadRes.ok) {
+        throw new Error(`Direct upload failed (${uploadRes.status})`);
+      }
+      
+      // Step 3: Create document record
+      const completeRes = await fetch('/api/upload/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          publicUrl,
+          fileName: file.name,
+          fileType: file.type || (isVideo ? 'video/webm' : 'image/jpeg'),
+          fileSize: file.size,
+          boatId: params.id,
+        }),
+      });
+      
+      if (!completeRes.ok) {
+        const errorData = await completeRes.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save document');
+      }
+      
+      const completeData = await completeRes.json();
+      document = completeData.document;
+      
+    } else {
+      // Small files: use regular upload through API
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('boat_id', params.id as string);
+      formData.append('name', file.name);
+      formData.append('category', 'other');
 
-    const uploadRes = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-    if (!uploadRes.ok) {
-      const errorData = await uploadRes.json().catch(() => ({}));
-      console.error('Upload error:', uploadRes.status, errorData);
-      throw new Error(errorData.error || `Upload failed (${uploadRes.status})`);
+      if (!uploadRes.ok) {
+        const errorData = await uploadRes.json().catch(() => ({}));
+        console.error('Upload error:', uploadRes.status, errorData);
+        throw new Error(errorData.error || `Upload failed (${uploadRes.status})`);
+      }
+
+      const uploadData = await uploadRes.json();
+      document = uploadData.document;
     }
-
-    const { document } = await uploadRes.json();
 
     // Add to gallery
     const galleryRes = await fetch(`/api/boats/${params.id}/gallery`, {
