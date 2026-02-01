@@ -68,24 +68,54 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
       streamRef.current = stream;
       
+      // Verify stream has video tracks
+      const videoTracks = stream.getVideoTracks();
+      if (videoTracks.length === 0) {
+        throw new Error('No video track available');
+      }
+      console.log('Camera started:', videoTracks[0].label);
+      
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+        const video = videoRef.current;
         
-        // iOS Safari needs this
-        videoRef.current.setAttribute('playsinline', 'true');
-        videoRef.current.setAttribute('webkit-playsinline', 'true');
+        // iOS Safari needs these attributes set before srcObject
+        video.setAttribute('autoplay', 'true');
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
+        video.setAttribute('muted', 'true');
         
-        // Wait for video to be ready
+        // Set the stream
+        video.srcObject = stream;
+        
+        // iOS Safari: must call load() then play()
+        video.load();
+        
+        // Wait for video to be ready and playing
         await new Promise<void>((resolve, reject) => {
-          const video = videoRef.current!;
-          video.onloadedmetadata = () => {
+          const onCanPlay = () => {
+            video.removeEventListener('canplay', onCanPlay);
             video.play()
-              .then(() => resolve())
+              .then(() => {
+                // Double-check video has dimensions (iOS fix)
+                if (video.videoWidth === 0 || video.videoHeight === 0) {
+                  // Wait a bit more for iOS
+                  setTimeout(() => resolve(), 500);
+                } else {
+                  resolve();
+                }
+              })
               .catch(reject);
           };
+          
+          video.addEventListener('canplay', onCanPlay);
           video.onerror = () => reject(new Error('Video failed to load'));
-          // Timeout fallback
-          setTimeout(() => resolve(), 3000);
+          
+          // Timeout fallback - iOS sometimes needs longer
+          setTimeout(() => {
+            video.removeEventListener('canplay', onCanPlay);
+            video.play().catch(() => {});
+            resolve();
+          }, 3000);
         });
         
         setIsStreaming(true);
@@ -218,7 +248,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
       </div>
 
       {/* Camera/Preview */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden">
+      <div className="flex-1 flex items-center justify-center overflow-hidden relative" style={{ minHeight: '200px' }}>
         {isLoading && !error ? (
           <div className="text-center p-8">
             <Loader2 className="w-12 h-12 text-teal-500 animate-spin mx-auto mb-4" />
@@ -255,8 +285,14 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             autoPlay
             playsInline
             muted
+            controls={false}
             className="h-full w-full object-cover"
-            style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
+            style={{ 
+              transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
+              minHeight: '100%',
+              minWidth: '100%',
+              background: '#000'
+            }}
           />
         )}
       </div>
