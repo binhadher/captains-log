@@ -254,9 +254,9 @@ export default function BoatDetailPage() {
                 <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">{boat.name}</h1>
+                <h1 className="text-lg font-bold text-teal-700 dark:text-white">{boat.name}</h1>
                 {boat.make && boat.model && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{boat.make} {boat.model}</p>
+                  <p className="text-xs text-teal-600 dark:text-gray-300">{boat.make} {boat.model}</p>
                 )}
               </div>
             </div>
