@@ -145,10 +145,10 @@ export default function Dashboard() {
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
-                <Anchor className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 bg-teal-100 dark:bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+                <Anchor className="w-5 h-5 text-teal-700 dark:text-white" />
               </div>
-              <h1 className="text-lg font-bold text-white drop-shadow-sm">Captain&apos;s Log</h1>
+              <h1 className="text-lg font-bold text-teal-700 dark:text-white">Captain&apos;s Log</h1>
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />
