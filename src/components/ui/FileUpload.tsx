@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, X, FileText, Image, Loader2, Camera } from 'lucide-react';
+import { Upload, X, FileText, Loader2, Camera } from 'lucide-react';
+import { CameraCapture } from './CameraCapture';
 
 interface UploadedFile {
   id: string;
@@ -18,7 +19,7 @@ interface FileUploadProps {
   onUpload?: (doc: UploadedFile) => void;
   maxFiles?: number;
   compact?: boolean;
-  showCamera?: boolean; // Enable camera capture button
+  showCamera?: boolean;
 }
 
 export function FileUpload({ 
@@ -33,8 +34,37 @@ export function FileUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [showCameraCapture, setShowCameraCapture] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
+
+  const uploadFile = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('name', file.name);
+      formData.append('category', file.type.startsWith('image/') ? 'other' : 'invoice');
+      
+      if (componentId) formData.append('component_id', componentId);
+      if (logEntryId) formData.append('log_entry_id', logEntryId);
+      if (boatId) formData.append('boat_id', boatId);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      const { document } = await response.json();
+      setFiles(prev => [...prev, document]);
+      onUpload?.(document);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    }
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -49,36 +79,23 @@ export function FileUpload({
     setError(null);
 
     for (const file of Array.from(selectedFiles)) {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('name', file.name);
-        formData.append('category', file.type.startsWith('image/') ? 'other' : 'invoice');
-        
-        if (componentId) formData.append('component_id', componentId);
-        if (logEntryId) formData.append('log_entry_id', logEntryId);
-        if (boatId) formData.append('boat_id', boatId);
-
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Upload failed');
-        }
-
-        const { document } = await response.json();
-        setFiles(prev => [...prev, document]);
-        onUpload?.(document);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Upload failed');
-      }
+      await uploadFile(file);
     }
 
     setUploading(false);
     if (inputRef.current) inputRef.current.value = '';
+  };
+
+  const handleCameraCapture = async (file: File) => {
+    if (files.length >= maxFiles) {
+      setError(`Maximum ${maxFiles} files allowed`);
+      return;
+    }
+
+    setUploading(true);
+    setError(null);
+    await uploadFile(file);
+    setUploading(false);
   };
 
   const removeFile = (id: string) => {
@@ -90,16 +107,14 @@ export function FileUpload({
   if (compact) {
     return (
       <div>
-        {/* Camera input - opens camera directly on mobile */}
-        <input
-          ref={cameraRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileSelect}
-          className="hidden"
-          id="camera-capture-compact"
-        />
+        {/* Camera Capture Overlay */}
+        {showCameraCapture && (
+          <CameraCapture
+            onCapture={handleCameraCapture}
+            onClose={() => setShowCameraCapture(false)}
+          />
+        )}
+
         {/* File picker - gallery/documents */}
         <input
           ref={inputRef}
@@ -136,10 +151,11 @@ export function FileUpload({
           
           {files.length < maxFiles && (
             <>
-              {/* Camera button */}
+              {/* Camera button - opens native camera UI */}
               {showCamera && (
-                <label
-                  htmlFor="camera-capture-compact"
+                <button
+                  type="button"
+                  onClick={() => setShowCameraCapture(true)}
                   className="w-16 h-16 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg flex items-center justify-center cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all"
                 >
                   {uploading ? (
@@ -147,7 +163,7 @@ export function FileUpload({
                   ) : (
                     <Camera className="w-5 h-5 text-teal-500" />
                   )}
-                </label>
+                </button>
               )}
               {/* Upload button */}
               <label
@@ -173,16 +189,14 @@ export function FileUpload({
 
   return (
     <div>
-      {/* Camera input - opens camera directly on mobile */}
-      <input
-        ref={cameraRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFileSelect}
-        className="hidden"
-        id="camera-capture"
-      />
+      {/* Camera Capture Overlay */}
+      {showCameraCapture && (
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onClose={() => setShowCameraCapture(false)}
+        />
+      )}
+
       {/* File picker - gallery/documents */}
       <input
         ref={inputRef}
@@ -196,10 +210,11 @@ export function FileUpload({
 
       {/* Upload Area - Two buttons side by side */}
       <div className="flex gap-3">
-        {/* Take Photo button */}
+        {/* Take Photo button - opens camera directly */}
         {showCamera && (
-          <label
-            htmlFor="camera-capture"
+          <button
+            type="button"
+            onClick={() => setShowCameraCapture(true)}
             className="flex-1 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg p-6 text-center cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all"
           >
             {uploading ? (
@@ -214,7 +229,7 @@ export function FileUpload({
                 <p className="text-xs text-gray-400 mt-1">Opens camera</p>
               </div>
             )}
-          </label>
+          </button>
         )}
         
         {/* Upload from gallery/files */}
