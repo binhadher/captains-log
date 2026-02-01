@@ -192,8 +192,8 @@ export default function SettingsPage() {
                   <Mail className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900">Email Notifications</h2>
-                  <p className="text-sm text-gray-500">Get alerts via email</p>
+                  <h2 className="font-semibold text-gray-900 dark:text-white">Email Notifications</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Get alerts via email</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -209,8 +209,8 @@ export default function SettingsPage() {
           </div>
           
           {preferences.email_enabled && (
-            <div className="p-4 bg-gray-50">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/50">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Email address
               </label>
               <input
@@ -236,8 +236,8 @@ export default function SettingsPage() {
                   <Smartphone className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900">Push Notifications</h2>
-                  <p className="text-sm text-gray-500">
+                  <h2 className="font-semibold text-gray-900 dark:text-white">Push Notifications</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {pushSupported ? 'Get alerts in your browser' : 'Not supported in this browser'}
                   </p>
                 </div>
@@ -273,8 +273,8 @@ export default function SettingsPage() {
                 <Bell className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">Alert Types</h2>
-                <p className="text-sm text-gray-500">Choose what to be notified about</p>
+                <h2 className="font-semibold text-gray-900 dark:text-white">Alert Types</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Choose what to be notified about</p>
               </div>
             </div>
           </div>
@@ -285,8 +285,8 @@ export default function SettingsPage() {
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="font-medium text-gray-800">Document Expiry</p>
-                  <p className="text-sm text-gray-500">Registration, insurance, licenses</p>
+                  <p className="font-medium text-gray-800 dark:text-white">Document Expiry</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Registration, insurance, licenses</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -305,8 +305,8 @@ export default function SettingsPage() {
               <div className="flex items-center gap-3">
                 <Wrench className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="font-medium text-gray-800">Maintenance Due</p>
-                  <p className="text-sm text-gray-500">Scheduled service reminders</p>
+                  <p className="font-medium text-gray-800 dark:text-white">Maintenance Due</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Scheduled service reminders</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -325,8 +325,8 @@ export default function SettingsPage() {
               <div className="flex items-center gap-3">
                 <Gauge className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="font-medium text-gray-800">Engine Hours</p>
-                  <p className="text-sm text-gray-500">Service due by hours</p>
+                  <p className="font-medium text-gray-800 dark:text-white">Engine Hours</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Service due by hours</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -350,8 +350,8 @@ export default function SettingsPage() {
                 <Clock className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">Timing</h2>
-                <p className="text-sm text-gray-500">When to send notifications</p>
+                <h2 className="font-semibold text-gray-900 dark:text-white">Timing</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">When to send notifications</p>
               </div>
             </div>
           </div>
@@ -359,7 +359,7 @@ export default function SettingsPage() {
           <div className="p-4 space-y-4">
             {/* Advance Notice */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Advance notice
               </label>
               <div className="flex gap-2">
@@ -370,7 +370,7 @@ export default function SettingsPage() {
                     className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
                       preferences.advance_notice_days === days
                         ? 'bg-teal-500 text-white border-teal-500'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-teal-500'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-teal-500'
                     }`}
                   >
                     {days} days
@@ -381,7 +381,7 @@ export default function SettingsPage() {
 
             {/* Digest Mode */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Notification frequency
               </label>
               <div className="flex gap-2">
@@ -396,7 +396,7 @@ export default function SettingsPage() {
                     className={`flex-1 py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
                       preferences.digest_mode === option.value
                         ? 'bg-teal-500 text-white border-teal-500'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-teal-500'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-teal-500'
                     }`}
                   >
                     {option.label}

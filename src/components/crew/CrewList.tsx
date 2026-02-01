@@ -84,7 +84,7 @@ export function CrewList({ crew, onEdit, onDelete, compact = false }: CrewListPr
       <div className="text-center py-6">
         <Users className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
         <p className="text-gray-500 dark:text-gray-400 text-sm">No crew members yet</p>
-        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Add your crew to track their documents</p>
+        <p className="text-gray-400 dark:text-gray-400 text-xs mt-1">Add your crew to track their documents</p>
       </div>
     );
   }

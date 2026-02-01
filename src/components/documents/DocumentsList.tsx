@@ -21,13 +21,13 @@ const CATEGORY_LABELS: Record<DocumentCategory, string> = {
 };
 
 const CATEGORY_COLORS: Record<DocumentCategory, string> = {
-  registration: 'bg-blue-100 text-blue-700',
-  insurance: 'bg-green-100 text-green-700',
-  berth: 'bg-purple-100 text-purple-700',
-  warranty: 'bg-orange-100 text-orange-700',
-  invoice: 'bg-gray-100 text-gray-700',
-  manual: 'bg-cyan-100 text-cyan-700',
-  other: 'bg-gray-100 text-gray-600',
+  registration: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  insurance: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  berth: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  warranty: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  invoice: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  manual: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
+  other: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
 function getExpiryInfo(expiryDate: string | undefined) {
@@ -55,8 +55,8 @@ export function DocumentsList({ documents, onDelete }: DocumentsListProps) {
   if (documents.length === 0) {
     return (
       <div className="text-center py-8">
-        <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-500">No documents uploaded yet</p>
+        <FileText className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-500 dark:text-gray-400">No documents uploaded yet</p>
         <p className="text-sm text-gray-400 mt-1">
           Upload registration, insurance, berth contracts and more
         </p>
@@ -76,7 +76,7 @@ export function DocumentsList({ documents, onDelete }: DocumentsListProps) {
     <div className="space-y-4">
       {Object.entries(grouped).map(([category, docs]) => (
         <div key={category}>
-          <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
             <span className={`px-2 py-0.5 rounded text-xs ${CATEGORY_COLORS[category as DocumentCategory]}`}>
               {CATEGORY_LABELS[category as DocumentCategory] || category}
             </span>
@@ -91,13 +91,13 @@ export function DocumentsList({ documents, onDelete }: DocumentsListProps) {
               return (
                 <div 
                   key={doc.id} 
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate">{doc.name}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">{doc.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {formatFileSize(doc.file_size)}
                         {doc.notes && ` • ${doc.notes}`}
                       </p>
@@ -120,7 +120,7 @@ export function DocumentsList({ documents, onDelete }: DocumentsListProps) {
                       href={doc.file_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-1.5 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
                       title="Download"
                     >
                       <Download className="w-4 h-4" />
@@ -133,7 +133,7 @@ export function DocumentsList({ documents, onDelete }: DocumentsListProps) {
                             onDelete(doc.id);
                           }
                         }}
-                        className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="p-1.5 text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />

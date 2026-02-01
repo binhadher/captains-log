@@ -112,23 +112,23 @@ export function AddBoatModal({ isOpen, onClose, onSubmit }: AddBoatModalProps) {
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
         
-        <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add New Boat</h2>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
               <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
                 {error}
               </div>
             )}
             {/* Boat Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Boat Name *
               </label>
               <input
@@ -136,7 +136,7 @@ export function AddBoatModal({ isOpen, onClose, onSubmit }: AddBoatModalProps) {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g., Sea Spirit"
               />
             </div>
@@ -144,26 +144,26 @@ export function AddBoatModal({ isOpen, onClose, onSubmit }: AddBoatModalProps) {
             {/* Boat Make & Model */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Boat Make
                 </label>
                 <input
                   type="text"
                   value={formData.make}
                   onChange={(e) => setFormData({ ...formData, make: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., Sunseeker"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Boat Model
                 </label>
                 <input
                   type="text"
                   value={formData.model}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., Manhattan 66"
                 />
               </div>
@@ -172,26 +172,26 @@ export function AddBoatModal({ isOpen, onClose, onSubmit }: AddBoatModalProps) {
             {/* Year & Length */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Year
                 </label>
                 <input
                   type="number"
                   value={formData.year || ''}
                   onChange={(e) => setFormData({ ...formData, year: e.target.value ? parseInt(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="2020"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Length (ft)
                 </label>
                 <input
                   type="number"
                   value={formData.length || ''}
                   onChange={(e) => setFormData({ ...formData, length: e.target.value ? parseInt(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="45"
                 />
               </div>
@@ -199,44 +199,44 @@ export function AddBoatModal({ isOpen, onClose, onSubmit }: AddBoatModalProps) {
 
             {/* Hull ID */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Hull ID / Registration
               </label>
               <input
                 type="text"
                 value={formData.hull_id}
                 onChange={(e) => setFormData({ ...formData, hull_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Registration number"
               />
             </div>
 
             {/* Home Port */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Home Port
               </label>
               <input
                 type="text"
                 value={formData.home_port}
                 onChange={(e) => setFormData({ ...formData, home_port: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g., Dubai Marina"
               />
             </div>
 
             {/* Engines Section */}
-            <div className="border-t pt-4 mt-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Engines</h3>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Engines</h3>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Number of Engines
                 </label>
                 <select
                   value={formData.number_of_engines || 2}
                   onChange={(e) => handleEngineCountChange(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   {[1, 2, 3, 4, 5, 6].map((num) => (
                     <option key={num} value={num}>{num} {num === 1 ? 'Engine' : 'Engines'}</option>
@@ -247,21 +247,21 @@ export function AddBoatModal({ isOpen, onClose, onSubmit }: AddBoatModalProps) {
               {/* Engine Brand & Model fields */}
               <div className="space-y-3">
                 {engineLabels.map((label, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                    <label className="block text-xs font-medium text-gray-600 mb-2">{label}</label>
+                  <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{label}</label>
                     <div className="grid grid-cols-2 gap-2">
                       <input
                         type="text"
                         value={formData.engines?.[index]?.brand || ''}
                         onChange={(e) => handleEngineChange(index, 'brand', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                         placeholder="Brand (e.g., Caterpillar)"
                       />
                       <input
                         type="text"
                         value={formData.engines?.[index]?.model || ''}
                         onChange={(e) => handleEngineChange(index, 'model', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                         placeholder="Model (e.g., C12)"
                       />
                     </div>
@@ -271,30 +271,30 @@ export function AddBoatModal({ isOpen, onClose, onSubmit }: AddBoatModalProps) {
             </div>
 
             {/* Generator Section */}
-            <div className="border-t pt-4 mt-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Generator</h3>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Generator</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Brand
                   </label>
                   <input
                     type="text"
                     value={formData.generator_brand}
                     onChange={(e) => setFormData({ ...formData, generator_brand: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g., Onan"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Model
                   </label>
                   <input
                     type="text"
                     value={formData.generator_model}
                     onChange={(e) => setFormData({ ...formData, generator_model: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g., MDKBH"
                   />
                 </div>

@@ -81,7 +81,7 @@ export function ActivityFeed({ items, showBoatName = true, compact = false }: Ac
                 <Icon className={`h-3 w-3 ${config.color}`} />
               </div>
               <p className="text-xs text-gray-900 dark:text-white truncate flex-1">{item.title}</p>
-              <time className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
+              <time className="text-[10px] text-gray-400 dark:text-gray-400 whitespace-nowrap">
                 {formatDistanceToNow(new Date(item.date), { addSuffix: true }).replace('about ', '')}
               </time>
             </Link>
@@ -153,7 +153,7 @@ export function ActivityFeed({ items, showBoatName = true, compact = false }: Ac
                     </div>
                     
                     {item.description && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate">
+                      <p className="text-xs text-gray-400 dark:text-gray-400 mt-1 truncate">
                         {item.description}
                       </p>
                     )}

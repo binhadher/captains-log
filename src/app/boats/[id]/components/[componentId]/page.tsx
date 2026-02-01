@@ -250,7 +250,7 @@ export default function ComponentDetailPage() {
                       Last: {formatDate(lastService.date)}
                     </p>
                   ) : (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">No records</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">No records</p>
                   )}
                 </div>
               );

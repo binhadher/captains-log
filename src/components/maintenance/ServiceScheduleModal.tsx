@@ -79,19 +79,19 @@ export function ServiceScheduleModal({
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
         
-        <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Service Schedule</h2>
-              <p className="text-sm text-gray-500">{componentName}</p>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Service Schedule</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{componentName}</p>
             </div>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-              <X className="w-5 h-5 text-gray-500" />
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -99,41 +99,41 @@ export function ServiceScheduleModal({
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Date-based scheduling */}
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Date-based Service
               </h3>
               
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                   Service every (days)
                 </label>
                 <input
                   type="number"
                   value={formData.service_interval_days}
                   onChange={(e) => setFormData({ ...formData, service_interval_days: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., 365 for yearly"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                   Next service date
                 </label>
                 <input
                   type="date"
                   value={formData.next_service_date}
                   onChange={(e) => setFormData({ ...formData, next_service_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
 
             {/* Hours-based scheduling (for engines/generators) */}
             {showHours && (
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   Hours-based Service
                   {currentHours !== undefined && (
@@ -142,27 +142,27 @@ export function ServiceScheduleModal({
                 </h3>
                 
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Service every (hours)
                   </label>
                   <input
                     type="number"
                     value={formData.service_interval_hours}
                     onChange={(e) => setFormData({ ...formData, service_interval_hours: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g., 250"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Next service at (hours)
                   </label>
                   <input
                     type="number"
                     value={formData.next_service_hours}
                     onChange={(e) => setFormData({ ...formData, next_service_hours: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder={currentHours ? `e.g., ${currentHours + 250}` : 'e.g., 500'}
                   />
                 </div>

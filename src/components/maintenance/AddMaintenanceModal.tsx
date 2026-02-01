@@ -105,33 +105,33 @@ export function AddMaintenanceModal({
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
         
-        <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+        <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Add Maintenance Log</h2>
-              <p className="text-sm text-gray-500">{componentName}</p>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add Maintenance Log</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{componentName}</p>
             </div>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-              <X className="w-5 h-5 text-gray-500" />
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
           {step === 'form' ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
                 {error}
               </div>
             )}
             {/* Maintenance Item */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Service Type *
               </label>
               <select
                 value={formData.maintenance_item}
                 onChange={(e) => setFormData({ ...formData, maintenance_item: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
                 <option value="">Select service type...</option>
@@ -145,28 +145,28 @@ export function AddMaintenanceModal({
 
             {/* Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Date *
               </label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
 
             {/* Description - required for "Other" */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description {formData.maintenance_item === 'other' && '*'}
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder={formData.maintenance_item === 'other' ? 'Describe the maintenance work...' : 'Optional details...'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 rows={2}
                 required={formData.maintenance_item === 'other'}
               />
@@ -175,7 +175,7 @@ export function AddMaintenanceModal({
             {/* Hours at Service - only for engines/generators */}
             {showHours && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Hours at Service
                 </label>
                 <input
@@ -183,7 +183,7 @@ export function AddMaintenanceModal({
                   value={formData.hours_at_service}
                   onChange={(e) => setFormData({ ...formData, hours_at_service: e.target.value })}
                   placeholder={currentHours ? `Current: ${currentHours}` : 'Enter hours'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             )}
@@ -191,7 +191,7 @@ export function AddMaintenanceModal({
             {/* Cost */}
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Cost
                 </label>
                 <input
@@ -200,17 +200,17 @@ export function AddMaintenanceModal({
                   value={formData.cost}
                   onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Currency
                 </label>
                 <select
                   value={formData.currency}
                   onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="AED">AED</option>
                   <option value="USD">USD</option>
@@ -221,14 +221,14 @@ export function AddMaintenanceModal({
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Notes
               </label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Additional notes, vendor info, parts used..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 rows={2}
               />
             </div>
@@ -245,7 +245,7 @@ export function AddMaintenanceModal({
         ) : (
           /* Upload Step */
           <div className="space-y-4">
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+            <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
               ✓ Maintenance log saved! Now add any photos or documents.
             </div>
 

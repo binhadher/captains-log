@@ -127,16 +127,16 @@ export function AddPartModal({
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
         
-        <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Add Part</h2>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-              <X className="w-5 h-5 text-gray-500" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add Part</h2>
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -144,14 +144,14 @@ export function AddPartModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Part Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Part Name *
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g., Oil Filter, Impeller"
                 required
               />
@@ -159,13 +159,13 @@ export function AddPartModal({
 
             {/* Component (optional) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 For Component
               </label>
               <select
                 value={formData.component_id}
                 onChange={(e) => setFormData({ ...formData, component_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">General / All</option>
                 {Object.entries(groupedComponents).map(([category, comps]) => (
@@ -183,26 +183,26 @@ export function AddPartModal({
             {/* Brand & Part Number */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Brand
                 </label>
                 <input
                   type="text"
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., Racor, Jabsco"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Part Number
                 </label>
                 <input
                   type="text"
                   value={formData.part_number}
                   onChange={(e) => setFormData({ ...formData, part_number: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., RAC-1234"
                 />
               </div>
@@ -210,41 +210,41 @@ export function AddPartModal({
 
             {/* Size/Specs */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Size / Specs
               </label>
               <input
                 type="text"
                 value={formData.size_specs}
                 onChange={(e) => setFormData({ ...formData, size_specs: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g., 2 micron, 3.5 inch diameter"
               />
             </div>
 
             {/* Supplier */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Supplier
               </label>
               <input
                 type="text"
                 value={formData.supplier}
                 onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g., Marine Parts UAE"
               />
             </div>
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Notes
               </label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 rows={2}
                 placeholder="Any additional notes..."
               />
@@ -252,7 +252,7 @@ export function AddPartModal({
 
             {/* Photo Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Photo
               </label>
               {photoUrl ? (
@@ -260,7 +260,7 @@ export function AddPartModal({
                   <img 
                     src={photoUrl} 
                     alt="Part" 
-                    className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                    className="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
                   />
                   <button
                     type="button"
@@ -271,7 +271,7 @@ export function AddPartModal({
                   </button>
                 </div>
               ) : (
-                <label className="block w-full p-4 border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all">
+                <label className="block w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
                   <input
                     type="file"
                     accept="image/*"
@@ -283,7 +283,7 @@ export function AddPartModal({
                   ) : (
                     <>
                       <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                      <span className="text-sm text-gray-500">Click to upload photo</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Click to upload photo</span>
                     </>
                   )}
                 </label>

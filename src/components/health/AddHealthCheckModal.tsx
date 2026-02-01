@@ -99,16 +99,16 @@ export function AddHealthCheckModal({
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
         
-        <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+        <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Quick Health Check</h2>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
               <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -116,7 +116,7 @@ export function AddHealthCheckModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Check Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Type
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -127,8 +127,8 @@ export function AddHealthCheckModal({
                     onClick={() => setFormData({ ...formData, check_type: type.id })}
                     className={`px-3 py-2 text-sm rounded-lg border transition-all ${
                       formData.check_type === type.id
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     {type.label}
@@ -139,13 +139,13 @@ export function AddHealthCheckModal({
 
             {/* Component (optional) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Component
               </label>
               <select
                 value={formData.component_id}
                 onChange={(e) => setFormData({ ...formData, component_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">General / All</option>
                 {Object.entries(groupedComponents).map(([category, comps]) => (
@@ -162,14 +162,14 @@ export function AddHealthCheckModal({
 
             {/* What did you do */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 What did you check/do? *
               </label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder={selectedType?.placeholder}
                 required
               />
@@ -178,14 +178,14 @@ export function AddHealthCheckModal({
             {/* Quantity (for fluid top-ups) */}
             {(formData.check_type === 'oil_level' || formData.check_type === 'fluid_level') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Quantity Added
                 </label>
                 <input
                   type="text"
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., 0.5L, 200ml"
                 />
               </div>
@@ -193,26 +193,26 @@ export function AddHealthCheckModal({
 
             {/* Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Date
               </label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Notes
               </label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 rows={2}
                 placeholder="Any additional notes..."
               />

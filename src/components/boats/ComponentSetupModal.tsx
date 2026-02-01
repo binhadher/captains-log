@@ -264,18 +264,18 @@ export function ComponentSetupModal({
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
         
-        <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {step === 'templates' ? 'Set Up Components' : 'Customize Components'}
             </h2>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
               <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -291,8 +291,8 @@ export function ComponentSetupModal({
                 Set Up All Components
               </Button>
 
-              <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-400">
-                <p className="font-medium text-gray-900 mb-2">This will create:</p>
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-400">
+                <p className="font-medium text-gray-900 dark:text-white mb-2">This will create:</p>
                 <ul className="space-y-1">
                   <li>• <strong>Propulsion:</strong> {numberOfEngines} engine(s), generator, shafts & propellers</li>
                   <li>• <strong>Systems:</strong> Hydraulic system, bow thruster</li>
@@ -300,7 +300,7 @@ export function ComponentSetupModal({
                 </ul>
               </div>
 
-              <div className="text-center pt-4 border-t border-gray-200">
+              <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button 
                   onClick={() => setStep('customize')}
                   className="text-sm text-blue-600 hover:text-blue-700"
@@ -318,19 +318,19 @@ export function ComponentSetupModal({
 
                 return (
                   <div key={category} className="space-y-2">
-                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                       {category}
                     </h3>
                     {categoryComponents.map((comp) => {
                       const showBrandModel = comp.type === 'engine' || comp.type === 'generator' || comp.type === 'ac_chiller';
                       return (
-                        <div key={comp.id} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                        <div key={comp.id} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                           <input
                             type="text"
                             value={comp.name}
                             onChange={(e) => updateComponent(comp.id, { name: e.target.value })}
                             placeholder="Name"
-                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+                            className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
                           />
                           {showBrandModel && (
                             <>
@@ -339,14 +339,14 @@ export function ComponentSetupModal({
                                 value={comp.brand || ''}
                                 onChange={(e) => updateComponent(comp.id, { brand: e.target.value })}
                                 placeholder="Brand"
-                                className="w-28 px-2 py-1 border border-gray-300 rounded text-sm"
+                                className="w-28 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
                               />
                               <input
                                 type="text"
                                 value={comp.model || ''}
                                 onChange={(e) => updateComponent(comp.id, { model: e.target.value })}
                                 placeholder="Model"
-                                className="w-28 px-2 py-1 border border-gray-300 rounded text-sm"
+                                className="w-28 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
                               />
                             </>
                           )}
@@ -364,20 +364,20 @@ export function ComponentSetupModal({
               })}
 
               {components.length === 0 && (
-                <p className="text-center text-gray-500 py-8">
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8">
                   No components added yet
                 </p>
               )}
 
               <button
                 onClick={addComponent}
-                className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-all"
+                className="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-all"
               >
                 <Plus className="w-4 h-4 inline mr-1" />
                 Add Component
               </button>
 
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Button 
                   variant="outline" 
                   onClick={() => { setStep('templates'); setComponents([]); }}

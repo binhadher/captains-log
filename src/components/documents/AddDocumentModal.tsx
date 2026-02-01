@@ -142,17 +142,17 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Upload Document</h2>
-          <button onClick={handleClose} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5 text-gray-500" />
+      <div className="bg-white dark:bg-gray-900 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Upload Document</h2>
+          <button onClick={handleClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 px-3 py-2 rounded-lg text-sm">
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-2 rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -161,10 +161,10 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
           <div
             className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
               dragActive 
-                ? 'border-blue-500 bg-blue-50' 
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
                 : file 
-                  ? 'border-green-300 bg-green-50' 
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/30' 
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
             }`}
             onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
             onDragLeave={() => setDragActive(false)}
@@ -172,10 +172,10 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
           >
             {file ? (
               <div className="flex items-center justify-center gap-3">
-                <FileText className="w-8 h-8 text-green-600" />
+                <FileText className="w-8 h-8 text-green-600 dark:text-green-400" />
                 <div className="text-left">
-                  <p className="font-medium text-gray-900">{file.name}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-gray-900 dark:text-white">{file.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {(file.size / 1024).toFixed(1)} KB
                   </p>
                 </div>
@@ -190,9 +190,9 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
             ) : (
               <>
                 <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-600 mb-1">
+                <p className="text-gray-600 dark:text-gray-300 mb-1">
                   Drag & drop or{' '}
-                  <label className="text-blue-600 hover:text-blue-700 cursor-pointer">
+                  <label className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 cursor-pointer">
                     browse
                     <input
                       type="file"
@@ -209,14 +209,14 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
 
           {/* Document Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Document Name *
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., Insurance Policy 2026"
               required
             />
@@ -224,13 +224,13 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Category
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as DocumentCategory)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {CATEGORIES.map((cat) => (
                 <option key={cat.value} value={cat.value}>
@@ -242,16 +242,16 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
 
           {/* Expiry Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Expiry Date <span className="font-normal text-gray-400">(optional)</span>
             </label>
             <input
               type="date"
               value={expiryDate}
               onChange={(e) => setExpiryDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Set for insurance, registration, berth contracts to get renewal reminders
             </p>
           </div>
@@ -259,13 +259,13 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
           {/* Reminder Days (only show if expiry date set) */}
           {expiryDate && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Remind me before
               </label>
               <select
                 value={reminderDays}
                 onChange={(e) => setReminderDays(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="7">1 week</option>
                 <option value="14">2 weeks</option>
@@ -278,14 +278,14 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Notes <span className="font-normal text-gray-400">(optional)</span>
             </label>
             <input
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., Policy number, contact info..."
             />
           </div>

@@ -337,7 +337,7 @@ export default function BoatDetailPage() {
                       {[engine.brand, engine.model].filter(Boolean).join(' ')}
                     </p>
                   ) : (
-                    <p className="text-gray-400 dark:text-gray-500 italic text-sm">Not specified</p>
+                    <p className="text-gray-400 dark:text-gray-400 italic text-sm">Not specified</p>
                   )}
                 </div>
               ))}

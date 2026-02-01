@@ -23,7 +23,7 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
       <div className="text-center py-6">
         <Bell className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
         <p className="text-gray-500 dark:text-gray-400 text-sm">No upcoming alerts</p>
-        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Set service intervals on your components to get reminders</p>
+        <p className="text-gray-400 dark:text-gray-400 text-xs mt-1">Set service intervals on your components to get reminders</p>
       </div>
     );
   }
@@ -62,7 +62,7 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
                         : ''
                     }
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-400" />
                 </div>
               </div>
             </Link>
@@ -118,7 +118,7 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
                   </p>
                 )}
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-400" />
             </div>
           </Link>
         );
