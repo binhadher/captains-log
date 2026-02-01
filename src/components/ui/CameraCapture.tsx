@@ -198,8 +198,11 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
       if (selectedMimeType) {
         options.mimeType = selectedMimeType;
       }
+      // Reduce bitrate to keep file sizes manageable (1.5 Mbps video)
+      options.videoBitsPerSecond = 1500000;
 
       const mediaRecorder = new MediaRecorder(streamRef.current, options);
+      console.log('MediaRecorder created with options:', options);
 
       mediaRecorder.ondataavailable = (event) => {
         console.log('Data available:', event.data.size);

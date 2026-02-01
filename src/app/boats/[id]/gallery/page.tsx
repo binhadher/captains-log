@@ -138,18 +138,42 @@ export default function GalleryPage() {
       
       const { signedUrl, publicUrl } = await signedRes.json();
       
-      // Step 2: Upload directly to Supabase Storage
-      const uploadRes = await fetch(signedUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': file.type || (isVideo ? 'video/webm' : 'image/jpeg'),
-        },
-        body: file,
-      });
+      // Step 2: Upload directly to Supabase Storage using XMLHttpRequest for progress
+      console.log('Starting direct upload, size:', file.size);
       
-      if (!uploadRes.ok) {
-        throw new Error(`Direct upload failed (${uploadRes.status})`);
-      }
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            console.log(`Upload progress: ${percent}%`);
+            // Could update UI here with progress
+          }
+        });
+        
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            console.log('Upload complete');
+            resolve();
+          } else {
+            reject(new Error(`Direct upload failed (${xhr.status})`));
+          }
+        });
+        
+        xhr.addEventListener('error', () => {
+          reject(new Error('Upload network error - check your connection'));
+        });
+        
+        xhr.addEventListener('timeout', () => {
+          reject(new Error('Upload timed out - video may be too large'));
+        });
+        
+        xhr.open('PUT', signedUrl);
+        xhr.setRequestHeader('Content-Type', file.type || (isVideo ? 'video/webm' : 'image/jpeg'));
+        xhr.timeout = 120000; // 2 minute timeout
+        xhr.send(file);
+      });
       
       // Step 3: Create document record
       const completeRes = await fetch('/api/upload/complete', {
@@ -237,12 +261,15 @@ export default function GalleryPage() {
   };
 
   const handleCameraCapture = async (file: File) => {
+    console.log('Camera capture received:', file.name, file.type, file.size, 'bytes');
     setUploading(true);
     setError(null);
     
     try {
       await uploadSingleFile(file);
+      console.log('Upload successful!');
     } catch (err) {
+      console.error('Camera capture upload error:', err);
       setError(err instanceof Error ? err.message : 'Upload failed');
     }
     
