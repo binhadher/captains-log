@@ -17,7 +17,8 @@ import {
   Plus,
   Cog,
   DollarSign,
-  ChevronRight
+  ChevronRight,
+  Camera
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -262,6 +263,13 @@ export default function BoatDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />
+              <Link 
+                href={`/boats/${params.id}/gallery`}
+                className="p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
+                title="Photo Gallery"
+              >
+                <Camera className="w-5 h-5 text-gray-700 dark:text-white" />
+              </Link>
               <Link 
                 href="/settings" 
                 className="p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
