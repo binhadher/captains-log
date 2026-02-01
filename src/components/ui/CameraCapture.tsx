@@ -156,50 +156,104 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
   };
 
   const startRecording = () => {
-    if (!streamRef.current) return;
+    if (!streamRef.current) {
+      setError('Camera not ready');
+      return;
+    }
+
+    // Check if MediaRecorder is supported
+    if (typeof MediaRecorder === 'undefined') {
+      setError('Video recording not supported on this browser');
+      return;
+    }
 
     chunksRef.current = [];
     
-    // Try to use a supported mime type
+    // Try MIME types in order of preference (iOS prefers mp4)
     const mimeTypes = [
-      'video/webm;codecs=vp9,opus',
-      'video/webm;codecs=vp8,opus',
-      'video/webm',
       'video/mp4',
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus', 
+      'video/webm',
+      'video/quicktime',
     ];
     
     let selectedMimeType = '';
     for (const type of mimeTypes) {
-      if (MediaRecorder.isTypeSupported(type)) {
-        selectedMimeType = type;
-        break;
+      try {
+        if (MediaRecorder.isTypeSupported(type)) {
+          selectedMimeType = type;
+          console.log('Using MIME type:', type);
+          break;
+        }
+      } catch {
+        // isTypeSupported might throw on some browsers
+        continue;
       }
     }
 
     try {
-      const mediaRecorder = new MediaRecorder(streamRef.current, {
-        mimeType: selectedMimeType || undefined
-      });
+      const options: MediaRecorderOptions = {};
+      if (selectedMimeType) {
+        options.mimeType = selectedMimeType;
+      }
+
+      const mediaRecorder = new MediaRecorder(streamRef.current, options);
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        console.log('Data available:', event.data.size);
+        if (event.data && event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: selectedMimeType || 'video/webm' });
-        const videoUrl = URL.createObjectURL(blob);
-        setCapturedVideo(videoUrl);
-        setStatus('captured');
+        console.log('Recording stopped, chunks:', chunksRef.current.length);
         
-        // Stop camera
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
+        if (chunksRef.current.length === 0) {
+          setError('No video data captured. Please try again.');
+          setStatus('streaming');
+          return;
+        }
+
+        try {
+          const mimeType = selectedMimeType || mediaRecorder.mimeType || 'video/webm';
+          const blob = new Blob(chunksRef.current, { type: mimeType });
+          console.log('Created blob:', blob.size, blob.type);
+          
+          if (blob.size === 0) {
+            setError('Video capture failed. Please try again.');
+            setStatus('streaming');
+            return;
+          }
+
+          const videoUrl = URL.createObjectURL(blob);
+          setCapturedVideo(videoUrl);
+          setStatus('captured');
+          
+          // Stop camera
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+          }
+        } catch (err) {
+          console.error('Error creating video blob:', err);
+          setError('Failed to process video');
+          setStatus('streaming');
         }
       };
 
-      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event);
+        setError('Recording error occurred');
+        setStatus('streaming');
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
+      };
+
+      // Start recording - use smaller timeslice for iOS
+      mediaRecorder.start(500);
       mediaRecorderRef.current = mediaRecorder;
       setStatus('recording');
       setRecordingTime(0);
@@ -209,19 +263,42 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
         setRecordingTime(prev => prev + 1);
       }, 1000);
 
+      console.log('Recording started with state:', mediaRecorder.state);
+
     } catch (err) {
       console.error('Recording error:', err);
-      setError('Failed to start recording');
+      setError('Failed to start recording: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      setStatus('streaming');
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
+    console.log('Stopping recording...');
+    
+    // Stop the timer first
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
+    }
+
+    // Request final data before stopping (helps with iOS)
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      try {
+        // Request any pending data
+        mediaRecorderRef.current.requestData();
+        // Small delay then stop (iOS needs this)
+        setTimeout(() => {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+          }
+        }, 100);
+      } catch (err) {
+        console.error('Error stopping recording:', err);
+        // Try to stop anyway
+        try {
+          mediaRecorderRef.current.stop();
+        } catch {}
+      }
     }
   };
 
