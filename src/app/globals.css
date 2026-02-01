@@ -73,15 +73,7 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
-/* Force white text in dark mode glass cards for visibility */
-/* Only direct children, not nested cards */
-.dark .glass-card > h2,
-.dark .glass-card > h3,
-.dark .glass-card > h4,
-.dark .glass-card > div > h2,
-.dark .glass-card > div > h3 {
-  color: #ffffff !important;
-}
+/* Dark mode text handled by Tailwind classes on each component */
 
 /* Header glass effect */
 .glass-header {

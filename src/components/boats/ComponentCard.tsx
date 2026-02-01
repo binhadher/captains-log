@@ -51,9 +51,9 @@ export function ComponentCard({ component, boatId }: ComponentCardProps) {
               {icon}
             </div>
             <div>
-              <h4 className="font-medium" style={{ color: '#111827' }}>{component.name}</h4>
+              <h4 className="font-medium text-gray-900">{component.name}</h4>
               {(component.brand || component.model) && (
-                <p className="text-sm" style={{ color: '#6b7280' }}>
+                <p className="text-sm text-gray-500">
                   {[component.brand, component.model].filter(Boolean).join(' ')}
                 </p>
               )}
