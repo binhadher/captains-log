@@ -80,12 +80,15 @@ export default function GalleryPage() {
   };
 
   const uploadSingleFile = async (file: File) => {
-    // Determine file type
-    const isVideo = file.type.startsWith('video/');
-    const isImage = file.type.startsWith('image/');
+    console.log('Uploading file:', file.name, 'type:', file.type, 'size:', file.size);
     
-    if (!isVideo && !isImage) {
-      setError('Only images and videos are allowed');
+    // Determine file type - be lenient for iOS which might not set type correctly
+    const isVideo = file.type.startsWith('video/') || file.name.endsWith('.webm') || file.name.endsWith('.mp4');
+    const isImage = file.type.startsWith('image/') || file.name.endsWith('.jpg') || file.name.endsWith('.jpeg') || file.name.endsWith('.png');
+    
+    if (!isVideo && !isImage && file.type) {
+      console.error('Invalid file type:', file.type);
+      setError(`File type not allowed: ${file.type || 'unknown'}`);
       return;
     }
 
@@ -93,6 +96,11 @@ export default function GalleryPage() {
     const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
       setError(`File too large. Max ${isVideo ? '50MB' : '10MB'}`);
+      return;
+    }
+    
+    if (file.size === 0) {
+      setError('File is empty');
       return;
     }
 
@@ -109,7 +117,9 @@ export default function GalleryPage() {
     });
 
     if (!uploadRes.ok) {
-      throw new Error('Upload failed');
+      const errorData = await uploadRes.json().catch(() => ({}));
+      console.error('Upload error:', uploadRes.status, errorData);
+      throw new Error(errorData.error || `Upload failed (${uploadRes.status})`);
     }
 
     const { document } = await uploadRes.json();

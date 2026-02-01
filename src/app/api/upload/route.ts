@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     // Validate file type first to determine size limit
     const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic'];
-    const videoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v'];
+    const videoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v', 'video/3gpp', 'video/mpeg'];
     const docTypes = [
       'application/pdf',
       'application/msword',
@@ -49,15 +49,29 @@ export async function POST(request: NextRequest) {
     ];
     const allowedTypes = [...imageTypes, ...videoTypes, ...docTypes];
     
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: `File type not allowed: ${file.type}` }, { status: 400 });
+    // Check by extension too (iOS Safari sometimes doesn't set MIME type correctly)
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+    const videoExts = ['mp4', 'webm', 'mov', 'm4v', '3gp'];
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic'];
+    const isVideoByExt = videoExts.includes(fileExt);
+    const isImageByExt = imageExts.includes(fileExt);
+    
+    console.log('Upload request - file:', file.name, 'type:', file.type, 'size:', file.size, 'ext:', fileExt);
+    
+    if (!allowedTypes.includes(file.type) && !isVideoByExt && !isImageByExt) {
+      console.error('File type not allowed:', file.type, 'ext:', fileExt);
+      return NextResponse.json({ error: `File type not allowed: ${file.type || 'unknown'}` }, { status: 400 });
     }
 
     // Validate file size (50MB for videos, 10MB for others)
-    const isVideo = videoTypes.includes(file.type);
+    const isVideo = videoTypes.includes(file.type) || isVideoByExt;
     const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json({ error: `File too large (max ${isVideo ? '50MB' : '10MB'})` }, { status: 400 });
+    }
+    
+    if (file.size === 0) {
+      return NextResponse.json({ error: 'File is empty' }, { status: 400 });
     }
 
     // Generate unique filename
