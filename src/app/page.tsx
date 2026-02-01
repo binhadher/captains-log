@@ -154,7 +154,7 @@ export default function Dashboard() {
               <ThemeToggle />
               <Link 
                 href="/settings" 
-                className="p-2 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
+                className="p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
                 title="Settings"
               >
                 <Settings className="w-5 h-5 text-gray-700 dark:text-white" />
