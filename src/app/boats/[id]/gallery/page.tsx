@@ -83,25 +83,32 @@ export default function GalleryPage() {
     console.log('Uploading file:', file.name, 'type:', file.type, 'size:', file.size);
     
     // Determine file type - be lenient for iOS which might not set type correctly
-    const isVideo = file.type.startsWith('video/') || file.name.endsWith('.webm') || file.name.endsWith('.mp4');
-    const isImage = file.type.startsWith('image/') || file.name.endsWith('.jpg') || file.name.endsWith('.jpeg') || file.name.endsWith('.png');
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+    const isVideoByType = file.type?.startsWith('video/');
+    const isImageByType = file.type?.startsWith('image/');
+    const isVideoByExt = ['webm', 'mp4', 'mov', 'm4v', '3gp'].includes(fileExt);
+    const isImageByExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic'].includes(fileExt);
     
-    if (!isVideo && !isImage && file.type) {
-      console.error('Invalid file type:', file.type);
-      setError(`File type not allowed: ${file.type || 'unknown'}`);
-      return;
+    const isVideo = isVideoByType || isVideoByExt;
+    const isImage = isImageByType || isImageByExt;
+    
+    console.log('File detection:', { isVideo, isImage, fileExt, mimeType: file.type });
+    
+    // Only reject if we can't identify the file type at all
+    if (!isVideo && !isImage) {
+      const errorMsg = `File type not recognized: ${file.type || 'no type'} (ext: ${fileExt || 'none'})`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
-
+    
     // Check file size (50MB for videos, 10MB for images)
     const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      setError(`File too large. Max ${isVideo ? '50MB' : '10MB'}`);
-      return;
+      throw new Error(`File too large. Max ${isVideo ? '50MB' : '10MB'}`);
     }
     
     if (file.size === 0) {
-      setError('File is empty');
-      return;
+      throw new Error('File is empty (0 bytes)');
     }
 
     // Upload to storage
