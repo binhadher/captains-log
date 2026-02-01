@@ -1,29 +1,39 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { X, RotateCcw, Check, Camera, Loader2, SwitchCamera } from 'lucide-react';
+import { X, RotateCcw, Check, Camera, Loader2, Video, Square } from 'lucide-react';
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void;
   onClose: () => void;
+  mode?: 'photo' | 'video' | 'both';
 }
 
-export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
+export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   
-  const [status, setStatus] = useState<'idle' | 'requesting' | 'streaming' | 'captured' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'requesting' | 'streaming' | 'recording' | 'captured' | 'error'>('idle');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedVideo, setCapturedVideo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [useFrontCamera, setUseFrontCamera] = useState(false);
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [captureMode, setCaptureMode] = useState<'photo' | 'video'>(mode === 'video' ? 'video' : 'photo');
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
       }
     };
   }, []);
@@ -38,7 +48,6 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
       .catch(() => {});
   }, []);
 
-  // This must be called directly from a click handler for iOS
   const startCamera = async () => {
     setStatus('requesting');
     setError(null);
@@ -50,25 +59,26 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
     }
 
     try {
-      // Simple constraints - iOS works better with basic settings
+      // Include audio for video recording
+      const needsAudio = mode !== 'photo';
       const constraints: MediaStreamConstraints = {
         video: useFrontCamera 
           ? { facingMode: 'user' }
           : { facingMode: 'environment' },
-        audio: false
+        audio: needsAudio
       };
 
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
       } catch {
-        // Fallback to any camera
+        // Fallback without audio
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       }
 
       streamRef.current = stream;
 
-      // Wait for video element to be available (may take a moment after render)
+      // Wait for video element to be available
       let video = videoRef.current;
       let attempts = 0;
       while (!video && attempts < 20) {
@@ -92,7 +102,6 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             .catch(reject);
         };
         video.onerror = () => reject(new Error('Video failed to load'));
-        // Timeout fallback
         setTimeout(() => resolve(), 2000);
       });
       
@@ -115,7 +124,6 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
   const switchCamera = async () => {
     setUseFrontCamera(prev => !prev);
-    // Restart with new camera after state updates
     setTimeout(() => startCamera(), 100);
   };
 
@@ -124,14 +132,12 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    // Set canvas to video dimensions
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Flip for front camera
     if (useFrontCamera) {
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
@@ -149,40 +155,127 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
     setStatus('captured');
   };
 
+  const startRecording = () => {
+    if (!streamRef.current) return;
+
+    chunksRef.current = [];
+    
+    // Try to use a supported mime type
+    const mimeTypes = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+      'video/mp4',
+    ];
+    
+    let selectedMimeType = '';
+    for (const type of mimeTypes) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        selectedMimeType = type;
+        break;
+      }
+    }
+
+    try {
+      const mediaRecorder = new MediaRecorder(streamRef.current, {
+        mimeType: selectedMimeType || undefined
+      });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: selectedMimeType || 'video/webm' });
+        const videoUrl = URL.createObjectURL(blob);
+        setCapturedVideo(videoUrl);
+        setStatus('captured');
+        
+        // Stop camera
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+        }
+      };
+
+      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorderRef.current = mediaRecorder;
+      setStatus('recording');
+      setRecordingTime(0);
+
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+
+    } catch (err) {
+      console.error('Recording error:', err);
+      setError('Failed to start recording');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  };
+
   const retake = () => {
     setCapturedImage(null);
+    setCapturedVideo(null);
+    setRecordingTime(0);
     startCamera();
   };
 
-  const confirmPhoto = async () => {
-    if (!capturedImage) return;
-
+  const confirmCapture = async () => {
     try {
-      const res = await fetch(capturedImage);
-      const blob = await res.blob();
-      const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
-      onCapture(file);
+      if (capturedImage) {
+        const res = await fetch(capturedImage);
+        const blob = await res.blob();
+        const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        onCapture(file);
+      } else if (capturedVideo) {
+        const res = await fetch(capturedVideo);
+        const blob = await res.blob();
+        const file = new File([blob], `video-${Date.now()}.webm`, { type: 'video/webm' });
+        onCapture(file);
+      }
       onClose();
     } catch {
-      setError('Failed to save photo');
+      setError('Failed to save');
     }
   };
 
   const handleClose = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
     onClose();
   };
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // Auto-start camera when component mounts
   useEffect(() => {
-    // Delay to ensure DOM is fully ready and ref is attached
     const timer = setTimeout(() => {
       if (videoRef.current) {
         startCamera();
       } else {
-        // If still not ready, wait a bit more
         setTimeout(() => startCamera(), 200);
       }
     }, 300);
@@ -200,6 +293,14 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
           <X className="w-6 h-6" />
         </button>
         
+        {/* Recording indicator */}
+        {status === 'recording' && (
+          <div className="flex items-center gap-2 bg-black/50 px-3 py-2 rounded-full">
+            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-white font-mono">{formatTime(recordingTime)}</span>
+          </div>
+        )}
+        
         {status === 'streaming' && hasMultipleCameras && (
           <button
             onClick={switchCamera}
@@ -212,7 +313,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center relative">
-        {/* Video element - ALWAYS in DOM, visibility controlled by CSS */}
+        {/* Video element - ALWAYS in DOM */}
         <video
           ref={videoRef}
           autoPlay
@@ -221,8 +322,8 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
           className="absolute inset-0 w-full h-full object-cover"
           style={{
             transform: useFrontCamera ? 'scaleX(-1)' : 'none',
-            opacity: status === 'streaming' ? 1 : 0,
-            pointerEvents: status === 'streaming' ? 'auto' : 'none'
+            opacity: (status === 'streaming' || status === 'recording') ? 1 : 0,
+            pointerEvents: (status === 'streaming' || status === 'recording') ? 'auto' : 'none'
           }}
         />
 
@@ -264,36 +365,96 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             className="max-h-full max-w-full object-contain z-10"
           />
         )}
+
+        {status === 'captured' && capturedVideo && (
+          <video 
+            src={capturedVideo}
+            controls
+            autoPlay
+            loop
+            className="max-h-full max-w-full object-contain z-10"
+          />
+        )}
       </div>
 
       {/* Hidden canvas */}
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Bottom controls */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 p-8 flex justify-center items-center gap-8">
-        {status === 'captured' ? (
-          <>
+      <div className="absolute bottom-0 left-0 right-0 z-20 p-6 pb-10">
+        {/* Mode switcher - only show when streaming and mode is 'both' */}
+        {status === 'streaming' && mode === 'both' && (
+          <div className="flex justify-center mb-6">
+            <div className="bg-black/50 rounded-full p-1 flex gap-1">
+              <button
+                onClick={() => setCaptureMode('photo')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  captureMode === 'photo' 
+                    ? 'bg-white text-black' 
+                    : 'text-white'
+                }`}
+              >
+                Photo
+              </button>
+              <button
+                onClick={() => setCaptureMode('video')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  captureMode === 'video' 
+                    ? 'bg-white text-black' 
+                    : 'text-white'
+                }`}
+              >
+                Video
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Capture controls */}
+        <div className="flex justify-center items-center gap-8">
+          {status === 'captured' ? (
+            <>
+              <button
+                onClick={retake}
+                className="p-4 rounded-full bg-white/20 text-white"
+              >
+                <RotateCcw className="w-8 h-8" />
+              </button>
+              <button
+                onClick={confirmCapture}
+                className="p-5 rounded-full bg-teal-500 text-white"
+              >
+                <Check className="w-10 h-10" />
+              </button>
+            </>
+          ) : status === 'streaming' ? (
+            captureMode === 'photo' ? (
+              // Photo capture button
+              <button
+                onClick={takePhoto}
+                className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <div className="w-16 h-16 rounded-full bg-white" />
+              </button>
+            ) : (
+              // Video record button
+              <button
+                onClick={startRecording}
+                className="w-20 h-20 rounded-full border-4 border-red-500 flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <div className="w-16 h-16 rounded-full bg-red-500" />
+              </button>
+            )
+          ) : status === 'recording' ? (
+            // Stop recording button
             <button
-              onClick={retake}
-              className="p-4 rounded-full bg-white/20 text-white"
+              onClick={stopRecording}
+              className="w-20 h-20 rounded-full border-4 border-red-500 flex items-center justify-center active:scale-95 transition-transform bg-red-500/20"
             >
-              <RotateCcw className="w-8 h-8" />
+              <Square className="w-10 h-10 text-white fill-white" />
             </button>
-            <button
-              onClick={confirmPhoto}
-              className="p-5 rounded-full bg-teal-500 text-white"
-            >
-              <Check className="w-10 h-10" />
-            </button>
-          </>
-        ) : status === 'streaming' ? (
-          <button
-            onClick={takePhoto}
-            className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform"
-          >
-            <div className="w-16 h-16 rounded-full bg-white" />
-          </button>
-        ) : null}
+          ) : null}
+        </div>
       </div>
     </div>
   );
