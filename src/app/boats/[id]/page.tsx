@@ -31,8 +31,10 @@ import { AddHealthCheckModal } from '@/components/health/AddHealthCheckModal';
 import { DocumentsList } from '@/components/documents/DocumentsList';
 import { AddDocumentModal } from '@/components/documents/AddDocumentModal';
 import { AlertsList } from '@/components/alerts/AlertsList';
+import { CrewList, CrewMember } from '@/components/crew/CrewList';
+import { AddCrewModal } from '@/components/crew/AddCrewModal';
 import { Alert } from '@/lib/alerts';
-import { Package, Activity, AlertTriangle } from 'lucide-react';
+import { Package, Activity, AlertTriangle, Users } from 'lucide-react';
 
 export default function BoatDetailPage() {
   const params = useParams();
@@ -51,6 +53,9 @@ export default function BoatDetailPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [showAddDocument, setShowAddDocument] = useState(false);
+  const [crew, setCrew] = useState<CrewMember[]>([]);
+  const [showAddCrew, setShowAddCrew] = useState(false);
+  const [editingCrew, setEditingCrew] = useState<CrewMember | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -60,6 +65,7 @@ export default function BoatDetailPage() {
       fetchHealthChecks(params.id as string);
       fetchAlerts(params.id as string);
       fetchDocuments(params.id as string);
+      fetchCrew(params.id as string);
     }
   }, [params.id]);
 
@@ -120,6 +126,31 @@ export default function BoatDetailPage() {
       }
     } catch (err) {
       console.error('Error fetching documents:', err);
+    }
+  };
+
+  const fetchCrew = async (boatId: string) => {
+    try {
+      const response = await fetch(`/api/boats/${boatId}/crew`);
+      if (response.ok) {
+        const data = await response.json();
+        setCrew(data.crew || []);
+      }
+    } catch (err) {
+      console.error('Error fetching crew:', err);
+    }
+  };
+
+  const handleDeleteCrew = async (member: CrewMember) => {
+    if (!confirm(`Delete ${member.name}?`)) return;
+    
+    try {
+      const response = await fetch(`/api/crew/${member.id}`, { method: 'DELETE' });
+      if (response.ok && boat) {
+        fetchCrew(boat.id);
+      }
+    } catch (err) {
+      console.error('Error deleting crew member:', err);
     }
   };
 
@@ -409,6 +440,28 @@ export default function BoatDetailPage() {
             onDelete={handleDeleteDocument}
           />
         </div>
+
+        {/* Crew Section */}
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Crew
+              {crew.length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({crew.filter(c => c.status === 'active').length} active)</span>
+              )}
+            </h2>
+            <Button size="sm" onClick={() => setShowAddCrew(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Add Crew
+            </Button>
+          </div>
+          <CrewList 
+            crew={crew}
+            onEdit={(member) => { setEditingCrew(member); setShowAddCrew(true); }}
+            onDelete={handleDeleteCrew}
+          />
+        </div>
       </main>
 
       {/* Boat Setup Wizard (new guided flow) */}
@@ -461,6 +514,17 @@ export default function BoatDetailPage() {
         onSuccess={() => {
           fetchDocuments(boat.id);
           fetchAlerts(boat.id); // Refresh alerts for new expiry dates
+        }}
+      />
+
+      {/* Add/Edit Crew Modal */}
+      <AddCrewModal
+        isOpen={showAddCrew}
+        onClose={() => { setShowAddCrew(false); setEditingCrew(null); }}
+        boatId={boat.id}
+        editingMember={editingCrew}
+        onSuccess={() => {
+          fetchCrew(boat.id);
         }}
       />
     </div>
