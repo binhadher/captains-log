@@ -30,7 +30,7 @@ export function HealthCheckList({ checks, showComponent = true }: HealthCheckLis
     return (
       <div className="text-center py-8">
         <Activity className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-500">No health checks recorded yet</p>
+        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">No health checks recorded yet</p>
       </div>
     );
   }
@@ -57,8 +57,8 @@ export function HealthCheckList({ checks, showComponent = true }: HealthCheckLis
                   {TYPE_ICONS[check.check_type]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900">{check.title}</p>
-                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <p className="font-medium text-gray-900 dark:text-white">{check.title}</p>
+                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     {showComponent && check.component_name && (
                       <span className="text-blue-600">{check.component_name}</span>
                     )}

@@ -108,7 +108,7 @@ export function FileUpload({
                 />
               ) : (
                 <div className="w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-gray-400" />
+                  <FileText className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                 </div>
               )}
               <button
@@ -128,7 +128,7 @@ export function FileUpload({
               {uploading ? (
                 <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
               ) : (
-                <Upload className="w-5 h-5 text-gray-400" />
+                <Upload className="w-5 h-5 text-gray-400 dark:text-gray-500" />
               )}
             </label>
           )}
@@ -161,12 +161,12 @@ export function FileUpload({
         {uploading ? (
           <div className="flex flex-col items-center">
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
-            <p className="text-sm text-gray-600">Uploading...</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">Uploading...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center">
             <Upload className="w-8 h-8 text-gray-400 mb-2" />
-            <p className="text-sm text-gray-600">Click to upload photos or documents</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-500">Click to upload photos or documents</p>
             <p className="text-xs text-gray-400 mt-1">JPG, PNG, PDF, DOC up to 10MB</p>
           </div>
         )}
@@ -189,12 +189,12 @@ export function FileUpload({
                 />
               ) : (
                 <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-gray-500" />
+                  <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                <p className="text-xs text-gray-500">{formatFileSize(file.file_size)}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatFileSize(file.file_size)}</p>
               </div>
               <button
                 onClick={() => removeFile(file.id)}

@@ -266,11 +266,11 @@ export function ComponentSetupModal({
         
         <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {step === 'templates' ? 'Set Up Components' : 'Customize Components'}
             </h2>
             <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
@@ -282,7 +282,7 @@ export function ComponentSetupModal({
 
           {step === 'templates' ? (
             <div className="space-y-4">
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Set up all your boat's systems with one click. Engine and generator details will be pulled from your boat profile.
               </p>
 
@@ -291,7 +291,7 @@ export function ComponentSetupModal({
                 Set Up All Components
               </Button>
 
-              <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+              <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-400">
                 <p className="font-medium text-gray-900 mb-2">This will create:</p>
                 <ul className="space-y-1">
                   <li>• <strong>Propulsion:</strong> {numberOfEngines} engine(s), generator, shafts & propellers</li>

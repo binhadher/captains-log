@@ -51,9 +51,9 @@ export function ComponentCard({ component, boatId }: ComponentCardProps) {
               {icon}
             </div>
             <div>
-              <h4 className="font-medium text-gray-900">{component.name}</h4>
+              <h4 className="font-medium text-gray-900 dark:text-white">{component.name}</h4>
               {(component.brand || component.model) && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
                   {[component.brand, component.model].filter(Boolean).join(' ')}
                 </p>
               )}
@@ -62,14 +62,14 @@ export function ComponentCard({ component, boatId }: ComponentCardProps) {
           <div className="flex items-center gap-3">
             {component.current_hours !== undefined && component.current_hours > 0 && (
               <div className="text-right">
-                <p className="text-xs text-gray-500">Hours</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Hours</p>
                 <p className="text-sm font-medium text-gray-900 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {component.current_hours.toLocaleString()}
                 </p>
               </div>
             )}
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+            <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
       </div>

@@ -101,9 +101,9 @@ export function AddHealthCheckModal({
         
         <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Quick Health Check</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Quick Health Check</h2>
             <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 

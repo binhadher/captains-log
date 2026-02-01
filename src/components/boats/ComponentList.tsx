@@ -93,11 +93,11 @@ export function ComponentList({ components, boatId, onSetupClick }: ComponentLis
         return (
           <div key={category}>
             <div className="flex items-center gap-2 mb-3">
-              <div className="text-gray-500">{info.icon}</div>
+              <div className="text-gray-500 dark:text-gray-400 dark:text-gray-500">{info.icon}</div>
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 {info.label}
               </h3>
-              <span className="text-xs text-gray-400">({categoryComponents.length})</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">({categoryComponents.length})</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {categoryComponents.map((component) => (

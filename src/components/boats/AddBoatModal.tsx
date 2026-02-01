@@ -114,9 +114,9 @@ export function AddBoatModal({ isOpen, onClose, onSubmit }: AddBoatModalProps) {
         
         <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Add New Boat</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Add New Boat</h2>
             <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
