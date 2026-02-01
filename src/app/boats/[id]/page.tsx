@@ -20,6 +20,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UserButton } from '@clerk/nextjs';
 import { Boat, BoatComponent, Part, HealthCheck, Document } from '@/types/database';
 import { ComponentList } from '@/components/boats/ComponentList';
 import { ComponentSetupModal } from '@/components/boats/ComponentSetupModal';
@@ -248,8 +250,8 @@ export default function BoatDetailPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
-              <Link href="/" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <Link href="/" className="p-2 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors">
+                <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
               <div>
                 <h1 className="text-lg font-bold text-gray-900 dark:text-white">{boat.name}</h1>
@@ -259,10 +261,19 @@ export default function BoatDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Link 
+                href="/settings" 
+                className="p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
+                title="Settings"
+              >
+                <Settings className="w-5 h-5 text-gray-700 dark:text-white" />
+              </Link>
               <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleting}>
                 <Trash2 className="w-4 h-4 mr-1" />
                 {deleting ? 'Deleting...' : 'Delete'}
               </Button>
+              <UserButton afterSignOutUrl="/sign-in" />
             </div>
           </div>
         </div>

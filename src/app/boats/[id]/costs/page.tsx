@@ -13,8 +13,11 @@ import {
   Fuel,
   BarChart3,
   PieChart,
-  Download
+  Download,
+  Settings
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UserButton } from '@clerk/nextjs';
 
 interface ComponentCost {
   id: string;
@@ -137,18 +140,31 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-400 via-teal-500 to-blue-600">
       {/* Header */}
-      <header className="bg-white/10 backdrop-blur-sm border-b border-white/20">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link 
-              href={`/boats/${boatId}`}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-white">Cost Tracking</h1>
-              <p className="text-white/70 text-sm">{boat.name}</p>
+      <header className="glass-header sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
+              <Link 
+                href={`/boats/${boatId}`}
+                className="p-2 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-white" />
+              </Link>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Cost Tracking</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{boat.name}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Link 
+                href="/settings" 
+                className="p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
+                title="Settings"
+              >
+                <Settings className="w-5 h-5 text-gray-700 dark:text-white" />
+              </Link>
+              <UserButton afterSignOutUrl="/sign-in" />
             </div>
           </div>
         </div>

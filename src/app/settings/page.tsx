@@ -18,6 +18,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UserButton } from '@clerk/nextjs';
 
 interface NotificationPreferences {
   email_enabled: boolean;
@@ -131,26 +133,28 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-400 via-teal-500 to-blue-600">
       {/* Header */}
-      <header className="bg-white/10 backdrop-blur-sm border-b border-white/20">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <header className="glass-header sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
               <Link 
                 href="/"
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-white" />
+                <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-white">Settings</h1>
-                <p className="text-white/70 text-sm">Notification preferences</p>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white">Settings</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Notification preferences</p>
               </div>
             </div>
-            <Button 
-              onClick={handleSave} 
-              disabled={saving}
-              className="bg-white text-teal-600 hover:bg-white/90"
-            >
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button 
+                onClick={handleSave} 
+                disabled={saving}
+                size="sm"
+              >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : saved ? (
@@ -164,7 +168,9 @@ export default function SettingsPage() {
                   Save
                 </>
               )}
-            </Button>
+              </Button>
+              <UserButton afterSignOutUrl="/sign-in" />
+            </div>
           </div>
         </div>
       </header>
