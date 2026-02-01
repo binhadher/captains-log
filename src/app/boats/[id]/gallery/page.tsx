@@ -14,7 +14,8 @@ import {
   Loader2,
   Play,
   Plus,
-  Settings
+  Settings,
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -49,6 +50,40 @@ export default function GalleryPage() {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCameraCapture, setShowCameraCapture] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  const shareFile = async (item: GalleryItem) => {
+    setSharing(true);
+    try {
+      // Fetch the file as blob
+      const response = await fetch(item.file_url);
+      const blob = await response.blob();
+      const filename = item.caption || `${item.file_type}-${item.id.slice(0, 8)}${item.mime_type.includes('video') ? '.mp4' : '.jpg'}`;
+      const file = new File([blob], filename, { type: item.mime_type });
+      
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: filename,
+        });
+      } else {
+        // Fallback: download the file
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    } catch (err) {
+      // User cancelled share or error occurred
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Share failed:', err);
+        setError('Failed to share file');
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
 
   useEffect(() => {
     if (params.id) {
@@ -490,6 +525,22 @@ export default function GalleryPage() {
               title="Delete"
             >
               <Trash2 className="w-6 h-6" />
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                shareFile(selectedItem);
+              }}
+              disabled={sharing}
+              className="absolute top-4 left-16 p-2 text-white hover:bg-blue-600 rounded-full transition-colors disabled:opacity-50"
+              title="Share"
+            >
+              {sharing ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Share2 className="w-6 h-6" />
+              )}
             </button>
 
             <div 

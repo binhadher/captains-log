@@ -1,6 +1,7 @@
 'use client';
 
-import { FileText, Download, Trash2, Calendar, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
+import { FileText, Download, Trash2, Calendar, AlertTriangle, Share2, Loader2 } from 'lucide-react';
 import { Document, DocumentCategory } from '@/types/database';
 import { Button } from '@/components/ui/Button';
 import { formatDueIn, calculateSeverity, SEVERITY_COLORS } from '@/lib/alerts';
@@ -52,6 +53,39 @@ function formatFileSize(bytes: number): string {
 }
 
 export function DocumentsList({ documents, onDelete }: DocumentsListProps) {
+  const [sharingId, setSharingId] = useState<string | null>(null);
+
+  const shareFile = async (doc: Document) => {
+    setSharingId(doc.id);
+    try {
+      // Fetch the file as blob
+      const response = await fetch(doc.file_url);
+      const blob = await response.blob();
+      const file = new File([blob], doc.name, { type: doc.file_type || 'application/octet-stream' });
+      
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: doc.name,
+        });
+      } else {
+        // Fallback: download the file
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = doc.name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    } catch (err) {
+      // User cancelled share or error occurred
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Share failed:', err);
+      }
+    } finally {
+      setSharingId(null);
+    }
+  };
+
   if (documents.length === 0) {
     return (
       <div className="text-center py-8">
@@ -125,6 +159,19 @@ export function DocumentsList({ documents, onDelete }: DocumentsListProps) {
                     >
                       <Download className="w-4 h-4" />
                     </a>
+
+                    <button
+                      onClick={() => shareFile(doc)}
+                      disabled={sharingId === doc.id}
+                      className="p-1.5 text-gray-500 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors disabled:opacity-50"
+                      title="Share"
+                    >
+                      {sharingId === doc.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Share2 className="w-4 h-4" />
+                      )}
+                    </button>
                     
                     {onDelete && (
                       <button
