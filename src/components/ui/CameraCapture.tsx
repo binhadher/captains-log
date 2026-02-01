@@ -195,16 +195,33 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-center">
-        {status === 'idle' || status === 'requesting' ? (
-          <div className="text-center p-8">
+      <div className="flex-1 flex items-center justify-center relative">
+        {/* Video element - ALWAYS in DOM, visibility controlled by CSS */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            transform: useFrontCamera ? 'scaleX(-1)' : 'none',
+            opacity: status === 'streaming' ? 1 : 0,
+            pointerEvents: status === 'streaming' ? 'auto' : 'none'
+          }}
+        />
+
+        {/* Overlays based on status */}
+        {(status === 'idle' || status === 'requesting') && (
+          <div className="text-center p-8 z-10">
             <Loader2 className="w-12 h-12 text-white animate-spin mx-auto mb-4" />
             <p className="text-white">
               {status === 'requesting' ? 'Accessing camera...' : 'Initializing...'}
             </p>
           </div>
-        ) : status === 'error' ? (
-          <div className="text-center p-8">
+        )}
+        
+        {status === 'error' && (
+          <div className="text-center p-8 z-10">
             <Camera className="w-16 h-16 text-gray-500 mx-auto mb-4" />
             <p className="text-red-400 mb-6 max-w-xs">{error}</p>
             <div className="space-y-3">
@@ -222,24 +239,13 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
               </button>
             </div>
           </div>
-        ) : status === 'captured' && capturedImage ? (
+        )}
+        
+        {status === 'captured' && capturedImage && (
           <img 
             src={capturedImage} 
             alt="Captured" 
-            className="max-h-full max-w-full object-contain"
-          />
-        ) : (
-          // Video viewfinder - always rendered but may be hidden
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-            style={{
-              transform: useFrontCamera ? 'scaleX(-1)' : 'none',
-              display: status === 'streaming' ? 'block' : 'none'
-            }}
+            className="max-h-full max-w-full object-contain z-10"
           />
         )}
       </div>
