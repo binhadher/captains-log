@@ -290,25 +290,25 @@ export default function BoatDetailPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {boat.year && (
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide">Year</p>
+                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Year</p>
                 <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.year}</p>
               </div>
             )}
             {boat.length && (
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide">Length</p>
+                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Length</p>
                 <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.length} ft</p>
               </div>
             )}
             {boat.hull_id && (
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide">Hull ID</p>
+                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Hull ID</p>
                 <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.hull_id}</p>
               </div>
             )}
             {boat.home_port && (
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide">Home Port</p>
+                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Home Port</p>
                 <p className="text-gray-900 dark:text-white font-medium text-sm flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   {boat.home_port}
@@ -329,7 +329,7 @@ export default function BoatDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {boat.engines.map((engine, index) => (
                 <div key={index} className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">
                     {engineLabels[index]}
                   </p>
                   {engine.brand || engine.model ? (
@@ -346,7 +346,7 @@ export default function BoatDetailPage() {
             {/* Generator */}
             {(boat.generator_brand || boat.generator_model) && (
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-xs text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1">Generator</p>
+                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">Generator</p>
                 <p className="text-gray-900 dark:text-white font-medium text-sm">
                   {[boat.generator_brand, boat.generator_model].filter(Boolean).join(' ')}
                 </p>
