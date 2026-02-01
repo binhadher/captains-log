@@ -159,8 +159,8 @@ export default function ComponentDetailPage() {
                 <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">{component.name}</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{boatName}</p>
+                <h1 className="text-lg font-bold text-teal-700 dark:text-white">{component.name}</h1>
+                <p className="text-xs text-teal-600 dark:text-gray-300">{boatName}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
