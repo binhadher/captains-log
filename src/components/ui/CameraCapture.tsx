@@ -19,6 +19,7 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
   const [status, setStatus] = useState<'idle' | 'requesting' | 'streaming' | 'recording' | 'captured' | 'error'>('idle');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [capturedVideo, setCapturedVideo] = useState<string | null>(null);
+  const capturedBlobRef = useRef<Blob | null>(null); // Store blob for iOS
   const [error, setError] = useState<string | null>(null);
   const [useFrontCamera, setUseFrontCamera] = useState(false);
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
@@ -210,9 +211,24 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
       mediaRecorder.onstop = () => {
         console.log('Recording stopped, chunks:', chunksRef.current.length);
         
+        // Stop camera first
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+
+        // Clear timer if still running
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
+        
         if (chunksRef.current.length === 0) {
+          console.error('No chunks captured');
           setError('No video data captured. Please try again.');
-          setStatus('streaming');
+          setCapturedVideo(null);
+          capturedBlobRef.current = null;
+          // Don't set back to streaming - let user see error
           return;
         }
 
@@ -222,23 +238,31 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
           console.log('Created blob:', blob.size, blob.type);
           
           if (blob.size === 0) {
+            console.error('Empty blob');
             setError('Video capture failed. Please try again.');
-            setStatus('streaming');
             return;
           }
 
-          const videoUrl = URL.createObjectURL(blob);
-          setCapturedVideo(videoUrl);
-          setStatus('captured');
+          // Store blob for later use (iOS sometimes loses the URL)
+          capturedBlobRef.current = blob;
           
-          // Stop camera
-          if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-          }
+          const videoUrl = URL.createObjectURL(blob);
+          console.log('Video URL created:', videoUrl);
+          
+          // Set state in specific order
+          setCapturedVideo(videoUrl);
+          setCapturedImage(null); // Clear any image
+          setError(null);
+          
+          // Use setTimeout to ensure state updates before changing status
+          setTimeout(() => {
+            console.log('Setting status to captured');
+            setStatus('captured');
+          }, 50);
+          
         } catch (err) {
           console.error('Error creating video blob:', err);
-          setError('Failed to process video');
-          setStatus('streaming');
+          setError('Failed to process video: ' + (err instanceof Error ? err.message : 'Unknown'));
         }
       };
 
@@ -305,12 +329,16 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
   const retake = () => {
     setCapturedImage(null);
     setCapturedVideo(null);
+    capturedBlobRef.current = null;
     setRecordingTime(0);
+    setError(null);
     startCamera();
   };
 
   const confirmCapture = async () => {
-    setStatus('requesting'); // Show loading state
+    console.log('Confirming capture, image:', !!capturedImage, 'video:', !!capturedVideo, 'blob:', !!capturedBlobRef.current);
+    setError(null);
+    
     try {
       if (capturedImage) {
         const res = await fetch(capturedImage);
@@ -318,21 +346,36 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
         const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
         onCapture(file);
         onClose();
-      } else if (capturedVideo) {
-        const res = await fetch(capturedVideo);
-        const blob = await res.blob();
-        // Use mp4 extension for better compatibility, but keep webm mime type
-        const file = new File([blob], `video-${Date.now()}.webm`, { type: blob.type || 'video/webm' });
+      } else if (capturedVideo || capturedBlobRef.current) {
+        // Use stored blob if available (more reliable on iOS)
+        let blob: Blob;
+        if (capturedBlobRef.current) {
+          blob = capturedBlobRef.current;
+          console.log('Using stored blob:', blob.size, blob.type);
+        } else {
+          const res = await fetch(capturedVideo!);
+          blob = await res.blob();
+          console.log('Fetched blob from URL:', blob.size, blob.type);
+        }
+        
+        if (blob.size === 0) {
+          setError('Video is empty. Please record again.');
+          return;
+        }
+        
+        // Determine extension from mime type
+        const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+        const file = new File([blob], `video-${Date.now()}.${ext}`, { type: blob.type || 'video/webm' });
+        console.log('Created file:', file.name, file.size, file.type);
+        
         onCapture(file);
         onClose();
       } else {
         setError('No capture to save');
-        setStatus('error');
       }
     } catch (err) {
       console.error('Save error:', err);
-      setError('Failed to save. Please try again.');
-      setStatus('captured'); // Go back to captured state so they can retry
+      setError('Failed to save: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   };
 
@@ -451,12 +494,13 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
           />
         )}
 
-        {status === 'captured' && capturedVideo && (
+        {(status === 'captured' || capturedBlobRef.current) && capturedVideo && (
           <video 
             src={capturedVideo}
             controls
             autoPlay
             loop
+            playsInline
             className="max-h-full max-w-full object-contain z-10"
           />
         )}
@@ -497,7 +541,7 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
 
         {/* Capture controls */}
         <div className="flex justify-center items-center gap-8">
-          {status === 'captured' ? (
+          {(status === 'captured' || capturedImage || capturedBlobRef.current) ? (
             <>
               <button
                 onClick={retake}
