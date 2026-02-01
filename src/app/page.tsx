@@ -154,12 +154,12 @@ export default function Dashboard() {
               <ThemeToggle />
               <Link 
                 href="/settings" 
-                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors"
                 title="Settings"
               >
                 <Settings className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
-              <Button onClick={() => setShowAddBoat(true)} size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0">
+              <Button onClick={() => setShowAddBoat(true)} size="sm" className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-800 dark:text-white border-0">
                 <Plus className="w-4 h-4 mr-1" />
                 Add Boat
               </Button>
