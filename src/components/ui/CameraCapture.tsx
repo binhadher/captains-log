@@ -68,24 +68,35 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
       streamRef.current = stream;
 
-      const video = videoRef.current;
-      if (!video) throw new Error('Video element not found');
+      // Wait for video element to be available (may take a moment after render)
+      let video = videoRef.current;
+      let attempts = 0;
+      while (!video && attempts < 20) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        video = videoRef.current;
+        attempts++;
+      }
+      
+      if (!video) {
+        throw new Error('Camera initialization failed. Please try again.');
+      }
 
-      // Assign stream and play - must happen synchronously for iOS
+      // Assign stream and play
       video.srcObject = stream;
       
-      // iOS needs this sequence
-      video.onloadedmetadata = () => {
-        video.play()
-          .then(() => {
-            setStatus('streaming');
-          })
-          .catch(err => {
-            console.error('Play failed:', err);
-            setError('Failed to start video playback');
-            setStatus('error');
-          });
-      };
+      // Wait for video to be ready then play
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => {
+          video.play()
+            .then(() => resolve())
+            .catch(reject);
+        };
+        video.onerror = () => reject(new Error('Video failed to load'));
+        // Timeout fallback
+        setTimeout(() => resolve(), 2000);
+      });
+      
+      setStatus('streaming');
 
     } catch (err) {
       console.error('Camera error:', err);
@@ -166,10 +177,15 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
   // Auto-start camera when component mounts
   useEffect(() => {
-    // Small delay to ensure DOM is ready
+    // Delay to ensure DOM is fully ready and ref is attached
     const timer = setTimeout(() => {
-      startCamera();
-    }, 100);
+      if (videoRef.current) {
+        startCamera();
+      } else {
+        // If still not ready, wait a bit more
+        setTimeout(() => startCamera(), 200);
+      }
+    }, 300);
     return () => clearTimeout(timer);
   }, []);
 
