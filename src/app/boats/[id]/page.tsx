@@ -15,7 +15,9 @@ import {
   Pencil,
   Trash2,
   Plus,
-  Cog
+  Cog,
+  DollarSign,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Boat, BoatComponent, Part, HealthCheck, Document } from '@/types/database';
@@ -324,6 +326,23 @@ export default function BoatDetailPage() {
             <AlertsList alerts={alerts} boatId={boat.id} compact />
           </div>
         )}
+
+        {/* Cost Tracking Quick Link */}
+        <Link 
+          href={`/boats/${boat.id}/costs`}
+          className="glass-card rounded-xl p-4 mb-4 flex items-center justify-between hover:bg-white/80 dark:hover:bg-gray-800/80 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Cost Tracking</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">View spending trends & breakdown</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+        </Link>
 
         {/* Components Section */}
         <div className="glass-card rounded-xl p-4 mb-4">
