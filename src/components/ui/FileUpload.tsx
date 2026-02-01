@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, X, FileText, Image, Loader2 } from 'lucide-react';
+import { Upload, X, FileText, Image, Loader2, Camera } from 'lucide-react';
 
 interface UploadedFile {
   id: string;
@@ -18,6 +18,7 @@ interface FileUploadProps {
   onUpload?: (doc: UploadedFile) => void;
   maxFiles?: number;
   compact?: boolean;
+  showCamera?: boolean; // Enable camera capture button
 }
 
 export function FileUpload({ 
@@ -27,11 +28,13 @@ export function FileUpload({
   onUpload,
   maxFiles = 5,
   compact = false,
+  showCamera = true,
 }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -87,6 +90,17 @@ export function FileUpload({
   if (compact) {
     return (
       <div>
+        {/* Camera input - opens camera directly on mobile */}
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileSelect}
+          className="hidden"
+          id="camera-capture-compact"
+        />
+        {/* File picker - gallery/documents */}
         <input
           ref={inputRef}
           type="file"
@@ -121,16 +135,32 @@ export function FileUpload({
           ))}
           
           {files.length < maxFiles && (
-            <label
-              htmlFor="file-upload-compact"
-              className="w-16 h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
-            >
-              {uploading ? (
-                <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
-              ) : (
-                <Upload className="w-5 h-5 text-gray-400" />
+            <>
+              {/* Camera button */}
+              {showCamera && (
+                <label
+                  htmlFor="camera-capture-compact"
+                  className="w-16 h-16 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg flex items-center justify-center cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all"
+                >
+                  {uploading ? (
+                    <Loader2 className="w-5 h-5 text-teal-500 animate-spin" />
+                  ) : (
+                    <Camera className="w-5 h-5 text-teal-500" />
+                  )}
+                </label>
               )}
-            </label>
+              {/* Upload button */}
+              <label
+                htmlFor="file-upload-compact"
+                className="w-16 h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+              >
+                {uploading ? (
+                  <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                ) : (
+                  <Upload className="w-5 h-5 text-gray-400" />
+                )}
+              </label>
+            </>
           )}
         </div>
 
@@ -143,6 +173,17 @@ export function FileUpload({
 
   return (
     <div>
+      {/* Camera input - opens camera directly on mobile */}
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileSelect}
+        className="hidden"
+        id="camera-capture"
+      />
+      {/* File picker - gallery/documents */}
       <input
         ref={inputRef}
         type="file"
@@ -153,24 +194,48 @@ export function FileUpload({
         id="file-upload"
       />
 
-      {/* Upload Area */}
-      <label
-        htmlFor="file-upload"
-        className="block border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
-      >
-        {uploading ? (
-          <div className="flex flex-col items-center">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
-            <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center">
-            <Upload className="w-8 h-8 text-gray-400 mb-2" />
-            <p className="text-sm text-gray-600 dark:text-gray-400">Click to upload photos or documents</p>
-            <p className="text-xs text-gray-400 mt-1">JPG, PNG, PDF, DOC up to 10MB</p>
-          </div>
+      {/* Upload Area - Two buttons side by side */}
+      <div className="flex gap-3">
+        {/* Take Photo button */}
+        {showCamera && (
+          <label
+            htmlFor="camera-capture"
+            className="flex-1 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg p-6 text-center cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all"
+          >
+            {uploading ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="w-8 h-8 text-teal-500 animate-spin mb-2" />
+                <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <Camera className="w-8 h-8 text-teal-500 mb-2" />
+                <p className="text-sm text-gray-600 dark:text-gray-400">Take Photo</p>
+                <p className="text-xs text-gray-400 mt-1">Opens camera</p>
+              </div>
+            )}
+          </label>
         )}
-      </label>
+        
+        {/* Upload from gallery/files */}
+        <label
+          htmlFor="file-upload"
+          className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+        >
+          {uploading ? (
+            <div className="flex flex-col items-center">
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
+              <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center">
+              <Upload className="w-8 h-8 text-gray-400 mb-2" />
+              <p className="text-sm text-gray-600 dark:text-gray-400">Upload Files</p>
+              <p className="text-xs text-gray-400 mt-1">Photos or documents</p>
+            </div>
+          )}
+        </label>
+      </div>
 
       {error && (
         <p className="text-sm text-red-600 dark:text-red-400 mt-2">{error}</p>
