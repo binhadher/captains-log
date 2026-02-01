@@ -43,8 +43,8 @@ export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
   if (totalAllTime === 0) {
     return (
       <div className="text-center py-3">
-        <DollarSign className={`${compact ? 'w-6 h-6' : 'w-8 h-8'} text-gray-300 mx-auto mb-1`} />
-        <p className="text-gray-500 text-xs">No costs logged yet</p>
+        <DollarSign className={`${compact ? 'w-6 h-6' : 'w-8 h-8'} text-gray-300 dark:text-gray-600 mx-auto mb-1`} />
+        <p className="text-gray-500 dark:text-gray-400 text-xs">No costs logged yet</p>
       </div>
     );
   }
@@ -101,8 +101,8 @@ export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
 
       {/* Expandable Breakdown */}
       {expanded && byCategory.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
-          <h4 className="text-sm font-medium text-gray-700 mb-3 px-4">Breakdown by Category</h4>
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 animate-in slide-in-from-top-2 duration-200">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 px-4">Breakdown by Category</h4>
           <div className="space-y-3 px-4">
             {byCategory.map((category) => (
               <div key={category.name} className="flex items-center gap-3">
@@ -112,12 +112,12 @@ export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-700 truncate">{category.name}</span>
-                    <span className="text-sm font-medium text-gray-900 ml-2">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{category.name}</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white ml-2">
                       {formatCurrency(category.total, currency)}
                     </span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div 
                       className="h-full rounded-full transition-all duration-500"
                       style={{ 
@@ -132,22 +132,22 @@ export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
           </div>
           
           {/* Summary stats */}
-          <div className="mt-4 pt-4 border-t border-gray-100 px-4 grid grid-cols-3 gap-4 text-center">
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 px-4 grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-lg font-semibold text-gray-900">{byCategory.length}</p>
-              <p className="text-xs text-gray-500">Categories</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">{byCategory.length}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Categories</p>
             </div>
             <div>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
                 {byCategory.reduce((sum, c) => sum + c.count, 0)}
               </p>
-              <p className="text-xs text-gray-500">Entries</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Entries</p>
             </div>
             <div>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
                 {formatCurrency(totalAllTime / Math.max(byCategory.reduce((sum, c) => sum + c.count, 0), 1), currency)}
               </p>
-              <p className="text-xs text-gray-500">Avg / Entry</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Avg / Entry</p>
             </div>
           </div>
         </div>

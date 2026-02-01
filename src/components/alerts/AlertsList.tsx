@@ -21,9 +21,9 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
   if (alerts.length === 0) {
     return (
       <div className="text-center py-6">
-        <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-        <p className="text-gray-500 text-sm">No upcoming alerts</p>
-        <p className="text-gray-400 text-xs mt-1">Set service intervals on your components to get reminders</p>
+        <Bell className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+        <p className="text-gray-500 dark:text-gray-400 text-sm">No upcoming alerts</p>
+        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Set service intervals on your components to get reminders</p>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={`font-medium text-sm ${colors.text}`}>{alert.title}</p>
-                  <p className="text-xs text-gray-500">{alert.description}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{alert.description}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className={`text-sm font-medium ${colors.text}`}>
@@ -62,14 +62,14 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
                         : ''
                     }
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 </div>
               </div>
             </Link>
           );
         })}
         {alerts.length > 5 && (
-          <p className="text-xs text-gray-500 text-center pt-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
             +{alerts.length - 5} more alerts
           </p>
         )}
@@ -101,7 +101,7 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`font-medium ${colors.text}`}>{alert.title}</p>
-                <p className="text-sm text-gray-600">{alert.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{alert.description}</p>
               </div>
               <div className="text-right">
                 <p className={`font-medium ${colors.text}`}>
@@ -113,12 +113,12 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
                   }
                 </p>
                 {alert.dueDate && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(alert.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                   </p>
                 )}
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
             </div>
           </Link>
         );
