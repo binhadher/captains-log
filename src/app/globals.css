@@ -74,15 +74,13 @@ body {
 }
 
 /* Force white text in dark mode glass cards for visibility */
-.dark .glass-card h2,
-.dark .glass-card h3,
-.dark .glass-card h4 {
+/* Only direct children, not nested cards */
+.dark .glass-card > h2,
+.dark .glass-card > h3,
+.dark .glass-card > h4,
+.dark .glass-card > div > h2,
+.dark .glass-card > div > h3 {
   color: #ffffff !important;
-}
-
-.dark .glass-card p,
-.dark .glass-card span {
-  color: #e2e8f0;
 }
 
 /* Header glass effect */
