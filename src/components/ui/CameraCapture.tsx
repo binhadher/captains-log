@@ -233,21 +233,29 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
   };
 
   const confirmCapture = async () => {
+    setStatus('requesting'); // Show loading state
     try {
       if (capturedImage) {
         const res = await fetch(capturedImage);
         const blob = await res.blob();
         const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
         onCapture(file);
+        onClose();
       } else if (capturedVideo) {
         const res = await fetch(capturedVideo);
         const blob = await res.blob();
-        const file = new File([blob], `video-${Date.now()}.webm`, { type: 'video/webm' });
+        // Use mp4 extension for better compatibility, but keep webm mime type
+        const file = new File([blob], `video-${Date.now()}.webm`, { type: blob.type || 'video/webm' });
         onCapture(file);
+        onClose();
+      } else {
+        setError('No capture to save');
+        setStatus('error');
       }
-      onClose();
-    } catch {
-      setError('Failed to save');
+    } catch (err) {
+      console.error('Save error:', err);
+      setError('Failed to save. Please try again.');
+      setStatus('captured'); // Go back to captured state so they can retry
     }
   };
 

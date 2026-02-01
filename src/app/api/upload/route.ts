@@ -39,21 +39,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 });
-    }
-
-    // Validate file type
-    const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic',
+    // Validate file type first to determine size limit
+    const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic'];
+    const videoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v'];
+    const docTypes = [
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
+    const allowedTypes = [...imageTypes, ...videoTypes, ...docTypes];
     
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'File type not allowed' }, { status: 400 });
+      return NextResponse.json({ error: `File type not allowed: ${file.type}` }, { status: 400 });
+    }
+
+    // Validate file size (50MB for videos, 10MB for others)
+    const isVideo = videoTypes.includes(file.type);
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return NextResponse.json({ error: `File too large (max ${isVideo ? '50MB' : '10MB'})` }, { status: 400 });
     }
 
     // Generate unique filename
