@@ -26,6 +26,10 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
   const [recordingTime, setRecordingTime] = useState(0);
   const [captureMode, setCaptureMode] = useState<'photo' | 'video'>(mode === 'video' ? 'video' : 'photo');
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Video recording limits
+  const MAX_RECORDING_SECONDS = 60;
+  const WARNING_SECONDS = 45;
 
   // Cleanup on unmount
   useEffect(() => {
@@ -285,9 +289,19 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
       setStatus('recording');
       setRecordingTime(0);
 
-      // Start timer
+      // Start timer with auto-stop at limit
       recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        setRecordingTime(prev => {
+          const newTime = prev + 1;
+          
+          // Auto-stop at max time
+          if (newTime >= MAX_RECORDING_SECONDS) {
+            console.log('Max recording time reached, stopping...');
+            stopRecording();
+          }
+          
+          return newTime;
+        });
       }, 1000);
 
       console.log('Recording started with state:', mediaRecorder.state);
@@ -426,9 +440,13 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
         
         {/* Recording indicator */}
         {status === 'recording' && (
-          <div className="flex items-center gap-2 bg-black/50 px-3 py-2 rounded-full">
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-full ${
+            recordingTime >= WARNING_SECONDS ? 'bg-red-600' : 'bg-black/50'
+          }`}>
             <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-            <span className="text-white font-mono">{formatTime(recordingTime)}</span>
+            <span className="text-white font-mono">
+              {formatTime(recordingTime)} / {formatTime(MAX_RECORDING_SECONDS)}
+            </span>
           </div>
         )}
         
@@ -536,7 +554,7 @@ export function CameraCapture({ onCapture, onClose, mode = 'both' }: CameraCaptu
                     : 'text-white'
                 }`}
               >
-                Video
+                Video <span className="text-xs opacity-70">({MAX_RECORDING_SECONDS}s)</span>
               </button>
             </div>
           </div>
