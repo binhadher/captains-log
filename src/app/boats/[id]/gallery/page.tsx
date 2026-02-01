@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { UserButton } from '@clerk/nextjs';
+import { CameraCapture } from '@/components/ui/CameraCapture';
 
 interface GalleryItem {
   id: string;
@@ -40,7 +41,6 @@ export default function GalleryPage() {
   const params = useParams();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   
   const [boat, setBoat] = useState<Boat | null>(null);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
@@ -48,6 +48,7 @@ export default function GalleryPage() {
   const [uploading, setUploading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showCameraCapture, setShowCameraCapture] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -78,7 +79,62 @@ export default function GalleryPage() {
     }
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, isCamera = false) => {
+  const uploadSingleFile = async (file: File) => {
+    // Determine file type
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+    
+    if (!isVideo && !isImage) {
+      setError('Only images and videos are allowed');
+      return;
+    }
+
+    // Check file size (50MB for videos, 10MB for images)
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError(`File too large. Max ${isVideo ? '50MB' : '10MB'}`);
+      return;
+    }
+
+    // Upload to storage
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('boat_id', params.id as string);
+    formData.append('name', file.name);
+    formData.append('category', 'other');
+
+    const uploadRes = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error('Upload failed');
+    }
+
+    const { document } = await uploadRes.json();
+
+    // Add to gallery
+    const galleryRes = await fetch(`/api/boats/${params.id}/gallery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file_url: document.file_url,
+        file_type: isVideo ? 'video' : 'image',
+        mime_type: file.type,
+        file_size: file.size,
+      }),
+    });
+
+    if (!galleryRes.ok) {
+      throw new Error('Failed to add to gallery');
+    }
+
+    const { galleryItem } = await galleryRes.json();
+    setGallery(prev => [galleryItem, ...prev]);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -87,58 +143,7 @@ export default function GalleryPage() {
 
     for (const file of Array.from(files)) {
       try {
-        // Determine file type
-        const isVideo = file.type.startsWith('video/');
-        const isImage = file.type.startsWith('image/');
-        
-        if (!isVideo && !isImage) {
-          setError('Only images and videos are allowed');
-          continue;
-        }
-
-        // Check file size (50MB for videos, 10MB for images)
-        const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-        if (file.size > maxSize) {
-          setError(`File too large. Max ${isVideo ? '50MB' : '10MB'}`);
-          continue;
-        }
-
-        // Upload to storage
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('boat_id', params.id as string);
-        formData.append('name', file.name);
-        formData.append('category', 'other');
-
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!uploadRes.ok) {
-          throw new Error('Upload failed');
-        }
-
-        const { document } = await uploadRes.json();
-
-        // Add to gallery
-        const galleryRes = await fetch(`/api/boats/${params.id}/gallery`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            file_url: document.file_url,
-            file_type: isVideo ? 'video' : 'image',
-            mime_type: file.type,
-            file_size: file.size,
-          }),
-        });
-
-        if (!galleryRes.ok) {
-          throw new Error('Failed to add to gallery');
-        }
-
-        const { galleryItem } = await galleryRes.json();
-        setGallery(prev => [galleryItem, ...prev]);
+        await uploadSingleFile(file);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Upload failed');
       }
@@ -146,9 +151,21 @@ export default function GalleryPage() {
 
     setUploading(false);
     
-    // Reset file inputs
+    // Reset file input
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
+  };
+
+  const handleCameraCapture = async (file: File) => {
+    setUploading(true);
+    setError(null);
+    
+    try {
+      await uploadSingleFile(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    }
+    
+    setUploading(false);
   };
 
   const handleDelete = async (item: GalleryItem) => {
@@ -231,6 +248,14 @@ export default function GalleryPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Camera Capture Overlay */}
+        {showCameraCapture && (
+          <CameraCapture
+            onCapture={handleCameraCapture}
+            onClose={() => setShowCameraCapture(false)}
+          />
+        )}
+
         {/* Upload Buttons */}
         <div className="glass-card rounded-xl p-4 mb-6">
           <div className="flex flex-wrap gap-3">
@@ -240,7 +265,7 @@ export default function GalleryPage() {
               type="file"
               accept="image/*,video/*"
               multiple
-              onChange={(e) => handleFileSelect(e, false)}
+              onChange={handleFileSelect}
               className="hidden"
               id="file-upload"
             />
@@ -252,23 +277,16 @@ export default function GalleryPage() {
               Upload from Device
             </label>
 
-            {/* Take photo/video (mobile) */}
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*,video/*"
-              capture="environment"
-              onChange={(e) => handleFileSelect(e, true)}
-              className="hidden"
-              id="camera-capture"
-            />
-            <label 
-              htmlFor="camera-capture"
-              className={`inline-flex items-center justify-center font-medium rounded-lg text-sm px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            {/* Take photo - opens camera directly */}
+            <button
+              type="button"
+              onClick={() => setShowCameraCapture(true)}
+              disabled={uploading}
+              className={`inline-flex items-center justify-center font-medium rounded-lg text-sm px-4 py-2 bg-teal-600 text-white hover:bg-teal-700 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <Camera className="w-4 h-4 mr-2" />
-              Take Photo/Video
-            </label>
+              Take Photo
+            </button>
 
             {uploading && (
               <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
