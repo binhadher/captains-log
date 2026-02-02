@@ -35,6 +35,7 @@ import { AddHealthCheckModal } from '@/components/health/AddHealthCheckModal';
 import { EditHealthCheckModal } from '@/components/health/EditHealthCheckModal';
 import { DocumentsList } from '@/components/documents/DocumentsList';
 import { AddDocumentModal } from '@/components/documents/AddDocumentModal';
+import { EditDocumentModal } from '@/components/documents/EditDocumentModal';
 import { AlertsList } from '@/components/alerts/AlertsList';
 import { CrewList, CrewMember } from '@/components/crew/CrewList';
 import { AddCrewModal } from '@/components/crew/AddCrewModal';
@@ -68,6 +69,7 @@ export default function BoatDetailPage() {
   const [showEditEngines, setShowEditEngines] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
   const [editingHealthCheck, setEditingHealthCheck] = useState<HealthCheck | null>(null);
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -617,7 +619,8 @@ export default function BoatDetailPage() {
             </Button>
           </div>
           <DocumentsList 
-            documents={documents} 
+            documents={documents}
+            onEdit={(doc) => setEditingDocument(doc)}
             onDelete={handleDeleteDocument}
           />
         </div>
@@ -745,6 +748,17 @@ export default function BoatDetailPage() {
         check={editingHealthCheck}
         onSuccess={() => fetchHealthChecks(boat.id)}
         onDelete={() => fetchHealthChecks(boat.id)}
+      />
+
+      {/* Edit Document Modal */}
+      <EditDocumentModal
+        isOpen={!!editingDocument}
+        onClose={() => setEditingDocument(null)}
+        document={editingDocument}
+        onSuccess={() => {
+          fetchDocuments(boat.id);
+          fetchAlerts(boat.id);
+        }}
       />
     </div>
   );

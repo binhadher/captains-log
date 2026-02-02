@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Download, Trash2, Calendar, AlertTriangle, Share2, Loader2 } from 'lucide-react';
+import { FileText, Download, Trash2, Calendar, AlertTriangle, Share2, Loader2, Pencil } from 'lucide-react';
 import { Document, DocumentCategory } from '@/types/database';
 import { Button } from '@/components/ui/Button';
 import { formatDueIn, calculateSeverity, SEVERITY_COLORS } from '@/lib/alerts';
 
 interface DocumentsListProps {
   documents: Document[];
+  onEdit?: (doc: Document) => void;
   onDelete?: (docId: string) => void;
 }
 
@@ -52,7 +53,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function DocumentsList({ documents, onDelete }: DocumentsListProps) {
+export function DocumentsList({ documents, onEdit, onDelete }: DocumentsListProps) {
   const [sharingId, setSharingId] = useState<string | null>(null);
 
   const shareFile = async (doc: Document) => {
@@ -150,6 +151,16 @@ export function DocumentsList({ documents, onDelete }: DocumentsListProps) {
                       </div>
                     )}
                     
+                    {onEdit && (
+                      <button
+                        onClick={() => onEdit(doc)}
+                        className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+
                     <a 
                       href={doc.file_url} 
                       target="_blank" 
