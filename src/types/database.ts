@@ -133,6 +133,7 @@ export interface Boat {
   generator_brand?: string;
   generator_model?: string;
   generator_data_plate?: string; // Photo of generator data plate
+  boat_data_plate?: string; // Photo of boat/hull data plate
   created_at: string;
   updated_at: string;
 }

@@ -166,7 +166,7 @@ export async function PATCH(
     const allowedFields = [
       'name', 'make', 'model', 'year', 'length', 'hull_id', 'home_port',
       'number_of_engines', 'engines', 'generator_brand', 'generator_model',
-      'generator_data_plate'
+      'generator_data_plate', 'boat_data_plate'
     ];
     
     for (const field of allowedFields) {

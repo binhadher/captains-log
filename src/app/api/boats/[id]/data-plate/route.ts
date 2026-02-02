@@ -49,8 +49,8 @@ export async function POST(
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    if (!type || !['engine', 'generator'].includes(type)) {
-      return NextResponse.json({ error: 'Invalid type. Must be "engine" or "generator"' }, { status: 400 });
+    if (!type || !['engine', 'generator', 'boat'].includes(type)) {
+      return NextResponse.json({ error: 'Invalid type. Must be "engine", "generator", or "boat"' }, { status: 400 });
     }
 
     // Create unique filename
@@ -83,7 +83,22 @@ export async function POST(
     const publicUrl = urlData.publicUrl;
 
     // Update boat record
-    if (type === 'generator') {
+    if (type === 'boat') {
+      // Update boat_data_plate field
+      const { data: updatedBoat, error: updateError } = await supabase
+        .from('boats')
+        .update({ boat_data_plate: publicUrl })
+        .eq('id', boatId)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating boat:', updateError);
+        return NextResponse.json({ error: 'Failed to update boat' }, { status: 500 });
+      }
+
+      return NextResponse.json({ boat: updatedBoat, url: publicUrl });
+    } else if (type === 'generator') {
       // Update generator_data_plate field
       const { data: updatedBoat, error: updateError } = await supabase
         .from('boats')
@@ -175,7 +190,21 @@ export async function DELETE(
       return NextResponse.json({ error: 'Boat not found' }, { status: 404 });
     }
 
-    if (type === 'generator') {
+    if (type === 'boat') {
+      // Clear boat_data_plate field
+      const { data: updatedBoat, error: updateError } = await supabase
+        .from('boats')
+        .update({ boat_data_plate: null })
+        .eq('id', boatId)
+        .select()
+        .single();
+
+      if (updateError) {
+        return NextResponse.json({ error: 'Failed to update boat' }, { status: 500 });
+      }
+
+      return NextResponse.json({ boat: updatedBoat });
+    } else if (type === 'generator') {
       // Clear generator_data_plate field
       const { data: updatedBoat, error: updateError } = await supabase
         .from('boats')

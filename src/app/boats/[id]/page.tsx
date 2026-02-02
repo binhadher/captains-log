@@ -338,6 +338,40 @@ export default function BoatDetailPage() {
               </div>
             )}
           </div>
+          
+          {/* Boat Data Plate */}
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Boat Data Plate</span>
+              <DataPlateUpload
+                label="Boat Data Plate"
+                currentUrl={boat.boat_data_plate}
+                onUpload={async (file) => {
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  formData.append('type', 'boat');
+                  
+                  const response = await fetch(`/api/boats/${boat.id}/data-plate`, {
+                    method: 'POST',
+                    body: formData,
+                  });
+                  
+                  if (!response.ok) throw new Error('Upload failed');
+                  const data = await response.json();
+                  setBoat(data.boat);
+                }}
+                onDelete={async () => {
+                  const response = await fetch(
+                    `/api/boats/${boat.id}/data-plate?type=boat`,
+                    { method: 'DELETE' }
+                  );
+                  if (!response.ok) throw new Error('Delete failed');
+                  const data = await response.json();
+                  setBoat(data.boat);
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Engines Card */}
