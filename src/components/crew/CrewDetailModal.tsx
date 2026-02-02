@@ -5,14 +5,10 @@ import {
   X, 
   Phone, 
   Mail, 
-  Calendar,
   AlertTriangle,
   Share2,
   Copy,
-  Check,
-  MessageCircle,
-  Send,
-  MessageSquare
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { CrewMember } from './CrewList';
@@ -130,41 +126,27 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
     }
   };
 
-  const shareOptions = [
-    {
-      name: 'Copy',
-      icon: copied ? Check : Copy,
-      color: copied ? 'text-green-500' : 'text-gray-600 dark:text-gray-400',
-      onClick: handleCopy,
-    },
-    {
-      name: 'WhatsApp',
-      icon: MessageCircle,
-      color: 'text-green-500',
-      href: `https://wa.me/?text=${encodedText}`,
-    },
-    {
-      name: 'Telegram',
-      icon: Send,
-      color: 'text-blue-500',
-      href: `https://t.me/share/url?text=${encodedText}`,
-    },
-    {
-      name: 'SMS',
-      icon: MessageSquare,
-      color: 'text-cyan-500',
-      href: `sms:?body=${encodedText}`,
-    },
-    {
-      name: 'Email',
-      icon: Mail,
-      color: 'text-amber-500',
-      href: `mailto:?subject=${encodeURIComponent(`Crew: ${member.name}`)}&body=${encodedText}`,
-    },
-  ];
-
   // Check for native share support
   const hasNativeShare = typeof navigator !== 'undefined' && navigator.share;
+
+  // Share a document image
+  const handleShareDoc = async (docName: string, docUrl: string) => {
+    if (hasNativeShare) {
+      try {
+        await navigator.share({
+          title: `${member.name} - ${docName}`,
+          text: `${docName}: ${docUrl}`,
+          url: docUrl,
+        });
+      } catch (err) {
+        // User cancelled or share failed - fallback to copy
+        await navigator.clipboard.writeText(docUrl);
+      }
+    } else {
+      await navigator.clipboard.writeText(docUrl);
+      alert('Link copied to clipboard');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -268,24 +250,13 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
                         <a href={member.passport_url} target="_blank" rel="noopener noreferrer" className="flex-1">
                           <img src={member.passport_url} alt="Passport" className="h-20 w-auto rounded border object-cover hover:opacity-80 transition-opacity" />
                         </a>
-                        <div className="flex flex-col gap-1">
-                          <a
-                            href={`https://wa.me/?text=${encodeURIComponent(`Passport: ${member.passport_url}`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg"
-                            title="Share via WhatsApp"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </a>
-                          <a
-                            href={`mailto:?subject=Passport&body=${encodeURIComponent(member.passport_url)}`}
-                            className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg"
-                            title="Share via Email"
-                          >
-                            <Mail className="w-4 h-4" />
-                          </a>
-                        </div>
+                        <button
+                          onClick={() => handleShareDoc('Passport', member.passport_url!)}
+                          className="p-2 text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg"
+                          title="Share"
+                        >
+                          <Share2 className="w-5 h-5" />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -323,24 +294,13 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
                         <a href={member.emirates_id_url} target="_blank" rel="noopener noreferrer" className="flex-1">
                           <img src={member.emirates_id_url} alt="Emirates ID" className="h-20 w-auto rounded border object-cover hover:opacity-80 transition-opacity" />
                         </a>
-                        <div className="flex flex-col gap-1">
-                          <a
-                            href={`https://wa.me/?text=${encodeURIComponent(`Emirates ID: ${member.emirates_id_url}`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg"
-                            title="Share via WhatsApp"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </a>
-                          <a
-                            href={`mailto:?subject=Emirates ID&body=${encodeURIComponent(member.emirates_id_url)}`}
-                            className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg"
-                            title="Share via Email"
-                          >
-                            <Mail className="w-4 h-4" />
-                          </a>
-                        </div>
+                        <button
+                          onClick={() => handleShareDoc('Emirates ID', member.emirates_id_url!)}
+                          className="p-2 text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg"
+                          title="Share"
+                        >
+                          <Share2 className="w-5 h-5" />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -382,24 +342,13 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
                         <a href={member.marine_license_url} target="_blank" rel="noopener noreferrer" className="flex-1">
                           <img src={member.marine_license_url} alt="Marine License" className="h-20 w-auto rounded border object-cover hover:opacity-80 transition-opacity" />
                         </a>
-                        <div className="flex flex-col gap-1">
-                          <a
-                            href={`https://wa.me/?text=${encodeURIComponent(`Marine License: ${member.marine_license_url}`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg"
-                            title="Share via WhatsApp"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </a>
-                          <a
-                            href={`mailto:?subject=Marine License&body=${encodeURIComponent(member.marine_license_url)}`}
-                            className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg"
-                            title="Share via Email"
-                          >
-                            <Mail className="w-4 h-4" />
-                          </a>
-                        </div>
+                        <button
+                          onClick={() => handleShareDoc('Marine License', member.marine_license_url!)}
+                          className="p-2 text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg"
+                          title="Share"
+                        >
+                          <Share2 className="w-5 h-5" />
+                        </button>
                       </div>
                     )}
                   </div>
@@ -410,46 +359,36 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
             {/* Share Section */}
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
-                Share / Export
+                Share Crew Info
               </h4>
               
-              <div className="grid grid-cols-5 gap-2">
-                {shareOptions.map((option) => (
-                  option.href ? (
-                    <a
-                      key={option.name}
-                      href={option.href}
-                      target={option.name === 'SMS' ? '_self' : '_blank'}
-                      rel="noopener noreferrer"
-                      className="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <option.icon className={`w-6 h-6 ${option.color}`} />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{option.name}</span>
-                    </a>
-                  ) : (
-                    <button
-                      key={option.name}
-                      onClick={option.onClick}
-                      className="flex flex-col items-center gap-1 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <option.icon className={`w-6 h-6 ${option.color}`} />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{option.name}</span>
-                    </button>
-                  )
-                ))}
-              </div>
-
-              {/* Native Share Button (mobile) */}
-              {hasNativeShare && (
+              <div className="flex gap-2">
+                {/* Native Share (primary) */}
+                {hasNativeShare && (
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={handleNativeShare}
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                )}
+                
+                {/* Copy to Clipboard */}
                 <Button 
                   variant="outline" 
-                  className="w-full mt-3"
-                  onClick={handleNativeShare}
+                  className={hasNativeShare ? '' : 'flex-1'}
+                  onClick={handleCopy}
                 >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share via...
+                  {copied ? (
+                    <Check className="w-4 h-4 mr-2 text-green-500" />
+                  ) : (
+                    <Copy className="w-4 h-4 mr-2" />
+                  )}
+                  {copied ? 'Copied!' : 'Copy'}
                 </Button>
-              )}
+              </div>
             </div>
           </div>
 
