@@ -53,15 +53,6 @@ export function AddPartModal({
   
   const isEngineSelected = selectedComponent && ENGINE_TYPES.includes(selectedComponent.type);
   const hasMultipleEngines = engineComponents.length > 1;
-  
-  // Debug: log to console
-  console.log('AddPartModal Debug:', { 
-    selectedComponent: selectedComponent?.type, 
-    engineCount: engineComponents.length,
-    isEngineSelected,
-    hasMultipleEngines,
-    showCheckbox: isEngineSelected && hasMultipleEngines
-  });
 
   if (!isOpen) return null;
 

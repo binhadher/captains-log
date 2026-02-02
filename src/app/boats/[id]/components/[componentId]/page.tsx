@@ -60,6 +60,7 @@ export default function ComponentDetailPage() {
   const [showSchedule, setShowSchedule] = useState(false);
   const [boatName, setBoatName] = useState<string>('');
   const [parts, setParts] = useState<Part[]>([]);
+  const [allComponents, setAllComponents] = useState<BoatComponent[]>([]);
 
   // Check if we should auto-open schedule modal
   useEffect(() => {
@@ -92,6 +93,9 @@ export default function ComponentDetailPage() {
       
       // Fetch parts for this component
       fetchParts(data.component.boat_id, componentId);
+      
+      // Fetch all components for the boat (needed for "apply to all engines" feature)
+      fetchAllComponents(data.component.boat_id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load component');
     } finally {
@@ -112,6 +116,18 @@ export default function ComponentDetailPage() {
       }
     } catch (err) {
       console.error('Error fetching parts:', err);
+    }
+  };
+
+  const fetchAllComponents = async (boatId: string) => {
+    try {
+      const response = await fetch(`/api/boats/${boatId}/components`);
+      if (response.ok) {
+        const data = await response.json();
+        setAllComponents(data.components || []);
+      }
+    } catch (err) {
+      console.error('Error fetching components:', err);
     }
   };
 
@@ -394,7 +410,7 @@ export default function ComponentDetailPage() {
         isOpen={showAddPart}
         onClose={() => setShowAddPart(false)}
         boatId={component.boat_id}
-        components={[component]}
+        components={allComponents.length > 0 ? allComponents : [component]}
         preselectedComponentId={component.id}
         onSuccess={() => fetchParts(component.boat_id, component.id)}
       />
