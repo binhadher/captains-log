@@ -8,11 +8,69 @@ import {
   AlertTriangle,
   Share2,
   Copy,
-  Check
+  Check,
+  ZoomIn,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { CrewMember } from './CrewList';
 import { formatDate } from '@/lib/utils';
+
+// Image Viewer Component
+function ImageViewer({ 
+  src, 
+  title, 
+  onClose,
+  onShare 
+}: { 
+  src: string; 
+  title: string; 
+  onClose: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/90 flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 text-white">
+        <h3 className="font-medium">{title}</h3>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onShare}
+            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            title="Share"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+          <a
+            href={src}
+            download
+            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            title="Download"
+          >
+            <Download className="w-5 h-5" />
+          </a>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+      
+      {/* Image */}
+      <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
+        <img 
+          src={src} 
+          alt={title} 
+          className="max-w-full max-h-full object-contain rounded-lg"
+          onClick={onClose}
+        />
+      </div>
+    </div>
+  );
+}
 
 interface CrewDetailModalProps {
   isOpen: boolean;
@@ -73,6 +131,7 @@ function getExpiryStatus(expiryDate?: string): { status: 'ok' | 'warning' | 'exp
 
 export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailModalProps) {
   const [copied, setCopied] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
   const [showShareMenu, setShowShareMenu] = useState(false);
 
   if (!isOpen || !member) return null;
@@ -247,9 +306,17 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
                     )}
                     {member.passport_url && (
                       <div className="mt-2 flex items-center gap-2">
-                        <a href={member.passport_url} target="_blank" rel="noopener noreferrer" className="flex-1">
-                          <img src={member.passport_url} alt="Passport" className="h-20 w-auto rounded border object-cover hover:opacity-80 transition-opacity" />
-                        </a>
+                        <button 
+                          onClick={() => setViewingDoc({ url: member.passport_url!, title: 'Passport' })}
+                          className="flex-1 text-left group"
+                        >
+                          <div className="relative">
+                            <img src={member.passport_url} alt="Passport" className="h-20 w-auto rounded border object-cover group-hover:opacity-80 transition-opacity" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ZoomIn className="w-6 h-6 text-white drop-shadow-lg" />
+                            </div>
+                          </div>
+                        </button>
                         <button
                           onClick={() => handleShareDoc('Passport', member.passport_url!)}
                           className="p-2 text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg"
@@ -291,9 +358,17 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
                     )}
                     {member.emirates_id_url && (
                       <div className="mt-2 flex items-center gap-2">
-                        <a href={member.emirates_id_url} target="_blank" rel="noopener noreferrer" className="flex-1">
-                          <img src={member.emirates_id_url} alt="Emirates ID" className="h-20 w-auto rounded border object-cover hover:opacity-80 transition-opacity" />
-                        </a>
+                        <button 
+                          onClick={() => setViewingDoc({ url: member.emirates_id_url!, title: 'Emirates ID' })}
+                          className="flex-1 text-left group"
+                        >
+                          <div className="relative">
+                            <img src={member.emirates_id_url} alt="Emirates ID" className="h-20 w-auto rounded border object-cover group-hover:opacity-80 transition-opacity" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ZoomIn className="w-6 h-6 text-white drop-shadow-lg" />
+                            </div>
+                          </div>
+                        </button>
                         <button
                           onClick={() => handleShareDoc('Emirates ID', member.emirates_id_url!)}
                           className="p-2 text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg"
@@ -339,9 +414,17 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
                     )}
                     {member.marine_license_url && (
                       <div className="mt-2 flex items-center gap-2">
-                        <a href={member.marine_license_url} target="_blank" rel="noopener noreferrer" className="flex-1">
-                          <img src={member.marine_license_url} alt="Marine License" className="h-20 w-auto rounded border object-cover hover:opacity-80 transition-opacity" />
-                        </a>
+                        <button 
+                          onClick={() => setViewingDoc({ url: member.marine_license_url!, title: 'Marine License' })}
+                          className="flex-1 text-left group"
+                        >
+                          <div className="relative">
+                            <img src={member.marine_license_url} alt="Marine License" className="h-20 w-auto rounded border object-cover group-hover:opacity-80 transition-opacity" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ZoomIn className="w-6 h-6 text-white drop-shadow-lg" />
+                            </div>
+                          </div>
+                        </button>
                         <button
                           onClick={() => handleShareDoc('Marine License', member.marine_license_url!)}
                           className="p-2 text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg"
@@ -405,6 +488,16 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
           </div>
         </div>
       </div>
+
+      {/* Document Viewer */}
+      {viewingDoc && (
+        <ImageViewer
+          src={viewingDoc.url}
+          title={viewingDoc.title}
+          onClose={() => setViewingDoc(null)}
+          onShare={() => handleShareDoc(viewingDoc.title, viewingDoc.url)}
+        />
+      )}
     </div>
   );
 }
