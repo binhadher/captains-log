@@ -302,7 +302,7 @@ export default function BoatDetailPage() {
             </h2>
             <button
               onClick={() => setShowEditBoat(true)}
-              className="p-2 text-gray-500 hover:text-teal-600 dark:text-gray-400 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
               title="Edit boat details"
             >
               <Pencil className="w-4 h-4" />
@@ -350,7 +350,7 @@ export default function BoatDetailPage() {
               </h2>
               <button
                 onClick={() => setShowEditEngines(true)}
-                className="p-2 text-gray-500 hover:text-teal-600 dark:text-gray-400 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
                 title="Edit engines & generator"
               >
                 <Pencil className="w-4 h-4" />
