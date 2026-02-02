@@ -21,11 +21,12 @@ import { BoatComponent, Part } from '@/types/database';
 import { getMaintenanceItems, getMaintenanceItemLabel } from '@/lib/maintenance-items';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import { AddMaintenanceModal } from '@/components/maintenance/AddMaintenanceModal';
+import { EditMaintenanceModal } from '@/components/maintenance/EditMaintenanceModal';
 import { ServiceScheduleModal } from '@/components/maintenance/ServiceScheduleModal';
 import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
 import { EditPartModal } from '@/components/parts/EditPartModal';
-import { Package, Settings } from 'lucide-react';
+import { Package, Settings, Pencil } from 'lucide-react';
 
 interface Document {
   id: string;
@@ -63,6 +64,7 @@ export default function ComponentDetailPage() {
   const [parts, setParts] = useState<Part[]>([]);
   const [allComponents, setAllComponents] = useState<BoatComponent[]>([]);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
+  const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
 
   // Check if we should auto-open schedule modal
   useEffect(() => {
@@ -302,13 +304,41 @@ export default function ComponentDetailPage() {
               {logs.map((log) => (
                 <div key={log.id} className="flex items-start gap-3 p-3 bg-gray-50/50 dark:bg-gray-800/50 rounded-lg">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-gray-900 dark:text-white text-sm">
-                        {getMaintenanceItemLabel(component.type, log.maintenance_item)}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDate(log.date)}
-                      </span>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900 dark:text-white text-sm">
+                          {getMaintenanceItemLabel(component.type, log.maintenance_item)}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(log.date)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setEditingLog(log)}
+                          className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
+                          title="Edit"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm('Delete this maintenance log?')) return;
+                            try {
+                              const response = await fetch(`/api/maintenance-logs/${log.id}`, { method: 'DELETE' });
+                              if (response.ok) {
+                                fetchComponent(params.componentId as string);
+                              }
+                            } catch (err) {
+                              console.error('Error deleting log:', err);
+                            }
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     {log.description && (
                       <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">{log.description}</p>
@@ -455,6 +485,16 @@ export default function ComponentDetailPage() {
         part={editingPart}
         onSuccess={() => fetchParts(component.boat_id, component.id)}
         onDelete={() => fetchParts(component.boat_id, component.id)}
+      />
+
+      {/* Edit Maintenance Log Modal */}
+      <EditMaintenanceModal
+        isOpen={!!editingLog}
+        onClose={() => setEditingLog(null)}
+        log={editingLog}
+        componentType={component.type}
+        onSuccess={() => fetchComponent(component.id)}
+        onDelete={() => fetchComponent(component.id)}
       />
     </div>
   );
