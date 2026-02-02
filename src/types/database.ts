@@ -54,6 +54,7 @@ export interface User {
 export interface Engine {
   brand?: string;
   model?: string;
+  data_plate_url?: string; // Photo of engine data plate
 }
 
 export interface BoatComponent {
@@ -131,6 +132,7 @@ export interface Boat {
   engines?: Engine[]; // Brand/model for each engine
   generator_brand?: string;
   generator_model?: string;
+  generator_data_plate?: string; // Photo of generator data plate
   created_at: string;
   updated_at: string;
 }

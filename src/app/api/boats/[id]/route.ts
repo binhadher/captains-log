@@ -47,7 +47,7 @@ export async function GET(
   }
 }
 
-// PUT /api/boats/[id] - Update a boat
+// PUT /api/boats/[id] - Update a boat (full replace)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -102,6 +102,7 @@ export async function PUT(
         engines: body.engines || [],
         generator_brand: body.generator_brand || null,
         generator_model: body.generator_model || null,
+        generator_data_plate: body.generator_data_plate || null,
       })
       .eq('id', id)
       .select()
@@ -115,6 +116,85 @@ export async function PUT(
     return NextResponse.json({ boat });
   } catch (error) {
     console.error('PUT /api/boats/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// PATCH /api/boats/[id] - Partial update a boat
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const supabase = createServerClient();
+    
+    // Get user's database ID
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('clerk_id', userId)
+      .single();
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Verify ownership
+    const { data: existing } = await supabase
+      .from('boats')
+      .select('*')
+      .eq('id', id)
+      .eq('owner_id', dbUser.id)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Boat not found' }, { status: 404 });
+    }
+
+    const body = await request.json();
+
+    // Build update object with only provided fields
+    const updateData: Record<string, unknown> = {};
+    
+    const allowedFields = [
+      'name', 'make', 'model', 'year', 'length', 'hull_id', 'home_port',
+      'number_of_engines', 'engines', 'generator_brand', 'generator_model',
+      'generator_data_plate'
+    ];
+    
+    for (const field of allowedFields) {
+      if (field in body) {
+        updateData[field] = body[field];
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
+    // Update the boat
+    const { data: boat, error } = await supabase
+      .from('boats')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating boat:', error);
+      return NextResponse.json({ error: 'Failed to update boat' }, { status: 500 });
+    }
+
+    return NextResponse.json({ boat });
+  } catch (error) {
+    console.error('PATCH /api/boats/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

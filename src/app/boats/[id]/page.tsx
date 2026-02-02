@@ -38,6 +38,8 @@ import { CrewList, CrewMember } from '@/components/crew/CrewList';
 import { AddCrewModal } from '@/components/crew/AddCrewModal';
 import { Alert } from '@/lib/alerts';
 import { Package, Activity, AlertTriangle, Users } from 'lucide-react';
+import { EditBoatModal } from '@/components/boats/EditBoatModal';
+import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 
 export default function BoatDetailPage() {
   const params = useParams();
@@ -59,6 +61,7 @@ export default function BoatDetailPage() {
   const [crew, setCrew] = useState<CrewMember[]>([]);
   const [showAddCrew, setShowAddCrew] = useState(false);
   const [editingCrew, setEditingCrew] = useState<CrewMember | null>(null);
+  const [showEditBoat, setShowEditBoat] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -290,10 +293,19 @@ export default function BoatDetailPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Boat Info Card */}
         <div className="glass-card rounded-xl p-4 mb-4">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-            <Ship className="w-4 h-4" />
-            Boat Details
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Ship className="w-4 h-4" />
+              Boat Details
+            </h2>
+            <button
+              onClick={() => setShowEditBoat(true)}
+              className="p-2 text-gray-500 hover:text-teal-600 dark:text-gray-400 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Edit boat details"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+          </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {boat.year && (
@@ -337,16 +349,54 @@ export default function BoatDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {boat.engines.map((engine, index) => (
                 <div key={index} className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">
-                    {engineLabels[index]}
-                  </p>
-                  {engine.brand || engine.model ? (
-                    <p className="text-gray-900 dark:text-white font-medium text-sm">
-                      {[engine.brand, engine.model].filter(Boolean).join(' ')}
-                    </p>
-                  ) : (
-                    <p className="text-gray-400 dark:text-gray-400 italic text-sm">Not specified</p>
-                  )}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">
+                        {engineLabels[index]}
+                      </p>
+                      {engine.brand || engine.model ? (
+                        <p className="text-gray-900 dark:text-white font-medium text-sm">
+                          {[engine.brand, engine.model].filter(Boolean).join(' ')}
+                        </p>
+                      ) : (
+                        <p className="text-gray-400 dark:text-gray-400 italic text-sm">Not specified</p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Engine Data Plate */}
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Data Plate</span>
+                      <DataPlateUpload
+                        label={`${engineLabels[index]} Data Plate`}
+                        currentUrl={engine.data_plate_url}
+                        onUpload={async (file) => {
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          formData.append('type', 'engine');
+                          formData.append('engineIndex', index.toString());
+                          
+                          const response = await fetch(`/api/boats/${boat.id}/data-plate`, {
+                            method: 'POST',
+                            body: formData,
+                          });
+                          
+                          if (!response.ok) throw new Error('Upload failed');
+                          const data = await response.json();
+                          setBoat(data.boat);
+                        }}
+                        onDelete={async () => {
+                          const response = await fetch(
+                            `/api/boats/${boat.id}/data-plate?type=engine&engineIndex=${index}`,
+                            { method: 'DELETE' }
+                          );
+                          if (!response.ok) throw new Error('Delete failed');
+                          const data = await response.json();
+                          setBoat(data.boat);
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -354,10 +404,47 @@ export default function BoatDetailPage() {
             {/* Generator */}
             {(boat.generator_brand || boat.generator_model) && (
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">Generator</p>
-                <p className="text-gray-900 dark:text-white font-medium text-sm">
-                  {[boat.generator_brand, boat.generator_model].filter(Boolean).join(' ')}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">Generator</p>
+                    <p className="text-gray-900 dark:text-white font-medium text-sm">
+                      {[boat.generator_brand, boat.generator_model].filter(Boolean).join(' ')}
+                    </p>
+                  </div>
+                </div>
+                {/* Generator Data Plate */}
+                <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Data Plate</span>
+                    <DataPlateUpload
+                      label="Generator Data Plate"
+                      currentUrl={boat.generator_data_plate}
+                      onUpload={async (file) => {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('type', 'generator');
+                        
+                        const response = await fetch(`/api/boats/${boat.id}/data-plate`, {
+                          method: 'POST',
+                          body: formData,
+                        });
+                        
+                        if (!response.ok) throw new Error('Upload failed');
+                        const data = await response.json();
+                        setBoat(data.boat);
+                      }}
+                      onDelete={async () => {
+                        const response = await fetch(
+                          `/api/boats/${boat.id}/data-plate?type=generator`,
+                          { method: 'DELETE' }
+                        );
+                        if (!response.ok) throw new Error('Delete failed');
+                        const data = await response.json();
+                        setBoat(data.boat);
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -544,6 +631,16 @@ export default function BoatDetailPage() {
         editingMember={editingCrew}
         onSuccess={() => {
           fetchCrew(boat.id);
+        }}
+      />
+
+      {/* Edit Boat Details Modal */}
+      <EditBoatModal
+        isOpen={showEditBoat}
+        onClose={() => setShowEditBoat(false)}
+        boat={boat}
+        onSuccess={(updatedBoat) => {
+          setBoat(updatedBoat);
         }}
       />
     </div>
