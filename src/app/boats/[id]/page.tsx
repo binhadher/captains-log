@@ -29,6 +29,7 @@ import { ComponentSetupModal } from '@/components/boats/ComponentSetupModal';
 import { BoatSetupWizard } from '@/components/boats/BoatSetupWizard';
 import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
+import { EditPartModal } from '@/components/parts/EditPartModal';
 import { HealthCheckList } from '@/components/health/HealthCheckList';
 import { AddHealthCheckModal } from '@/components/health/AddHealthCheckModal';
 import { DocumentsList } from '@/components/documents/DocumentsList';
@@ -64,6 +65,7 @@ export default function BoatDetailPage() {
   const [editingCrew, setEditingCrew] = useState<CrewMember | null>(null);
   const [showEditBoat, setShowEditBoat] = useState(false);
   const [showEditEngines, setShowEditEngines] = useState(false);
+  const [editingPart, setEditingPart] = useState<Part | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -568,7 +570,20 @@ export default function BoatDetailPage() {
               Add Part
             </Button>
           </div>
-          <PartsList parts={parts} />
+          <PartsList 
+            parts={parts}
+            onEdit={(part) => setEditingPart(part)}
+            onDelete={async (part) => {
+              try {
+                const response = await fetch(`/api/parts/${part.id}`, { method: 'DELETE' });
+                if (response.ok) {
+                  fetchParts(boat.id);
+                }
+              } catch (err) {
+                console.error('Error deleting part:', err);
+              }
+            }}
+          />
         </div>
 
         {/* Boat-level Documents (registration, insurance, etc.) */}
@@ -697,6 +712,15 @@ export default function BoatDetailPage() {
         onSuccess={(updatedBoat) => {
           setBoat(updatedBoat);
         }}
+      />
+
+      {/* Edit Part Modal */}
+      <EditPartModal
+        isOpen={!!editingPart}
+        onClose={() => setEditingPart(null)}
+        part={editingPart}
+        onSuccess={() => fetchParts(boat.id)}
+        onDelete={() => fetchParts(boat.id)}
       />
     </div>
   );

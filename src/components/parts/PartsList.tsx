@@ -1,15 +1,17 @@
 'use client';
 
-import { Package, Copy, Check } from 'lucide-react';
+import { Package, Copy, Check, Pencil, Trash2 } from 'lucide-react';
 import { Part } from '@/types/database';
 import { useState } from 'react';
 
 interface PartsListProps {
   parts: Part[];
   showComponent?: boolean;
+  onEdit?: (part: Part) => void;
+  onDelete?: (part: Part) => void;
 }
 
-export function PartsList({ parts, showComponent = true }: PartsListProps) {
+export function PartsList({ parts, showComponent = true, onEdit, onDelete }: PartsListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const copyToClipboard = async (part: Part) => {
@@ -64,17 +66,41 @@ export function PartsList({ parts, showComponent = true }: PartsListProps) {
                   <p className="text-xs text-blue-600 dark:text-blue-400">{part.component_name}</p>
                 )}
               </div>
-              <button
-                onClick={() => copyToClipboard(part)}
-                className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
-                title="Copy details"
-              >
-                {copiedId === part.id ? (
-                  <Check className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Copy className="w-4 h-4" />
+              <div className="flex items-center gap-1">
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(part)}
+                    className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-all"
+                    title="Edit part"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
                 )}
-              </button>
+                <button
+                  onClick={() => copyToClipboard(part)}
+                  className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
+                  title="Copy details"
+                >
+                  {copiedId === part.id ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+                {onDelete && (
+                  <button
+                    onClick={() => {
+                      if (confirm(`Delete "${part.name}"?`)) {
+                        onDelete(part);
+                      }
+                    }}
+                    className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                    title="Delete part"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
             
             <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">

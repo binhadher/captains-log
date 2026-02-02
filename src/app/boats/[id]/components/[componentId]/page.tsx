@@ -24,6 +24,7 @@ import { AddMaintenanceModal } from '@/components/maintenance/AddMaintenanceModa
 import { ServiceScheduleModal } from '@/components/maintenance/ServiceScheduleModal';
 import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
+import { EditPartModal } from '@/components/parts/EditPartModal';
 import { Package, Settings } from 'lucide-react';
 
 interface Document {
@@ -61,6 +62,7 @@ export default function ComponentDetailPage() {
   const [boatName, setBoatName] = useState<string>('');
   const [parts, setParts] = useState<Part[]>([]);
   const [allComponents, setAllComponents] = useState<BoatComponent[]>([]);
+  const [editingPart, setEditingPart] = useState<Part | null>(null);
 
   // Check if we should auto-open schedule modal
   useEffect(() => {
@@ -376,7 +378,21 @@ export default function ComponentDetailPage() {
               Add Part
             </Button>
           </div>
-          <PartsList parts={parts} showComponent={false} />
+          <PartsList 
+            parts={parts} 
+            showComponent={false}
+            onEdit={(part) => setEditingPart(part)}
+            onDelete={async (part) => {
+              try {
+                const response = await fetch(`/api/parts/${part.id}`, { method: 'DELETE' });
+                if (response.ok && component) {
+                  fetchParts(component.boat_id, component.id);
+                }
+              } catch (err) {
+                console.error('Error deleting part:', err);
+              }
+            }}
+          />
         </div>
 
         {/* Documents Section - Placeholder */}
@@ -430,6 +446,15 @@ export default function ComponentDetailPage() {
           next_service_hours: component.next_service_hours,
         }}
         onSuccess={() => fetchComponent(component.id)}
+      />
+
+      {/* Edit Part Modal */}
+      <EditPartModal
+        isOpen={!!editingPart}
+        onClose={() => setEditingPart(null)}
+        part={editingPart}
+        onSuccess={() => fetchParts(component.boat_id, component.id)}
+        onDelete={() => fetchParts(component.boat_id, component.id)}
       />
     </div>
   );
