@@ -39,6 +39,7 @@ import { AddCrewModal } from '@/components/crew/AddCrewModal';
 import { Alert } from '@/lib/alerts';
 import { Package, Activity, AlertTriangle, Users } from 'lucide-react';
 import { EditBoatModal } from '@/components/boats/EditBoatModal';
+import { EditEnginesModal } from '@/components/boats/EditEnginesModal';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 
 export default function BoatDetailPage() {
@@ -62,6 +63,7 @@ export default function BoatDetailPage() {
   const [showAddCrew, setShowAddCrew] = useState(false);
   const [editingCrew, setEditingCrew] = useState<CrewMember | null>(null);
   const [showEditBoat, setShowEditBoat] = useState(false);
+  const [showEditEngines, setShowEditEngines] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -341,10 +343,19 @@ export default function BoatDetailPage() {
         {/* Engines Card */}
         {boat.engines && boat.engines.length > 0 && (
           <div className="glass-card rounded-xl p-4 mb-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Engines
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Engines
+              </h2>
+              <button
+                onClick={() => setShowEditEngines(true)}
+                className="p-2 text-gray-500 hover:text-teal-600 dark:text-gray-400 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Edit engines & generator"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {boat.engines.map((engine, index) => (
@@ -638,6 +649,16 @@ export default function BoatDetailPage() {
       <EditBoatModal
         isOpen={showEditBoat}
         onClose={() => setShowEditBoat(false)}
+        boat={boat}
+        onSuccess={(updatedBoat) => {
+          setBoat(updatedBoat);
+        }}
+      />
+
+      {/* Edit Engines & Generator Modal */}
+      <EditEnginesModal
+        isOpen={showEditEngines}
+        onClose={() => setShowEditEngines(false)}
         boat={boat}
         onSuccess={(updatedBoat) => {
           setBoat(updatedBoat);
