@@ -39,6 +39,7 @@ import { EditDocumentModal } from '@/components/documents/EditDocumentModal';
 import { AlertsList } from '@/components/alerts/AlertsList';
 import { CrewList, CrewMember } from '@/components/crew/CrewList';
 import { AddCrewModal } from '@/components/crew/AddCrewModal';
+import { CrewDetailModal } from '@/components/crew/CrewDetailModal';
 import { Alert } from '@/lib/alerts';
 import { Package, Activity, AlertTriangle, Users } from 'lucide-react';
 import { EditBoatModal } from '@/components/boats/EditBoatModal';
@@ -66,6 +67,7 @@ export default function BoatDetailPage() {
   const [crew, setCrew] = useState<CrewMember[]>([]);
   const [showAddCrew, setShowAddCrew] = useState(false);
   const [editingCrew, setEditingCrew] = useState<CrewMember | null>(null);
+  const [viewingCrew, setViewingCrew] = useState<CrewMember | null>(null);
   const [showEditBoat, setShowEditBoat] = useState(false);
   const [showEditEngines, setShowEditEngines] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
@@ -645,6 +647,7 @@ export default function BoatDetailPage() {
           </div>
           <CrewList 
             crew={crew}
+            onView={(member) => setViewingCrew(member)}
             onEdit={(member) => { setEditingCrew(member); setShowAddCrew(true); }}
             onDelete={handleDeleteCrew}
           />
@@ -712,6 +715,18 @@ export default function BoatDetailPage() {
         editingMember={editingCrew}
         onSuccess={() => {
           fetchCrew(boat.id);
+        }}
+      />
+
+      {/* Crew Detail Modal */}
+      <CrewDetailModal
+        isOpen={!!viewingCrew}
+        onClose={() => setViewingCrew(null)}
+        member={viewingCrew}
+        onEdit={(member) => {
+          setViewingCrew(null);
+          setEditingCrew(member);
+          setShowAddCrew(true);
         }}
       />
 

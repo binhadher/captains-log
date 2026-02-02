@@ -8,10 +8,11 @@ import {
   FileText, 
   ChevronRight,
   AlertTriangle,
-  MoreVertical,
-  Edit,
+  Pencil,
   Trash2,
-  Users
+  Users,
+  Copy,
+  Check
 } from 'lucide-react';
 
 export interface CrewMember {
@@ -31,6 +32,7 @@ export interface CrewMember {
 
 interface CrewListProps {
   crew: CrewMember[];
+  onView?: (member: CrewMember) => void;
   onEdit?: (member: CrewMember) => void;
   onDelete?: (member: CrewMember) => void;
   compact?: boolean;
@@ -76,8 +78,21 @@ function getExpiryWarning(expiryDate?: string): { warning: boolean; daysLeft: nu
   };
 }
 
-export function CrewList({ crew, onEdit, onDelete, compact = false }: CrewListProps) {
-  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+export function CrewList({ crew, onView, onEdit, onDelete, compact = false }: CrewListProps) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyToClipboard = async (member: CrewMember) => {
+    const lines = [
+      member.name,
+      member.title === 'other' ? member.title_other : TITLE_LABELS[member.title],
+      member.phone && `Phone: ${member.phone}`,
+      member.email && `Email: ${member.email}`,
+    ].filter(Boolean);
+
+    await navigator.clipboard.writeText(lines.join('\n'));
+    setCopiedId(member.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   if (crew.length === 0) {
     return (
@@ -105,12 +120,13 @@ export function CrewList({ crew, onEdit, onDelete, compact = false }: CrewListPr
           member.status === 'inactive' 
             ? 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-60'
             : hasWarning
-              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-md'
+              ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 hover:shadow-md cursor-pointer'
+              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-md cursor-pointer'
         }`}
+        onClick={() => onView?.(member)}
       >
         {/* Avatar */}
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0 ${
           member.status === 'inactive' 
             ? 'bg-gray-200 dark:bg-gray-700'
             : 'bg-cyan-100 dark:bg-cyan-900/50'
@@ -135,59 +151,45 @@ export function CrewList({ crew, onEdit, onDelete, compact = false }: CrewListPr
           </p>
         </div>
 
-        {/* Contact Icons */}
-        {!compact && (
-          <div className="flex items-center gap-2">
-            {member.phone && (
-              <a href={`tel:${member.phone}`} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                <Phone className="w-4 h-4 text-gray-400" />
-              </a>
-            )}
-            {member.email && (
-              <a href={`mailto:${member.email}`} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                <Mail className="w-4 h-4 text-gray-400" />
-              </a>
-            )}
-          </div>
-        )}
-
-        {/* Actions */}
-        {(onEdit || onDelete) && (
-          <div className="relative">
-            <button 
-              onClick={() => setMenuOpen(menuOpen === member.id ? null : member.id)}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+        {/* Action Icons - matching Parts style */}
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          {onEdit && (
+            <button
+              onClick={() => onEdit(member)}
+              className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-all"
+              title="Edit"
             >
-              <MoreVertical className="w-4 h-4 text-gray-400" />
+              <Pencil className="w-4 h-4" />
             </button>
-            
-            {menuOpen === member.id && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
-                <div className="absolute right-0 top-8 z-20 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[120px]">
-                  {onEdit && (
-                    <button
-                      onClick={() => { onEdit(member); setMenuOpen(null); }}
-                      className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button
-                      onClick={() => { onDelete(member); setMenuOpen(null); }}
-                      className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
-                  )}
-                </div>
-              </>
+          )}
+          <button
+            onClick={() => copyToClipboard(member)}
+            className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
+            title="Copy details"
+          >
+            {copiedId === member.id ? (
+              <Check className="w-4 h-4 text-green-500" />
+            ) : (
+              <Copy className="w-4 h-4" />
             )}
-          </div>
-        )}
+          </button>
+          {onDelete && (
+            <button
+              onClick={() => {
+                if (confirm(`Delete "${member.name}"?`)) {
+                  onDelete(member);
+                }
+              }}
+              className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+          {onView && (
+            <ChevronRight className="w-5 h-5 text-gray-400 ml-1" />
+          )}
+        </div>
       </div>
     );
   };
