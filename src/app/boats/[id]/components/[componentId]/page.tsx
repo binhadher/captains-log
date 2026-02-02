@@ -11,15 +11,16 @@ import {
   FileText,
   Image,
   Loader2,
-  Trash2,
-  DollarSign
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { UserButton } from '@clerk/nextjs';
 import { BoatComponent, Part } from '@/types/database';
 import { getMaintenanceItems, getMaintenanceItemLabel } from '@/lib/maintenance-items';
-import { formatDate, formatCurrency } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
+import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { AddMaintenanceModal } from '@/components/maintenance/AddMaintenanceModal';
 import { EditMaintenanceModal } from '@/components/maintenance/EditMaintenanceModal';
 import { ServiceScheduleModal } from '@/components/maintenance/ServiceScheduleModal';
@@ -49,10 +50,22 @@ interface LogEntry {
   documents?: Document[];
 }
 
+// Helper function to format currency with proper symbol
+function formatCurrencyDisplay(amount: number, currencyCode: string): string {
+  const formatted = amount.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+  if (currencyCode === 'USD') return `$${formatted}`;
+  if (currencyCode === 'EUR') return `€${formatted}`;
+  return `AED ${formatted}`; // Use text for share/copy since SVG won't work in text
+}
+
 export default function ComponentDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { currency } = useCurrency();
   const [component, setComponent] = useState<BoatComponent | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,6 +198,7 @@ export default function ComponentDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <CurrencyToggle />
               <ThemeToggle />
               <Link 
                 href="/settings" 
@@ -328,7 +342,7 @@ export default function ComponentDetailPage() {
                               `${getMaintenanceItemLabel(component.type, log.maintenance_item)} - ${formatDate(log.date)}`,
                               log.description && `Description: ${log.description}`,
                               log.hours_at_service && `Hours: ${log.hours_at_service.toLocaleString()}`,
-                              log.cost && `Cost: ${formatCurrency(log.cost, log.currency as 'AED' | 'USD' | 'EUR')}`,
+                              log.cost && `Cost: ${formatCurrencyDisplay(log.cost, currency)}`,
                               log.notes && `Notes: ${log.notes}`,
                             ].filter(Boolean).join('\n');
                             if (navigator.share) {
@@ -357,7 +371,7 @@ export default function ComponentDetailPage() {
                               `${getMaintenanceItemLabel(component.type, log.maintenance_item)} - ${formatDate(log.date)}`,
                               log.description && `Description: ${log.description}`,
                               log.hours_at_service && `Hours: ${log.hours_at_service.toLocaleString()}`,
-                              log.cost && `Cost: ${formatCurrency(log.cost, log.currency as 'AED' | 'USD' | 'EUR')}`,
+                              log.cost && `Cost: ${formatCurrencyDisplay(log.cost, currency)}`,
                               log.notes && `Notes: ${log.notes}`,
                             ].filter(Boolean).join('\n');
                             await navigator.clipboard.writeText(text);
@@ -404,8 +418,14 @@ export default function ComponentDetailPage() {
                       )}
                       {log.cost && (
                         <span className="flex items-center gap-1">
-                          <DollarSign className="w-3 h-3" />
-                          {formatCurrency(log.cost, log.currency as 'AED' | 'USD' | 'EUR')}
+                          {currency === 'AED' ? (
+                            <AedSymbol className="w-3 h-3" />
+                          ) : currency === 'USD' ? (
+                            <span>$</span>
+                          ) : (
+                            <span>€</span>
+                          )}
+                          {log.cost.toLocaleString()}
                         </span>
                       )}
                     </div>
