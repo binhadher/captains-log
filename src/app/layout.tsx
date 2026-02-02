@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { CurrencyProvider } from '@/components/providers/CurrencyProvider';
 import { TermsCheck } from '@/components/providers/TermsCheck';
 import './globals.css';
 
@@ -32,9 +33,11 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className="min-h-screen bg-gray-50 dark:bg-gray-900 antialiased transition-colors">
           <ThemeProvider>
-            <TermsCheck>
-              {children}
-            </TermsCheck>
+            <CurrencyProvider>
+              <TermsCheck>
+                {children}
+              </TermsCheck>
+            </CurrencyProvider>
           </ThemeProvider>
         </body>
       </html>

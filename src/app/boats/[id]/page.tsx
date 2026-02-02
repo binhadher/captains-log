@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { UserButton } from '@clerk/nextjs';
 import { Boat, BoatComponent, Part, HealthCheck, Document } from '@/types/database';
 import { ComponentList } from '@/components/boats/ComponentList';
@@ -277,6 +278,7 @@ export default function BoatDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <CurrencyToggle />
               <ThemeToggle />
               <Link 
                 href={`/boats/${params.id}/gallery`}

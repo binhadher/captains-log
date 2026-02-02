@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { getMaintenanceItems } from '@/lib/maintenance-items';
+import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
 
 interface AddMaintenanceModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export function AddMaintenanceModal({
   currentHours,
   onSuccess,
 }: AddMaintenanceModalProps) {
+  const { currency } = useCurrency();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'form' | 'upload'>('form');
@@ -34,7 +36,6 @@ export function AddMaintenanceModal({
     date: new Date().toISOString().split('T')[0],
     description: '',
     cost: '',
-    currency: 'AED',
     hours_at_service: currentHours?.toString() || '',
     notes: '',
   });
@@ -50,7 +51,6 @@ export function AddMaintenanceModal({
       date: new Date().toISOString().split('T')[0],
       description: '',
       cost: '',
-      currency: 'AED',
       hours_at_service: currentHours?.toString() || '',
       notes: '',
     });
@@ -79,7 +79,7 @@ export function AddMaintenanceModal({
           date: formData.date,
           description: formData.maintenance_item === 'other' ? formData.description : formData.description,
           cost: formData.cost ? parseFloat(formData.cost) : null,
-          currency: formData.currency,
+          currency: currency,
           hours_at_service: formData.hours_at_service ? parseInt(formData.hours_at_service) : null,
           notes: formData.notes || null,
         }),
@@ -203,19 +203,17 @@ export function AddMaintenanceModal({
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Currency
-                </label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="AED">AED</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
+              <div className="flex items-end">
+                <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                  {currency === 'AED' ? (
+                    <AedSymbol className="w-4 h-4" />
+                  ) : currency === 'USD' ? (
+                    '$'
+                  ) : (
+                    '€'
+                  )}
+                  <span className="text-sm">{currency}</span>
+                </div>
               </div>
             </div>
 

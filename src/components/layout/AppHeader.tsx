@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { Anchor, ArrowLeft, Settings } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 
 interface AppHeaderProps {
   title?: string;
@@ -58,6 +59,7 @@ export function AppHeader({ title, subtitle, backHref, showBack = false }: AppHe
 
           {/* Right side - always show these */}
           <div className="flex items-center gap-2">
+            <CurrencyToggle />
             <ThemeToggle />
             <Link 
               href="/settings" 

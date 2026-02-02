@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Save, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { getMaintenanceItems } from '@/lib/maintenance-items';
+import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
 
 interface LogEntry {
   id: string;
@@ -33,6 +34,7 @@ export function EditMaintenanceModal({
   onSuccess, 
   onDelete 
 }: EditMaintenanceModalProps) {
+  const { currency } = useCurrency();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,6 @@ export function EditMaintenanceModal({
     date: '',
     description: '',
     cost: '',
-    currency: 'AED',
     hours_at_service: '',
     notes: '',
   });
@@ -56,7 +57,6 @@ export function EditMaintenanceModal({
         date: log.date || '',
         description: log.description || '',
         cost: log.cost?.toString() || '',
-        currency: log.currency || 'AED',
         hours_at_service: log.hours_at_service?.toString() || '',
         notes: log.notes || '',
       });
@@ -84,7 +84,7 @@ export function EditMaintenanceModal({
           date: formData.date,
           description: formData.description.trim(),
           cost: formData.cost ? parseFloat(formData.cost) : null,
-          currency: formData.currency,
+          currency: currency,
           hours_at_service: formData.hours_at_service ? parseInt(formData.hours_at_service) : null,
           notes: formData.notes.trim() || null,
         }),
@@ -208,17 +208,17 @@ export function EditMaintenanceModal({
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
-                >
-                  <option value="AED">AED</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
+              <div className="flex items-end">
+                <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                  {currency === 'AED' ? (
+                    <AedSymbol className="w-4 h-4" />
+                  ) : currency === 'USD' ? (
+                    '$'
+                  ) : (
+                    '€'
+                  )}
+                  <span className="text-sm">{currency}</span>
+                </div>
               </div>
             </div>
 
