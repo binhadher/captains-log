@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
 
 export interface CostCategory {
   name: string;
@@ -24,13 +25,34 @@ interface SpendingCardProps {
   compact?: boolean;
 }
 
-function formatCurrency(amount: number, currency: string = 'AED'): string {
-  return new Intl.NumberFormat('en-AE', {
-    style: 'currency',
-    currency,
+// Currency symbol component
+function CurrencySymbol({ className = "w-4 h-4" }: { className?: string }) {
+  const { currency } = useCurrency();
+  if (currency === 'AED') return <AedSymbol className={className} />;
+  if (currency === 'USD') return <span className="font-semibold">$</span>;
+  return <span className="font-semibold">€</span>;
+}
+
+// Format amount with proper currency symbol
+function CurrencyDisplay({ amount, className = "" }: { amount: number; className?: string }) {
+  const { currency } = useCurrency();
+  const formatted = amount.toLocaleString('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  });
+  
+  return (
+    <span className={`inline-flex items-center gap-0.5 ${className}`}>
+      {currency === 'AED' ? (
+        <AedSymbol className="w-4 h-4 inline" />
+      ) : currency === 'USD' ? (
+        '$'
+      ) : (
+        '€'
+      )}
+      {formatted}
+    </span>
+  );
 }
 
 export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
@@ -43,7 +65,9 @@ export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
   if (totalAllTime === 0) {
     return (
       <div className="text-center py-3">
-        <DollarSign className={`${compact ? 'w-6 h-6' : 'w-8 h-8'} text-gray-300 dark:text-gray-600 mx-auto mb-1`} />
+        <div className={`${compact ? 'w-6 h-6' : 'w-8 h-8'} text-gray-300 dark:text-gray-600 mx-auto mb-1`}>
+          <CurrencySymbol className="w-full h-full" />
+        </div>
         <p className="text-gray-500 dark:text-gray-400 text-xs">No costs logged yet</p>
       </div>
     );
@@ -53,15 +77,15 @@ export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
     return (
       <div className="p-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-            <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+          <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
+            <CurrencySymbol className="w-4 h-4" />
           </div>
           <div>
             <p className="text-base font-bold text-gray-900 dark:text-white">
-              {formatCurrency(totalAllTime, currency)}
+              <CurrencyDisplay amount={totalAllTime} />
             </p>
             <p className="text-[10px] text-gray-500 dark:text-gray-400">
-              {formatCurrency(totalThisYear, currency)} this year
+              <CurrencyDisplay amount={totalThisYear} /> this year
             </p>
           </div>
         </div>
@@ -77,15 +101,15 @@ export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
         className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors group"
       >
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-            <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
+            <CurrencySymbol className="w-6 h-6" />
           </div>
           <div className="text-left">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {formatCurrency(totalAllTime, currency)}
+              <CurrencyDisplay amount={totalAllTime} />
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Total spent • {formatCurrency(totalThisYear, currency)} this year
+              Total spent • <CurrencyDisplay amount={totalThisYear} /> this year
             </p>
           </div>
         </div>
@@ -114,7 +138,7 @@ export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{category.name}</span>
                     <span className="text-sm font-medium text-gray-900 dark:text-white ml-2">
-                      {formatCurrency(category.total, currency)}
+                      <CurrencyDisplay amount={category.total} />
                     </span>
                   </div>
                   <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -145,7 +169,7 @@ export function SpendingCard({ summary, compact = false }: SpendingCardProps) {
             </div>
             <div>
               <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {formatCurrency(totalAllTime / Math.max(byCategory.reduce((sum, c) => sum + c.count, 0), 1), currency)}
+                <CurrencyDisplay amount={totalAllTime / Math.max(byCategory.reduce((sum, c) => sum + c.count, 0), 1)} />
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Avg / Entry</p>
             </div>
