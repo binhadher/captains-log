@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, User, Phone, Mail, FileText, Upload, Loader2, Camera, Image, Trash2 } from 'lucide-react';
+import { X, User, Phone, Mail, FileText, Upload, Loader2, Camera, Image, Trash2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { CrewMember } from './CrewList';
 
@@ -133,6 +133,24 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
       setError(`Failed to upload ${docType.replace('_', ' ')}`);
     } finally {
       setUploading(null);
+    }
+  };
+
+  // Share document handler
+  const handleShareDoc = async (docName: string, docUrl: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${name || 'Crew'} - ${docName}`,
+          text: `${docName}: ${docUrl}`,
+          url: docUrl,
+        });
+      } catch (err) {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(docUrl);
+      alert('Link copied to clipboard');
     }
   };
 
@@ -394,8 +412,17 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
                         </a>
                         <button
                           type="button"
+                          onClick={() => handleShareDoc('Passport', passportUrl)}
+                          className="p-2 text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg"
+                          title="Share"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setPassportUrl(null)}
                           className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                          title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -458,8 +485,17 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
                         </a>
                         <button
                           type="button"
+                          onClick={() => handleShareDoc('Emirates ID', emiratesIdUrl)}
+                          className="p-2 text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg"
+                          title="Share"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setEmiratesIdUrl(null)}
                           className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                          title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -530,8 +566,17 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
                         </a>
                         <button
                           type="button"
+                          onClick={() => handleShareDoc('Marine License', marineLicenseUrl)}
+                          className="p-2 text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg"
+                          title="Share"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setMarineLicenseUrl(null)}
                           className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                          title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
