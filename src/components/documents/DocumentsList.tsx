@@ -54,7 +54,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function DocumentsList({ documents, onEdit, onDelete, maxHeight = "320px" }: DocumentsListProps) {
+export function DocumentsList({ documents, onEdit, onDelete, maxHeight = "260px" }: DocumentsListProps) {
   const [sharingId, setSharingId] = useState<string | null>(null);
 
   // Sort documents by uploaded_at (most recent first)
@@ -117,8 +117,9 @@ export function DocumentsList({ documents, onEdit, onDelete, maxHeight = "320px"
 
   return (
     <div 
-      className="space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+      className="space-y-4 overflow-y-auto pr-1"
       style={{ maxHeight }}
+    >
       {Object.entries(grouped).map(([category, docs]) => (
         <div key={category}>
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
