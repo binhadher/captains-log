@@ -10,6 +10,7 @@ interface DocumentsListProps {
   documents: Document[];
   onEdit?: (doc: Document) => void;
   onDelete?: (docId: string) => void;
+  maxHeight?: string; // e.g., "300px" - enables scrolling
 }
 
 const CATEGORY_LABELS: Record<DocumentCategory, string> = {
@@ -53,8 +54,15 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function DocumentsList({ documents, onEdit, onDelete }: DocumentsListProps) {
+export function DocumentsList({ documents, onEdit, onDelete, maxHeight = "320px" }: DocumentsListProps) {
   const [sharingId, setSharingId] = useState<string | null>(null);
+
+  // Sort documents by uploaded_at (most recent first)
+  const sortedDocuments = [...documents].sort((a, b) => {
+    const dateA = new Date(a.uploaded_at || 0).getTime();
+    const dateB = new Date(b.uploaded_at || 0).getTime();
+    return dateB - dateA;
+  });
 
   const shareFile = async (doc: Document) => {
     setSharingId(doc.id);
@@ -99,8 +107,8 @@ export function DocumentsList({ documents, onEdit, onDelete }: DocumentsListProp
     );
   }
 
-  // Group by category
-  const grouped = documents.reduce((acc, doc) => {
+  // Group by category (using sorted documents)
+  const grouped = sortedDocuments.reduce((acc, doc) => {
     const cat = doc.category || 'other';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(doc);
@@ -108,7 +116,9 @@ export function DocumentsList({ documents, onEdit, onDelete }: DocumentsListProp
   }, {} as Record<string, Document[]>);
 
   return (
-    <div className="space-y-4">
+    <div 
+      className="space-y-4 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+      style={{ maxHeight }}
       {Object.entries(grouped).map(([category, docs]) => (
         <div key={category}>
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
@@ -134,6 +144,7 @@ export function DocumentsList({ documents, onEdit, onDelete }: DocumentsListProp
                       <p className="font-medium text-gray-900 dark:text-white truncate">{doc.name}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         {formatFileSize(doc.file_size)}
+                        {doc.uploaded_at && ` • ${new Date(doc.uploaded_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
                         {doc.notes && ` • ${doc.notes}`}
                       </p>
                     </div>
