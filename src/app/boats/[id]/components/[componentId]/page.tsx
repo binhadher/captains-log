@@ -26,7 +26,7 @@ import { ServiceScheduleModal } from '@/components/maintenance/ServiceScheduleMo
 import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
 import { EditPartModal } from '@/components/parts/EditPartModal';
-import { Package, Settings, Pencil, Copy, Check } from 'lucide-react';
+import { Package, Settings, Pencil, Copy, Check, Share2 } from 'lucide-react';
 
 interface Document {
   id: string;
@@ -331,12 +331,41 @@ export default function ComponentDetailPage() {
                               log.cost && `Cost: ${formatCurrency(log.cost, log.currency as 'AED' | 'USD' | 'EUR')}`,
                               log.notes && `Notes: ${log.notes}`,
                             ].filter(Boolean).join('\n');
+                            if (navigator.share) {
+                              try {
+                                await navigator.share({
+                                  title: getMaintenanceItemLabel(component.type, log.maintenance_item),
+                                  text: text,
+                                });
+                              } catch (err) {
+                                // User cancelled
+                              }
+                            } else {
+                              await navigator.clipboard.writeText(text);
+                              setCopiedLogId(log.id);
+                              setTimeout(() => setCopiedLogId(null), 2000);
+                            }
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded transition-all"
+                          title="Share"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const text = [
+                              `${getMaintenanceItemLabel(component.type, log.maintenance_item)} - ${formatDate(log.date)}`,
+                              log.description && `Description: ${log.description}`,
+                              log.hours_at_service && `Hours: ${log.hours_at_service.toLocaleString()}`,
+                              log.cost && `Cost: ${formatCurrency(log.cost, log.currency as 'AED' | 'USD' | 'EUR')}`,
+                              log.notes && `Notes: ${log.notes}`,
+                            ].filter(Boolean).join('\n');
                             await navigator.clipboard.writeText(text);
                             setCopiedLogId(log.id);
                             setTimeout(() => setCopiedLogId(null), 2000);
                           }}
                           className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-all"
-                          title="Copy details"
+                          title="Copy"
                         >
                           {copiedLogId === log.id ? (
                             <Check className="w-3.5 h-3.5 text-green-500" />

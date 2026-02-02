@@ -12,7 +12,8 @@ import {
   Trash2,
   Users,
   Copy,
-  Check
+  Check,
+  Share2
 } from 'lucide-react';
 
 export interface CrewMember {
@@ -90,15 +91,36 @@ function getExpiryWarning(expiryDate?: string): { warning: boolean; daysLeft: nu
 export function CrewList({ crew, onView, onEdit, onDelete, compact = false }: CrewListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const copyToClipboard = async (member: CrewMember) => {
-    const lines = [
+  const getMemberText = (member: CrewMember) => {
+    return [
       member.name,
       member.title === 'other' ? member.title_other : TITLE_LABELS[member.title],
       member.phone && `Phone: ${member.phone}`,
       member.email && `Email: ${member.email}`,
-    ].filter(Boolean);
+    ].filter(Boolean).join('\n');
+  };
 
-    await navigator.clipboard.writeText(lines.join('\n'));
+  const shareMember = async (member: CrewMember) => {
+    const text = getMemberText(member);
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: member.name,
+          text: text,
+        });
+      } catch (err) {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(member.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
+  const copyToClipboard = async (member: CrewMember) => {
+    const text = getMemberText(member);
+    await navigator.clipboard.writeText(text);
     setCopiedId(member.id);
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -172,9 +194,16 @@ export function CrewList({ crew, onView, onEdit, onDelete, compact = false }: Cr
             </button>
           )}
           <button
+            onClick={() => shareMember(member)}
+            className="p-2 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-all"
+            title="Share"
+          >
+            <Share2 className="w-4 h-4" />
+          </button>
+          <button
             onClick={() => copyToClipboard(member)}
             className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
-            title="Copy details"
+            title="Copy"
           >
             {copiedId === member.id ? (
               <Check className="w-4 h-4 text-green-500" />

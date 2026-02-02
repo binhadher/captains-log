@@ -1,6 +1,6 @@
 'use client';
 
-import { Package, Copy, Check, Pencil, Trash2, Calendar } from 'lucide-react';
+import { Package, Copy, Check, Pencil, Trash2, Calendar, Share2 } from 'lucide-react';
 import { Part } from '@/types/database';
 import { useState } from 'react';
 import { formatDate } from '@/lib/utils';
@@ -15,8 +15,8 @@ interface PartsListProps {
 export function PartsList({ parts, showComponent = true, onEdit, onDelete }: PartsListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const copyToClipboard = async (part: Part) => {
-    const text = [
+  const getPartText = (part: Part) => {
+    return [
       part.name,
       part.brand && `Brand: ${part.brand}`,
       part.part_number && `Part #: ${part.part_number}`,
@@ -25,7 +25,29 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete }: Par
       part.install_date && `Installed: ${formatDate(part.install_date)}`,
       part.notes && `Notes: ${part.notes}`,
     ].filter(Boolean).join('\n');
+  };
 
+  const sharePart = async (part: Part) => {
+    const text = getPartText(part);
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: part.name,
+          text: text,
+        });
+      } catch (err) {
+        // User cancelled - do nothing
+      }
+    } else {
+      // Fallback to copy
+      await navigator.clipboard.writeText(text);
+      setCopiedId(part.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
+  const copyToClipboard = async (part: Part) => {
+    const text = getPartText(part);
     await navigator.clipboard.writeText(text);
     setCopiedId(part.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -79,9 +101,16 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete }: Par
                   </button>
                 )}
                 <button
+                  onClick={() => sharePart(part)}
+                  className="p-2 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-all"
+                  title="Share"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => copyToClipboard(part)}
                   className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
-                  title="Copy details"
+                  title="Copy"
                 >
                   {copiedId === part.id ? (
                     <Check className="w-4 h-4 text-green-500" />

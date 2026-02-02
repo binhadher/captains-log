@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, Droplet, CircleDot, Eye, MoreHorizontal, Pencil, Trash2, Copy, Check } from 'lucide-react';
+import { Activity, Droplet, CircleDot, Eye, MoreHorizontal, Pencil, Trash2, Copy, Check, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import { HealthCheck, HealthCheckType } from '@/types/database';
 import { formatDate } from '@/lib/utils';
@@ -31,8 +31,8 @@ const TYPE_COLORS: Record<HealthCheckType, string> = {
 export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete }: HealthCheckListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const copyToClipboard = async (check: HealthCheck) => {
-    const text = [
+  const getCheckText = (check: HealthCheck) => {
+    return [
       check.title,
       `Type: ${check.check_type.replace('_', ' ')}`,
       `Date: ${formatDate(check.date)}`,
@@ -40,6 +40,28 @@ export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete
       check.quantity && `Quantity: ${check.quantity}`,
       check.notes && `Notes: ${check.notes}`,
     ].filter(Boolean).join('\n');
+  };
+
+  const shareCheck = async (check: HealthCheck) => {
+    const text = getCheckText(check);
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: check.title,
+          text: text,
+        });
+      } catch (err) {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(check.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
+  const copyToClipboard = async (check: HealthCheck) => {
+    const text = getCheckText(check);
     await navigator.clipboard.writeText(text);
     setCopiedId(check.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -99,9 +121,16 @@ export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete
                     </button>
                   )}
                   <button
+                    onClick={() => shareCheck(check)}
+                    className="p-1.5 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded transition-all"
+                    title="Share"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => copyToClipboard(check)}
                     className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-all"
-                    title="Copy details"
+                    title="Copy"
                   >
                     {copiedId === check.id ? (
                       <Check className="w-4 h-4 text-green-500" />
