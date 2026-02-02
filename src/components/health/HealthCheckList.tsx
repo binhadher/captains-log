@@ -1,6 +1,7 @@
 'use client';
 
-import { Activity, Droplet, CircleDot, Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Activity, Droplet, CircleDot, Eye, MoreHorizontal, Pencil, Trash2, Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 import { HealthCheck, HealthCheckType } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 
@@ -28,6 +29,21 @@ const TYPE_COLORS: Record<HealthCheckType, string> = {
 };
 
 export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete }: HealthCheckListProps) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyToClipboard = async (check: HealthCheck) => {
+    const text = [
+      check.title,
+      `Type: ${check.check_type.replace('_', ' ')}`,
+      `Date: ${formatDate(check.date)}`,
+      showComponent && check.component_name && `Component: ${check.component_name}`,
+      check.quantity && `Quantity: ${check.quantity}`,
+      check.notes && `Notes: ${check.notes}`,
+    ].filter(Boolean).join('\n');
+    await navigator.clipboard.writeText(text);
+    setCopiedId(check.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
   if (checks.length === 0) {
     return (
       <div className="text-center py-8">
@@ -72,32 +88,41 @@ export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{check.notes}</p>
                   )}
                 </div>
-                {(onEdit || onDelete) && (
-                  <div className="flex items-center gap-1">
-                    {onEdit && (
-                      <button
-                        onClick={() => onEdit(check)}
-                        className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
-                        title="Edit"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                <div className="flex items-center gap-1">
+                  {onEdit && (
+                    <button
+                      onClick={() => onEdit(check)}
+                      className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
+                      title="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => copyToClipboard(check)}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-all"
+                    title="Copy details"
+                  >
+                    {copiedId === check.id ? (
+                      <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
                     )}
-                    {onDelete && (
-                      <button
-                        onClick={() => {
-                          if (confirm('Delete this health check?')) {
-                            onDelete(check);
-                          }
-                        }}
-                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
+                  </button>
+                  {onDelete && (
+                    <button
+                      onClick={() => {
+                        if (confirm('Delete this health check?')) {
+                          onDelete(check);
+                        }
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

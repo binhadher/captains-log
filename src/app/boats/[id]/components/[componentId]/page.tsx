@@ -26,7 +26,7 @@ import { ServiceScheduleModal } from '@/components/maintenance/ServiceScheduleMo
 import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
 import { EditPartModal } from '@/components/parts/EditPartModal';
-import { Package, Settings, Pencil } from 'lucide-react';
+import { Package, Settings, Pencil, Copy, Check } from 'lucide-react';
 
 interface Document {
   id: string;
@@ -65,6 +65,7 @@ export default function ComponentDetailPage() {
   const [allComponents, setAllComponents] = useState<BoatComponent[]>([]);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
   const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
+  const [copiedLogId, setCopiedLogId] = useState<string | null>(null);
 
   // Check if we should auto-open schedule modal
   useEffect(() => {
@@ -320,6 +321,28 @@ export default function ComponentDetailPage() {
                           title="Edit"
                         >
                           <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const text = [
+                              `${getMaintenanceItemLabel(component.type, log.maintenance_item)} - ${formatDate(log.date)}`,
+                              log.description && `Description: ${log.description}`,
+                              log.hours_at_service && `Hours: ${log.hours_at_service.toLocaleString()}`,
+                              log.cost && `Cost: ${formatCurrency(log.cost, log.currency as 'AED' | 'USD' | 'EUR')}`,
+                              log.notes && `Notes: ${log.notes}`,
+                            ].filter(Boolean).join('\n');
+                            await navigator.clipboard.writeText(text);
+                            setCopiedLogId(log.id);
+                            setTimeout(() => setCopiedLogId(null), 2000);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-all"
+                          title="Copy details"
+                        >
+                          {copiedLogId === log.id ? (
+                            <Check className="w-3.5 h-3.5 text-green-500" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
                         </button>
                         <button
                           onClick={async () => {
