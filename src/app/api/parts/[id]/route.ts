@@ -49,6 +49,7 @@ export async function PATCH(
         part_number: body.part_number?.trim() || null,
         size_specs: body.size_specs?.trim() || null,
         supplier: body.supplier?.trim() || null,
+        install_date: body.install_date || null,
         notes: body.notes?.trim() || null,
         photo_url: body.photo_url || null,
       })

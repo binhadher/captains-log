@@ -125,6 +125,7 @@ export async function POST(
       part_number: body.part_number || null,
       size_specs: body.size_specs || null,
       supplier: body.supplier || null,
+      install_date: body.install_date || null,
       notes: body.notes || null,
       photo_url: body.photo_url || null,
       created_by: dbUser.id,

@@ -25,6 +25,7 @@ export function EditPartModal({ isOpen, onClose, part, onSuccess, onDelete }: Ed
     part_number: '',
     size_specs: '',
     supplier: '',
+    install_date: '',
     notes: '',
   });
 
@@ -36,6 +37,7 @@ export function EditPartModal({ isOpen, onClose, part, onSuccess, onDelete }: Ed
         part_number: part.part_number || '',
         size_specs: part.size_specs || '',
         supplier: part.supplier || '',
+        install_date: part.install_date || '',
         notes: part.notes || '',
       });
       setPhotoUrl(part.photo_url || null);
@@ -189,14 +191,25 @@ export function EditPartModal({ isOpen, onClose, part, onSuccess, onDelete }: Ed
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier</label>
-              <input
-                type="text"
-                value={formData.supplier}
-                onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier</label>
+                <input
+                  type="text"
+                  value={formData.supplier}
+                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Install Date</label>
+                <input
+                  type="date"
+                  value={formData.install_date}
+                  onChange={(e) => setFormData({ ...formData, install_date: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
             </div>
 
             <div>

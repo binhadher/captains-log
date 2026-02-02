@@ -93,6 +93,7 @@ export interface Part {
   part_number?: string;
   size_specs?: string;
   supplier?: string;
+  install_date?: string;
   notes?: string;
   photo_url?: string;
   created_by: string;

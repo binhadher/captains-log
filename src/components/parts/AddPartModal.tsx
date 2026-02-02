@@ -37,6 +37,7 @@ export function AddPartModal({
     part_number: '',
     size_specs: '',
     supplier: '',
+    install_date: '',
     notes: '',
   });
 
@@ -129,6 +130,7 @@ export function AddPartModal({
         part_number: '',
         size_specs: '',
         supplier: '',
+        install_date: '',
         notes: '',
       });
       setPhotoUrl(null);
@@ -274,18 +276,31 @@ export function AddPartModal({
               />
             </div>
 
-            {/* Supplier */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Supplier
-              </label>
-              <input
-                type="text"
-                value={formData.supplier}
-                onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., Marine Parts UAE"
-              />
+            {/* Supplier & Install Date */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Supplier
+                </label>
+                <input
+                  type="text"
+                  value={formData.supplier}
+                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Marine Parts UAE"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Install Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.install_date}
+                  onChange={(e) => setFormData({ ...formData, install_date: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
             </div>
 
             {/* Notes */}

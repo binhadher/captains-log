@@ -1,8 +1,9 @@
 'use client';
 
-import { Package, Copy, Check, Pencil, Trash2 } from 'lucide-react';
+import { Package, Copy, Check, Pencil, Trash2, Calendar } from 'lucide-react';
 import { Part } from '@/types/database';
 import { useState } from 'react';
+import { formatDate } from '@/lib/utils';
 
 interface PartsListProps {
   parts: Part[];
@@ -21,6 +22,7 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete }: Par
       part.part_number && `Part #: ${part.part_number}`,
       part.size_specs && `Size/Specs: ${part.size_specs}`,
       part.supplier && `Supplier: ${part.supplier}`,
+      part.install_date && `Installed: ${formatDate(part.install_date)}`,
       part.notes && `Notes: ${part.notes}`,
     ].filter(Boolean).join('\n');
 
@@ -126,6 +128,13 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete }: Par
                 <div>
                   <span className="text-gray-500 dark:text-gray-400">Supplier: </span>
                   <span className="text-gray-900 dark:text-white">{part.supplier}</span>
+                </div>
+              )}
+              {part.install_date && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-gray-400" />
+                  <span className="text-gray-500 dark:text-gray-400">Installed: </span>
+                  <span className="text-gray-900 dark:text-white">{formatDate(part.install_date)}</span>
                 </div>
               )}
             </div>
