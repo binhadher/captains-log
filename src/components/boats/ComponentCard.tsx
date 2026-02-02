@@ -7,72 +7,142 @@ import {
   Wind, 
   Anchor,
   ChevronRight,
-  Clock
+  Clock,
+  Calendar,
+  Battery,
+  Pencil
 } from 'lucide-react';
 import { BoatComponent } from '@/types/database';
+import { formatDate } from '@/lib/utils';
 
 interface ComponentCardProps {
   component: BoatComponent;
   boatId: string;
+  onEdit?: (component: BoatComponent) => void;
 }
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   engine: <Cog className="w-5 h-5" />,
+  inboard_engine: <Cog className="w-5 h-5" />,
+  outboard_engine: <Cog className="w-5 h-5" />,
+  drive_pod: <Cog className="w-5 h-5" />,
   generator: <Gauge className="w-5 h-5" />,
   shaft: <Anchor className="w-5 h-5" />,
   propeller: <Anchor className="w-5 h-5" />,
   hydraulic: <Cog className="w-5 h-5" />,
   bow_thruster: <Anchor className="w-5 h-5" />,
+  stern_thruster: <Anchor className="w-5 h-5" />,
   ac_chiller: <Wind className="w-5 h-5" />,
   ac_air_handler: <Wind className="w-5 h-5" />,
+  engine_battery: <Battery className="w-5 h-5" />,
+  generator_battery: <Battery className="w-5 h-5" />,
+  house_battery: <Battery className="w-5 h-5" />,
+  thruster_battery: <Battery className="w-5 h-5" />,
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  engine: 'bg-orange-100 text-orange-600',
-  generator: 'bg-yellow-100 text-yellow-600',
-  shaft: 'bg-blue-100 text-blue-600',
-  propeller: 'bg-blue-100 text-blue-600',
-  hydraulic: 'bg-purple-100 text-purple-600',
-  bow_thruster: 'bg-cyan-100 text-cyan-600',
-  ac_chiller: 'bg-sky-100 text-sky-600',
-  ac_air_handler: 'bg-sky-100 text-sky-600',
+  engine: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+  inboard_engine: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+  outboard_engine: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+  drive_pod: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+  generator: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
+  shaft: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+  propeller: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+  hydraulic: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+  bow_thruster: 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400',
+  stern_thruster: 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400',
+  ac_chiller: 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400',
+  ac_air_handler: 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400',
+  engine_battery: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+  generator_battery: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+  house_battery: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+  thruster_battery: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
 };
 
-export function ComponentCard({ component, boatId }: ComponentCardProps) {
+// Check if component is a battery type
+const isBatteryType = (type: string) => type.includes('battery');
+
+export function ComponentCard({ component, boatId, onEdit }: ComponentCardProps) {
   const icon = TYPE_ICONS[component.type] || <Cog className="w-5 h-5" />;
-  const colorClass = TYPE_COLORS[component.type] || 'bg-gray-100 text-gray-600';
+  const colorClass = TYPE_COLORS[component.type] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+  const isBattery = isBatteryType(component.type);
+
+  // Calculate battery age if it's a battery with install date
+  const getBatteryAge = () => {
+    if (!isBattery || !component.install_date) return null;
+    const installed = new Date(component.install_date);
+    const now = new Date();
+    const months = Math.floor((now.getTime() - installed.getTime()) / (1000 * 60 * 60 * 24 * 30));
+    const years = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+    if (years > 0) {
+      return `${years}y ${remainingMonths}m old`;
+    }
+    return `${months}m old`;
+  };
+
+  const batteryAge = getBatteryAge();
 
   return (
-    <Link href={`/boats/${boatId}/components/${component.id}`}>
-      <div className="bg-white dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm transition-all cursor-pointer">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}`}>
-              {icon}
+    <div className="bg-white dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm transition-all">
+      <div className="flex items-center justify-between">
+        <Link href={`/boats/${boatId}/components/${component.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+            {icon}
+          </div>
+          <div className="min-w-0">
+            <h4 className="font-medium text-gray-900 dark:text-white truncate">{component.name}</h4>
+            {(component.brand || component.model) && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                {[component.brand, component.model].filter(Boolean).join(' ')}
+              </p>
+            )}
+          </div>
+        </Link>
+        <div className="flex items-center gap-2">
+          {/* Show hours for engines/generators */}
+          {component.current_hours !== undefined && component.current_hours > 0 && (
+            <div className="text-right">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Hours</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {component.current_hours.toLocaleString()}
+              </p>
             </div>
-            <div>
-              <h4 className="font-medium text-gray-900 dark:text-white">{component.name}</h4>
-              {(component.brand || component.model) && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {[component.brand, component.model].filter(Boolean).join(' ')}
+          )}
+          {/* Show install date / age for batteries */}
+          {isBattery && (
+            <div className="text-right">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Installed</p>
+              {component.install_date ? (
+                <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {batteryAge || formatDate(component.install_date)}
                 </p>
+              ) : (
+                <p className="text-xs text-amber-500 italic">Not set</p>
               )}
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {component.current_hours !== undefined && component.current_hours > 0 && (
-              <div className="text-right">
-                <p className="text-xs text-gray-500 dark:text-gray-400">Hours</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {component.current_hours.toLocaleString()}
-                </p>
-              </div>
-            )}
+          )}
+          {/* Edit button */}
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onEdit(component);
+              }}
+              className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-all"
+              title="Edit component"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+          )}
+          <Link href={`/boats/${boatId}/components/${component.id}`}>
             <ChevronRight className="w-5 h-5 text-gray-400" />
-          </div>
+          </Link>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

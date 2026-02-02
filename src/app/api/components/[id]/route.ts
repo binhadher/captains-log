@@ -160,6 +160,83 @@ export async function PUT(
   }
 }
 
+// PATCH /api/components/[id] - Partial update a component
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const supabase = createServerClient();
+    
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('clerk_id', userId)
+      .single();
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Verify ownership via boat
+    const { data: existing } = await supabase
+      .from('boat_components')
+      .select('*, boats!inner(owner_id)')
+      .eq('id', id)
+      .single();
+
+    if (!existing || existing.boats.owner_id !== dbUser.id) {
+      return NextResponse.json({ error: 'Component not found' }, { status: 404 });
+    }
+
+    const body = await request.json();
+
+    // Build update object with only provided fields
+    const updateData: Record<string, unknown> = {};
+    const allowedFields = [
+      'name', 'position', 'brand', 'model', 'serial_number', 
+      'install_date', 'current_hours', 'notes',
+      'service_interval_days', 'service_interval_hours',
+      'next_service_date', 'next_service_hours',
+      'last_service_date', 'last_service_hours'
+    ];
+    
+    for (const field of allowedFields) {
+      if (field in body) {
+        updateData[field] = body[field];
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
+    const { data: component, error } = await supabase
+      .from('boat_components')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating component:', error);
+      return NextResponse.json({ error: 'Failed to update component' }, { status: 500 });
+    }
+
+    return NextResponse.json({ component });
+  } catch (error) {
+    console.error('PATCH /api/components/[id] error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 // DELETE /api/components/[id] - Delete a component
 export async function DELETE(
   request: NextRequest,

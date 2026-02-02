@@ -43,6 +43,7 @@ import { Alert } from '@/lib/alerts';
 import { Package, Activity, AlertTriangle, Users } from 'lucide-react';
 import { EditBoatModal } from '@/components/boats/EditBoatModal';
 import { EditEnginesModal } from '@/components/boats/EditEnginesModal';
+import { EditComponentModal } from '@/components/boats/EditComponentModal';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 
 export default function BoatDetailPage() {
@@ -70,6 +71,7 @@ export default function BoatDetailPage() {
   const [editingPart, setEditingPart] = useState<Part | null>(null);
   const [editingHealthCheck, setEditingHealthCheck] = useState<HealthCheck | null>(null);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [editingComponent, setEditingComponent] = useState<BoatComponent | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -544,6 +546,7 @@ export default function BoatDetailPage() {
             components={components} 
             boatId={boat.id}
             onSetupClick={() => setShowWizard(true)}
+            onEditComponent={(comp) => setEditingComponent(comp)}
           />
         </div>
 
@@ -759,6 +762,14 @@ export default function BoatDetailPage() {
           fetchDocuments(boat.id);
           fetchAlerts(boat.id);
         }}
+      />
+
+      {/* Edit Component Modal */}
+      <EditComponentModal
+        isOpen={!!editingComponent}
+        onClose={() => setEditingComponent(null)}
+        component={editingComponent}
+        onSuccess={() => fetchComponents(boat.id)}
       />
     </div>
   );
