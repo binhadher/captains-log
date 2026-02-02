@@ -114,30 +114,36 @@ export async function POST(
       return NextResponse.json({ error: 'Part name is required' }, { status: 400 });
     }
 
-    // Create part
-    const { data: part, error } = await supabase
+    // Check if we need to create parts for multiple components (e.g., all engines)
+    const componentIds = body.apply_to_component_ids || [body.component_id || null];
+    
+    const partsToCreate = componentIds.map((compId: string | null) => ({
+      boat_id: boatId,
+      component_id: compId,
+      name: body.name.trim(),
+      brand: body.brand || null,
+      part_number: body.part_number || null,
+      size_specs: body.size_specs || null,
+      supplier: body.supplier || null,
+      notes: body.notes || null,
+      photo_url: body.photo_url || null,
+      created_by: dbUser.id,
+    }));
+
+    // Create part(s)
+    const { data: parts, error } = await supabase
       .from('parts')
-      .insert({
-        boat_id: boatId,
-        component_id: body.component_id || null,
-        name: body.name.trim(),
-        brand: body.brand || null,
-        part_number: body.part_number || null,
-        size_specs: body.size_specs || null,
-        supplier: body.supplier || null,
-        notes: body.notes || null,
-        photo_url: body.photo_url || null,
-        created_by: dbUser.id,
-      })
-      .select()
-      .single();
+      .insert(partsToCreate)
+      .select();
 
     if (error) {
       console.error('Error creating part:', error);
       return NextResponse.json({ error: 'Failed to create part' }, { status: 500 });
     }
 
-    return NextResponse.json({ part }, { status: 201 });
+    // Return single part for backward compatibility, or array if multiple
+    const result = parts.length === 1 ? { part: parts[0] } : { parts };
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error('POST /api/boats/[id]/parts error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Upload, Loader2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { X, Upload, Loader2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BoatComponent } from '@/types/database';
+
+// Engine component types that can be "mirrored"
+const ENGINE_TYPES = ['engine', 'inboard_engine', 'outboard_engine', 'drive_pod'];
 
 interface AddPartModalProps {
   isOpen: boolean;
@@ -26,6 +29,7 @@ export function AddPartModal({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [applyToAllEngines, setApplyToAllEngines] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     component_id: preselectedComponentId || '',
@@ -35,6 +39,20 @@ export function AddPartModal({
     supplier: '',
     notes: '',
   });
+
+  // Find all engine components and check if selected component is an engine
+  const engineComponents = useMemo(() => 
+    components.filter(c => ENGINE_TYPES.includes(c.type)),
+    [components]
+  );
+  
+  const selectedComponent = useMemo(() => 
+    components.find(c => c.id === formData.component_id),
+    [components, formData.component_id]
+  );
+  
+  const isEngineSelected = selectedComponent && ENGINE_TYPES.includes(selectedComponent.type);
+  const hasMultipleEngines = engineComponents.length > 1;
 
   if (!isOpen) return null;
 
@@ -80,14 +98,22 @@ export function AddPartModal({
     setError(null);
 
     try {
+      // Build the request body
+      const requestBody: Record<string, unknown> = {
+        ...formData,
+        component_id: formData.component_id || null,
+        photo_url: photoUrl,
+      };
+
+      // If "apply to all engines" is checked, include all engine component IDs
+      if (applyToAllEngines && isEngineSelected && hasMultipleEngines) {
+        requestBody.apply_to_component_ids = engineComponents.map(c => c.id);
+      }
+
       const response = await fetch(`/api/boats/${boatId}/parts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          component_id: formData.component_id || null,
-          photo_url: photoUrl,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -106,6 +132,7 @@ export function AddPartModal({
         notes: '',
       });
       setPhotoUrl(null);
+      setApplyToAllEngines(false);
       onSuccess();
       onClose();
     } catch (err) {
@@ -164,7 +191,10 @@ export function AddPartModal({
               </label>
               <select
                 value={formData.component_id}
-                onChange={(e) => setFormData({ ...formData, component_id: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, component_id: e.target.value });
+                  setApplyToAllEngines(false); // Reset when component changes
+                }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">General / All</option>
@@ -179,6 +209,28 @@ export function AddPartModal({
                 ))}
               </select>
             </div>
+
+            {/* Apply to all engines checkbox - only show when an engine is selected and there are multiple engines */}
+            {isEngineSelected && hasMultipleEngines && (
+              <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="applyToAllEngines"
+                  checked={applyToAllEngines}
+                  onChange={(e) => setApplyToAllEngines(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                />
+                <label htmlFor="applyToAllEngines" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-200">
+                    <Copy className="w-4 h-4" />
+                    Apply to all engines
+                  </div>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                    This part will be added to all {engineComponents.length} engines ({engineComponents.map(e => e.name).join(', ')})
+                  </p>
+                </label>
+              </div>
+            )}
 
             {/* Brand & Part Number */}
             <div className="grid grid-cols-2 gap-4">
