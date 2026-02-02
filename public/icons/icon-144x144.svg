@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+    <defs>
+      <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#f0fdfa"/>
+        <stop offset="100%" style="stop-color:#ccfbf1"/>
+      </linearGradient>
+    </defs>
+    <rect width="144" height="144" rx="21.599999999999998" fill="url(#bgGrad)"/>
+    <circle cx="72" cy="72" r="60.480000000000004" fill="none" stroke="#0d9488" stroke-width="5.76"/>
+    <circle cx="72" cy="72" r="21.168" fill="none" stroke="#0d9488" stroke-width="5.040000000000001"/>
+    <line x1="72" y1="50.832" x2="72" y2="20.592" stroke="#0d9488" stroke-width="5.040000000000001" stroke-linecap="round"/><line x1="86.96803634415684" y1="57.031963655843164" x2="108.35094540723804" y2="35.64905459276197" stroke="#0d9488" stroke-width="5.040000000000001" stroke-linecap="round"/><line x1="93.168" y1="72" x2="123.408" y2="72" stroke="#0d9488" stroke-width="5.040000000000001" stroke-linecap="round"/><line x1="86.96803634415684" y1="86.96803634415684" x2="108.35094540723804" y2="108.35094540723803" stroke="#0d9488" stroke-width="5.040000000000001" stroke-linecap="round"/><line x1="72" y1="93.168" x2="72" y2="123.408" stroke="#0d9488" stroke-width="5.040000000000001" stroke-linecap="round"/><line x1="57.031963655843164" y1="86.96803634415684" x2="35.64905459276197" y2="108.35094540723804" stroke="#0d9488" stroke-width="5.040000000000001" stroke-linecap="round"/><line x1="50.832" y1="72" x2="20.592" y2="72" stroke="#0d9488" stroke-width="5.040000000000001" stroke-linecap="round"/><line x1="57.03196365584316" y1="57.031963655843164" x2="35.649054592761956" y2="35.64905459276197" stroke="#0d9488" stroke-width="5.040000000000001" stroke-linecap="round"/>
+    <circle cx="72" cy="11.519999999999996" r="9.072000000000001" fill="#0d9488"/><circle cx="114.7658181261624" cy="29.234181873837606" r="9.072000000000001" fill="#0d9488"/><circle cx="132.48000000000002" cy="72" r="9.072000000000001" fill="#0d9488"/><circle cx="114.7658181261624" cy="114.7658181261624" r="9.072000000000001" fill="#0d9488"/><circle cx="72" cy="132.48000000000002" r="9.072000000000001" fill="#0d9488"/><circle cx="29.234181873837606" cy="114.7658181261624" r="9.072000000000001" fill="#0d9488"/><circle cx="11.519999999999996" cy="72.00000000000001" r="9.072000000000001" fill="#0d9488"/><circle cx="29.234181873837592" cy="29.234181873837606" r="9.072000000000001" fill="#0d9488"/>
+    <circle cx="72" cy="72" r="8.64" fill="#0d9488"/>
+  </svg>
