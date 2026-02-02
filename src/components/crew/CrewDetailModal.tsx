@@ -231,73 +231,177 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
             )}
 
             {/* Documents */}
-            {(member.passport_expiry || member.emirates_id_expiry || member.marine_license_expiry) && (
+            {(member.passport_expiry || member.emirates_id_expiry || member.marine_license_expiry || 
+              member.passport_url || member.emirates_id_url || member.marine_license_url) && (
               <div className="mb-6 space-y-3">
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">Documents</h4>
                 
-                {member.passport_expiry && passportStatus && (
-                  <div className={`flex items-center justify-between p-3 rounded-lg ${
-                    passportStatus.status === 'expired' ? 'bg-red-50 dark:bg-red-900/20' :
-                    passportStatus.status === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20' :
+                {/* Passport */}
+                {(member.passport_expiry || member.passport_url) && (
+                  <div className={`p-3 rounded-lg ${
+                    passportStatus?.status === 'expired' ? 'bg-red-50 dark:bg-red-900/20' :
+                    passportStatus?.status === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20' :
                     'bg-gray-50 dark:bg-gray-800'
                   }`}>
-                    <span className="text-gray-700 dark:text-gray-300">Passport</span>
-                    <div className="flex items-center gap-2">
-                      {(passportStatus.status === 'expired' || passportStatus.status === 'warning') && (
-                        <AlertTriangle className={`w-4 h-4 ${passportStatus.status === 'expired' ? 'text-red-500' : 'text-amber-500'}`} />
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">🛂 Passport</span>
+                      {passportStatus && (
+                        <div className="flex items-center gap-2">
+                          {(passportStatus.status === 'expired' || passportStatus.status === 'warning') && (
+                            <AlertTriangle className={`w-4 h-4 ${passportStatus.status === 'expired' ? 'text-red-500' : 'text-amber-500'}`} />
+                          )}
+                          <span className={`text-sm font-medium ${
+                            passportStatus.status === 'expired' ? 'text-red-600 dark:text-red-400' :
+                            passportStatus.status === 'warning' ? 'text-amber-600 dark:text-amber-400' :
+                            'text-gray-900 dark:text-white'
+                          }`}>
+                            {passportStatus.label}
+                          </span>
+                        </div>
                       )}
-                      <span className={`text-sm font-medium ${
-                        passportStatus.status === 'expired' ? 'text-red-600 dark:text-red-400' :
-                        passportStatus.status === 'warning' ? 'text-amber-600 dark:text-amber-400' :
-                        'text-gray-900 dark:text-white'
-                      }`}>
-                        {passportStatus.label}
-                      </span>
                     </div>
+                    {member.passport_number && (
+                      <p className="text-sm text-gray-500 mt-1">#{member.passport_number} {member.passport_country && `• ${member.passport_country}`}</p>
+                    )}
+                    {member.passport_url && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <a href={member.passport_url} target="_blank" rel="noopener noreferrer" className="flex-1">
+                          <img src={member.passport_url} alt="Passport" className="h-20 w-auto rounded border object-cover hover:opacity-80 transition-opacity" />
+                        </a>
+                        <div className="flex flex-col gap-1">
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`Passport: ${member.passport_url}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg"
+                            title="Share via WhatsApp"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </a>
+                          <a
+                            href={`mailto:?subject=Passport&body=${encodeURIComponent(member.passport_url)}`}
+                            className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg"
+                            title="Share via Email"
+                          >
+                            <Mail className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {member.emirates_id_expiry && emiratesStatus && (
-                  <div className={`flex items-center justify-between p-3 rounded-lg ${
-                    emiratesStatus.status === 'expired' ? 'bg-red-50 dark:bg-red-900/20' :
-                    emiratesStatus.status === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20' :
+                {/* Emirates ID */}
+                {(member.emirates_id_expiry || member.emirates_id_url) && (
+                  <div className={`p-3 rounded-lg ${
+                    emiratesStatus?.status === 'expired' ? 'bg-red-50 dark:bg-red-900/20' :
+                    emiratesStatus?.status === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20' :
                     'bg-gray-50 dark:bg-gray-800'
                   }`}>
-                    <span className="text-gray-700 dark:text-gray-300">Emirates ID</span>
-                    <div className="flex items-center gap-2">
-                      {(emiratesStatus.status === 'expired' || emiratesStatus.status === 'warning') && (
-                        <AlertTriangle className={`w-4 h-4 ${emiratesStatus.status === 'expired' ? 'text-red-500' : 'text-amber-500'}`} />
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">🪪 Emirates ID</span>
+                      {emiratesStatus && (
+                        <div className="flex items-center gap-2">
+                          {(emiratesStatus.status === 'expired' || emiratesStatus.status === 'warning') && (
+                            <AlertTriangle className={`w-4 h-4 ${emiratesStatus.status === 'expired' ? 'text-red-500' : 'text-amber-500'}`} />
+                          )}
+                          <span className={`text-sm font-medium ${
+                            emiratesStatus.status === 'expired' ? 'text-red-600 dark:text-red-400' :
+                            emiratesStatus.status === 'warning' ? 'text-amber-600 dark:text-amber-400' :
+                            'text-gray-900 dark:text-white'
+                          }`}>
+                            {emiratesStatus.label}
+                          </span>
+                        </div>
                       )}
-                      <span className={`text-sm font-medium ${
-                        emiratesStatus.status === 'expired' ? 'text-red-600 dark:text-red-400' :
-                        emiratesStatus.status === 'warning' ? 'text-amber-600 dark:text-amber-400' :
-                        'text-gray-900 dark:text-white'
-                      }`}>
-                        {emiratesStatus.label}
-                      </span>
                     </div>
+                    {member.emirates_id_number && (
+                      <p className="text-sm text-gray-500 mt-1">#{member.emirates_id_number}</p>
+                    )}
+                    {member.emirates_id_url && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <a href={member.emirates_id_url} target="_blank" rel="noopener noreferrer" className="flex-1">
+                          <img src={member.emirates_id_url} alt="Emirates ID" className="h-20 w-auto rounded border object-cover hover:opacity-80 transition-opacity" />
+                        </a>
+                        <div className="flex flex-col gap-1">
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`Emirates ID: ${member.emirates_id_url}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg"
+                            title="Share via WhatsApp"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </a>
+                          <a
+                            href={`mailto:?subject=Emirates ID&body=${encodeURIComponent(member.emirates_id_url)}`}
+                            className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg"
+                            title="Share via Email"
+                          >
+                            <Mail className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {member.marine_license_expiry && licenseStatus && (
-                  <div className={`flex items-center justify-between p-3 rounded-lg ${
-                    licenseStatus.status === 'expired' ? 'bg-red-50 dark:bg-red-900/20' :
-                    licenseStatus.status === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20' :
+                {/* Marine License */}
+                {(member.marine_license_expiry || member.marine_license_url) && (
+                  <div className={`p-3 rounded-lg ${
+                    licenseStatus?.status === 'expired' ? 'bg-red-50 dark:bg-red-900/20' :
+                    licenseStatus?.status === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20' :
                     'bg-gray-50 dark:bg-gray-800'
                   }`}>
-                    <span className="text-gray-700 dark:text-gray-300">Marine License</span>
-                    <div className="flex items-center gap-2">
-                      {(licenseStatus.status === 'expired' || licenseStatus.status === 'warning') && (
-                        <AlertTriangle className={`w-4 h-4 ${licenseStatus.status === 'expired' ? 'text-red-500' : 'text-amber-500'}`} />
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">⚓ Marine License</span>
+                      {licenseStatus && (
+                        <div className="flex items-center gap-2">
+                          {(licenseStatus.status === 'expired' || licenseStatus.status === 'warning') && (
+                            <AlertTriangle className={`w-4 h-4 ${licenseStatus.status === 'expired' ? 'text-red-500' : 'text-amber-500'}`} />
+                          )}
+                          <span className={`text-sm font-medium ${
+                            licenseStatus.status === 'expired' ? 'text-red-600 dark:text-red-400' :
+                            licenseStatus.status === 'warning' ? 'text-amber-600 dark:text-amber-400' :
+                            'text-gray-900 dark:text-white'
+                          }`}>
+                            {licenseStatus.label}
+                          </span>
+                        </div>
                       )}
-                      <span className={`text-sm font-medium ${
-                        licenseStatus.status === 'expired' ? 'text-red-600 dark:text-red-400' :
-                        licenseStatus.status === 'warning' ? 'text-amber-600 dark:text-amber-400' :
-                        'text-gray-900 dark:text-white'
-                      }`}>
-                        {licenseStatus.label}
-                      </span>
                     </div>
+                    {(member.marine_license_number || member.marine_license_type) && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {member.marine_license_number && `#${member.marine_license_number}`}
+                        {member.marine_license_number && member.marine_license_type && ' • '}
+                        {member.marine_license_type}
+                      </p>
+                    )}
+                    {member.marine_license_url && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <a href={member.marine_license_url} target="_blank" rel="noopener noreferrer" className="flex-1">
+                          <img src={member.marine_license_url} alt="Marine License" className="h-20 w-auto rounded border object-cover hover:opacity-80 transition-opacity" />
+                        </a>
+                        <div className="flex flex-col gap-1">
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`Marine License: ${member.marine_license_url}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg"
+                            title="Share via WhatsApp"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </a>
+                          <a
+                            href={`mailto:?subject=Marine License&body=${encodeURIComponent(member.marine_license_url)}`}
+                            className="p-2 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg"
+                            title="Share via Email"
+                          >
+                            <Mail className="w-4 h-4" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

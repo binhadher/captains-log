@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, FileText, Upload, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, User, Phone, Mail, FileText, Upload, Loader2, Camera, Image, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { CrewMember } from './CrewList';
 
@@ -43,12 +43,16 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
   const [passportNumber, setPassportNumber] = useState('');
   const [passportExpiry, setPassportExpiry] = useState('');
   const [passportCountry, setPassportCountry] = useState('');
+  const [passportUrl, setPassportUrl] = useState<string | null>(null);
   const [emiratesIdNumber, setEmiratesIdNumber] = useState('');
   const [emiratesIdExpiry, setEmiratesIdExpiry] = useState('');
+  const [emiratesIdUrl, setEmiratesIdUrl] = useState<string | null>(null);
   const [marineLicenseNumber, setMarineLicenseNumber] = useState('');
   const [marineLicenseExpiry, setMarineLicenseExpiry] = useState('');
   const [marineLicenseType, setMarineLicenseType] = useState('');
+  const [marineLicenseUrl, setMarineLicenseUrl] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
+  const [uploading, setUploading] = useState<string | null>(null); // which doc is uploading
 
   // Reset form when modal opens/closes or editing member changes
   useEffect(() => {
@@ -60,8 +64,19 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
         setPhone(editingMember.phone || '');
         setEmail(editingMember.email || '');
         setStatus(editingMember.status);
-        // Note: We'd need to fetch full member data to get document fields
-        // For now, keeping it simple
+        // Document fields
+        setPassportNumber(editingMember.passport_number || '');
+        setPassportExpiry(editingMember.passport_expiry || '');
+        setPassportCountry(editingMember.passport_country || '');
+        setPassportUrl(editingMember.passport_url || null);
+        setEmiratesIdNumber(editingMember.emirates_id_number || '');
+        setEmiratesIdExpiry(editingMember.emirates_id_expiry || '');
+        setEmiratesIdUrl(editingMember.emirates_id_url || null);
+        setMarineLicenseNumber(editingMember.marine_license_number || '');
+        setMarineLicenseExpiry(editingMember.marine_license_expiry || '');
+        setMarineLicenseType(editingMember.marine_license_type || '');
+        setMarineLicenseUrl(editingMember.marine_license_url || null);
+        setNotes(editingMember.notes || '');
       } else {
         resetForm();
       }
@@ -80,12 +95,45 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
     setPassportNumber('');
     setPassportExpiry('');
     setPassportCountry('');
+    setPassportUrl(null);
     setEmiratesIdNumber('');
     setEmiratesIdExpiry('');
+    setEmiratesIdUrl(null);
     setMarineLicenseNumber('');
     setMarineLicenseExpiry('');
     setMarineLicenseType('');
+    setMarineLicenseUrl(null);
     setNotes('');
+  };
+
+  // Upload document handler
+  const handleDocUpload = async (file: File, docType: 'passport' | 'emirates_id' | 'marine_license') => {
+    setUploading(docType);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('boat_id', boatId);
+      formData.append('category', 'other');
+      formData.append('name', `crew_${docType}_${Date.now()}`);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+      
+      const { document } = await response.json();
+      const url = document.file_url;
+
+      if (docType === 'passport') setPassportUrl(url);
+      else if (docType === 'emirates_id') setEmiratesIdUrl(url);
+      else if (docType === 'marine_license') setMarineLicenseUrl(url);
+    } catch (err) {
+      setError(`Failed to upload ${docType.replace('_', ' ')}`);
+    } finally {
+      setUploading(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,11 +158,14 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
         passport_number: passportNumber || null,
         passport_expiry: passportExpiry || null,
         passport_country: passportCountry || null,
+        passport_url: passportUrl || null,
         emirates_id_number: emiratesIdNumber || null,
         emirates_id_expiry: emiratesIdExpiry || null,
+        emirates_id_url: emiratesIdUrl || null,
         marine_license_number: marineLicenseNumber || null,
         marine_license_expiry: marineLicenseExpiry || null,
         marine_license_type: marineLicenseType || null,
+        marine_license_url: marineLicenseUrl || null,
         notes: notes || null,
       };
 
@@ -334,6 +385,47 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
                       className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     />
                   </div>
+                  {/* Passport Upload */}
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+                    {passportUrl ? (
+                      <div className="flex items-center gap-3">
+                        <a href={passportUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                          <img src={passportUrl} alt="Passport" className="h-16 w-auto rounded border object-cover" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => setPassportUrl(null)}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <label className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'passport')}
+                          />
+                          {uploading === 'passport' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4 text-gray-400" />}
+                          <span className="text-sm text-gray-500">Upload</span>
+                        </label>
+                        <label className="flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'passport')}
+                          />
+                          <Camera className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-500">Camera</span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Emirates ID */}
@@ -356,6 +448,47 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
                       onChange={(e) => setEmiratesIdExpiry(e.target.value)}
                       className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     />
+                  </div>
+                  {/* Emirates ID Upload */}
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+                    {emiratesIdUrl ? (
+                      <div className="flex items-center gap-3">
+                        <a href={emiratesIdUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                          <img src={emiratesIdUrl} alt="Emirates ID" className="h-16 w-auto rounded border object-cover" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => setEmiratesIdUrl(null)}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <label className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'emirates_id')}
+                          />
+                          {uploading === 'emirates_id' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4 text-gray-400" />}
+                          <span className="text-sm text-gray-500">Upload</span>
+                        </label>
+                        <label className="flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'emirates_id')}
+                          />
+                          <Camera className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-500">Camera</span>
+                        </label>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -387,6 +520,47 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
                       placeholder="Expiry date"
                       className="col-span-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                     />
+                  </div>
+                  {/* Marine License Upload */}
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+                    {marineLicenseUrl ? (
+                      <div className="flex items-center gap-3">
+                        <a href={marineLicenseUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                          <img src={marineLicenseUrl} alt="Marine License" className="h-16 w-auto rounded border object-cover" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => setMarineLicenseUrl(null)}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <label className="flex-1 flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'marine_license')}
+                          />
+                          {uploading === 'marine_license' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4 text-gray-400" />}
+                          <span className="text-sm text-gray-500">Upload</span>
+                        </label>
+                        <label className="flex items-center justify-center gap-2 py-2 px-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'marine_license')}
+                          />
+                          <Camera className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-500">Camera</span>
+                        </label>
+                      </div>
+                    )}
                   </div>
                 </div>
 

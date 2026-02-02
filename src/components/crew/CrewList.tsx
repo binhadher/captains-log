@@ -23,9 +23,18 @@ export interface CrewMember {
   title_other?: string;
   phone?: string;
   email?: string;
+  passport_number?: string;
   passport_expiry?: string;
+  passport_country?: string;
+  passport_url?: string;
+  emirates_id_number?: string;
   emirates_id_expiry?: string;
+  emirates_id_url?: string;
+  marine_license_number?: string;
   marine_license_expiry?: string;
+  marine_license_type?: string;
+  marine_license_url?: string;
+  notes?: string;
   status: 'active' | 'inactive';
   photo_url?: string;
 }
