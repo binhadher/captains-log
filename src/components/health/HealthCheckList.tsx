@@ -1,12 +1,14 @@
 'use client';
 
-import { Activity, Droplet, CircleDot, Eye, MoreHorizontal } from 'lucide-react';
+import { Activity, Droplet, CircleDot, Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { HealthCheck, HealthCheckType } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 
 interface HealthCheckListProps {
   checks: HealthCheck[];
   showComponent?: boolean;
+  onEdit?: (check: HealthCheck) => void;
+  onDelete?: (check: HealthCheck) => void;
 }
 
 const TYPE_ICONS: Record<HealthCheckType, React.ReactNode> = {
@@ -25,7 +27,7 @@ const TYPE_COLORS: Record<HealthCheckType, string> = {
   other: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
-export function HealthCheckList({ checks, showComponent = true }: HealthCheckListProps) {
+export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete }: HealthCheckListProps) {
   if (checks.length === 0) {
     return (
       <div className="text-center py-8">
@@ -70,6 +72,32 @@ export function HealthCheckList({ checks, showComponent = true }: HealthCheckLis
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{check.notes}</p>
                   )}
                 </div>
+                {(onEdit || onDelete) && (
+                  <div className="flex items-center gap-1">
+                    {onEdit && (
+                      <button
+                        onClick={() => onEdit(check)}
+                        className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        onClick={() => {
+                          if (confirm('Delete this health check?')) {
+                            onDelete(check);
+                          }
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -32,6 +32,7 @@ import { AddPartModal } from '@/components/parts/AddPartModal';
 import { EditPartModal } from '@/components/parts/EditPartModal';
 import { HealthCheckList } from '@/components/health/HealthCheckList';
 import { AddHealthCheckModal } from '@/components/health/AddHealthCheckModal';
+import { EditHealthCheckModal } from '@/components/health/EditHealthCheckModal';
 import { DocumentsList } from '@/components/documents/DocumentsList';
 import { AddDocumentModal } from '@/components/documents/AddDocumentModal';
 import { AlertsList } from '@/components/alerts/AlertsList';
@@ -66,6 +67,7 @@ export default function BoatDetailPage() {
   const [showEditBoat, setShowEditBoat] = useState(false);
   const [showEditEngines, setShowEditEngines] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
+  const [editingHealthCheck, setEditingHealthCheck] = useState<HealthCheck | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -555,7 +557,20 @@ export default function BoatDetailPage() {
               Quick Check
             </Button>
           </div>
-          <HealthCheckList checks={healthChecks} />
+          <HealthCheckList 
+            checks={healthChecks}
+            onEdit={(check) => setEditingHealthCheck(check)}
+            onDelete={async (check) => {
+              try {
+                const response = await fetch(`/api/health-checks/${check.id}`, { method: 'DELETE' });
+                if (response.ok) {
+                  fetchHealthChecks(boat.id);
+                }
+              } catch (err) {
+                console.error('Error deleting health check:', err);
+              }
+            }}
+          />
         </div>
 
         {/* Parts Catalog */}
@@ -721,6 +736,15 @@ export default function BoatDetailPage() {
         part={editingPart}
         onSuccess={() => fetchParts(boat.id)}
         onDelete={() => fetchParts(boat.id)}
+      />
+
+      {/* Edit Health Check Modal */}
+      <EditHealthCheckModal
+        isOpen={!!editingHealthCheck}
+        onClose={() => setEditingHealthCheck(null)}
+        check={editingHealthCheck}
+        onSuccess={() => fetchHealthChecks(boat.id)}
+        onDelete={() => fetchHealthChecks(boat.id)}
       />
     </div>
   );
