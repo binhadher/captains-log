@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
-  DollarSign, 
   TrendingUp, 
   TrendingDown,
   Calendar,
@@ -17,6 +16,8 @@ import {
   Settings
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
+import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
 import { UserButton } from '@clerk/nextjs';
 
 interface ComponentCost {
@@ -65,13 +66,34 @@ interface CostData {
   }[];
 }
 
-function formatCurrency(amount: number, currency: string = 'AED'): string {
-  return new Intl.NumberFormat('en-AE', {
-    style: 'currency',
-    currency,
+// Currency display component using global currency
+function CurrencyDisplay({ amount, className = "" }: { amount: number; className?: string }) {
+  const { currency } = useCurrency();
+  const formatted = amount.toLocaleString('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  });
+  
+  return (
+    <span className={`inline-flex items-center gap-0.5 ${className}`}>
+      {currency === 'AED' ? (
+        <AedSymbol className="w-4 h-4 inline" />
+      ) : currency === 'USD' ? (
+        '$'
+      ) : (
+        '€'
+      )}
+      {formatted}
+    </span>
+  );
+}
+
+// Currency symbol component
+function CurrencySymbol({ className = "w-5 h-5" }: { className?: string }) {
+  const { currency } = useCurrency();
+  if (currency === 'AED') return <AedSymbol className={className} />;
+  if (currency === 'USD') return <span className="font-bold text-lg">$</span>;
+  return <span className="font-bold text-lg">€</span>;
 }
 
 function getComponentIcon(type: string): string {
@@ -156,6 +178,7 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <CurrencyToggle />
               <ThemeToggle />
               <Link 
                 href="/settings" 
@@ -175,11 +198,11 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-white/95 backdrop-blur rounded-xl p-4 shadow-lg">
             <div className="flex items-center gap-2 text-gray-500 text-xs mb-1">
-              <DollarSign className="w-3 h-3" />
+              <CurrencySymbol className="w-3 h-3" />
               All Time
             </div>
             <p className="text-xl font-bold text-gray-900 dark:text-white">
-              {formatCurrency(summary.totalAllTime, summary.currency)}
+              <CurrencyDisplay amount={summary.totalAllTime} />
             </p>
             <p className="text-xs text-gray-500">{summary.entryCount} entries</p>
           </div>
@@ -190,7 +213,7 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
               This Year
             </div>
             <p className="text-xl font-bold text-gray-900 dark:text-white">
-              {formatCurrency(summary.totalThisYear, summary.currency)}
+              <CurrencyDisplay amount={summary.totalThisYear} />
             </p>
             {yearOverYearChange !== 0 && (
               <p className={`text-xs flex items-center gap-1 ${yearOverYearChange > 0 ? 'text-red-500' : 'text-green-500'}`}>
@@ -206,10 +229,10 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
               This Month
             </div>
             <p className="text-xl font-bold text-gray-900 dark:text-white">
-              {formatCurrency(summary.totalThisMonth, summary.currency)}
+              <CurrencyDisplay amount={summary.totalThisMonth} />
             </p>
             <p className="text-xs text-gray-500">
-              avg {formatCurrency(summary.averagePerMonth, summary.currency)}/mo
+              avg <CurrencyDisplay amount={summary.averagePerMonth} />/mo
             </p>
           </div>
           
@@ -220,7 +243,7 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
             </div>
             <p className="text-xl font-bold text-gray-900 dark:text-white">
               {boat.current_engine_hours > 0 
-                ? formatCurrency(summary.totalAllTime / boat.current_engine_hours, summary.currency)
+                ? <CurrencyDisplay amount={summary.totalAllTime / boat.current_engine_hours} />
                 : '—'}
             </p>
             <p className="text-xs text-gray-500">
@@ -243,7 +266,7 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
                   style={{ height: `${(month.total / maxMonthly) * 100}%`, minHeight: month.total > 0 ? '4px' : '0' }}
                 >
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    {formatCurrency(month.total, summary.currency)}
+                    <CurrencyDisplay amount={month.total} />
                   </div>
                 </div>
                 <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate w-full text-center">
@@ -273,7 +296,7 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium text-gray-800 dark:text-white truncate">{comp.name}</span>
                       <span className="text-sm font-bold text-gray-900 dark:text-white ml-2">
-                        {formatCurrency(comp.totalCost, summary.currency)}
+                        <CurrencyDisplay amount={comp.totalCost} />
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -281,7 +304,7 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
                       {comp.costPerHour !== undefined && comp.costPerHour > 0 && (
                         <>
                           <span>•</span>
-                          <span>{formatCurrency(comp.costPerHour, summary.currency)}/hr</span>
+                          <span><CurrencyDisplay amount={comp.costPerHour} />/hr</span>
                         </>
                       )}
                     </div>
@@ -320,7 +343,7 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
                     </p>
                   </div>
                   <span className="text-sm font-semibold text-gray-900 dark:text-white ml-2">
-                    {formatCurrency(expense.cost, expense.currency)}
+                    <CurrencyDisplay amount={expense.cost} />
                   </span>
                 </div>
               ))}
