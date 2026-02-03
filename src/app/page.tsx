@@ -226,16 +226,15 @@ export default function Dashboard() {
               >
                 <Settings className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
-              {!isInstalled && (
-                <Button 
-                  onClick={installPrompt ? handleInstallClick : () => setShowInstallModal(true)} 
-                  size="sm" 
-                  className="bg-teal-600 hover:bg-teal-700 text-white border-0"
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Install
-                </Button>
-              )}
+              <Button 
+                onClick={installPrompt ? handleInstallClick : () => setShowInstallModal(true)} 
+                size="sm" 
+                className="bg-teal-600 hover:bg-teal-700 text-white border-0"
+                title="Install app on this or other devices"
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Install
+              </Button>
               <Button onClick={() => setShowAddBoat(true)} size="sm" className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-800 dark:text-white border-0">
                 <Plus className="w-4 h-4 mr-1" />
                 Add Boat
@@ -490,7 +489,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">Install App</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Add to your home screen</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Add to home screen on any device</p>
               </div>
             </div>
 
@@ -535,4 +534,3 @@ export default function Dashboard() {
     </div>
   );
 }
-// Build 1770134339
