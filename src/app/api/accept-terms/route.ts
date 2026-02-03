@@ -15,45 +15,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('clerk_id', userId)
-      .single();
-
-    let dbUserId = existingUser?.id;
-
-    // Create user if doesn't exist
-    if (!dbUserId) {
-      const clerkUser = await currentUser();
-      const email = clerkUser?.emailAddresses?.[0]?.emailAddress || `${userId}@user.local`;
-      
-      const { data: newUser, error: createError } = await supabase
-        .from('users')
-        .insert({ clerk_id: userId, email })
-        .select('id')
-        .single();
-      
-      if (createError) {
-        console.error('Create user error:', createError);
-        return NextResponse.json({ error: 'Failed to create user', detail: createError.message }, { status: 500 });
-      }
-      dbUserId = newUser?.id;
-    }
-
-    // Update terms acceptance
-    const { error: updateError } = await supabase
+    // Try to update existing user first
+    const { data: updated, error: updateError } = await supabase
       .from('users')
       .update({
         terms_accepted_at: new Date().toISOString(),
         privacy_accepted_at: new Date().toISOString(),
       })
-      .eq('id', dbUserId);
+      .eq('clerk_id', userId)
+      .select('id');
 
-    if (updateError) {
-      console.error('Update error:', updateError);
-      return NextResponse.json({ error: 'Failed to save', detail: updateError.message }, { status: 500 });
+    // If no rows updated, create user
+    if (!updated || updated.length === 0) {
+      const clerkUser = await currentUser();
+      const email = clerkUser?.emailAddresses?.[0]?.emailAddress || `${userId}@user.local`;
+      
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({ 
+          clerk_id: userId, 
+          email,
+          terms_accepted_at: new Date().toISOString(),
+          privacy_accepted_at: new Date().toISOString(),
+        });
+      
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ success: true });
