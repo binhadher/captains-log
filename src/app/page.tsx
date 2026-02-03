@@ -44,29 +44,7 @@ export default function Dashboard() {
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
 
-  useEffect(() => {
-    if (isSignedIn) {
-      fetchBoats();
-      fetchAlerts();
-      fetchActivity();
-      fetchCosts();
-    }
-  }, [isSignedIn]);
-
-  // Show landing page for unauthenticated visitors
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!isSignedIn) {
-    return <LandingPage />;
-  }
-
-  // PWA Install detection
+  // PWA Install detection - must be before conditional returns
   useEffect(() => {
     // Check if already installed
     const standalone = window.matchMedia('(display-mode: standalone)').matches 
@@ -98,6 +76,28 @@ export default function Dashboard() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchBoats();
+      fetchAlerts();
+      fetchActivity();
+      fetchCosts();
+    }
+  }, [isSignedIn]);
+
+  // Show landing page for unauthenticated visitors
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return <LandingPage />;
+  }
 
   const fetchBoats = async () => {
     try {
