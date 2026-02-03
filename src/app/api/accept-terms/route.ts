@@ -25,15 +25,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user from database
-    const { data: user, error: userError } = await supabase
+    // Get user from database, or create if doesn't exist
+    let { data: user, error: userError } = await supabase
       .from('users')
       .select('id')
       .eq('clerk_id', userId)
       .single();
 
     if (userError || !user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      // Auto-create user if not exists
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert([{ clerk_id: userId }])
+        .select('id')
+        .single();
+      
+      if (createError || !newUser) {
+        console.error('Error creating user:', createError);
+        return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+      }
+      user = newUser;
     }
 
     const now = new Date().toISOString();
