@@ -262,19 +262,21 @@ export default function BoatDetailPage() {
       <header className="glass-header sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-3">
-              <Link href="/" className="p-2 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors">
+            <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
+              <Link href="/" className="p-2 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors flex-shrink-0">
                 <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
-              <div>
-                <h1 className="text-lg font-bold text-teal-700 dark:text-white">{boat.name}</h1>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold text-teal-700 dark:text-white truncate">{boat.name}</h1>
                 {boat.make && boat.model && (
-                  <p className="text-xs text-teal-600 dark:text-gray-300">{boat.make} {boat.model}</p>
+                  <p className="text-xs text-teal-600 dark:text-gray-300 truncate">{boat.make} {boat.model}</p>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <CurrencyToggle />
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <div className="hidden sm:block">
+                <CurrencyToggle />
+              </div>
               <ThemeToggle />
               <Link 
                 href={`/boats/${params.id}/gallery`}
@@ -285,15 +287,19 @@ export default function BoatDetailPage() {
               </Link>
               <Link 
                 href="/settings" 
-                className="p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
+                className="hidden sm:flex p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
                 title="Settings"
               >
                 <Settings className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
-              <Button variant="outline" size="sm" onClick={handleDelete} disabled={deleting}>
-                <Trash2 className="w-4 h-4 mr-1" />
-                {deleting ? 'Deleting...' : 'Delete'}
-              </Button>
+              <button 
+                onClick={handleDelete} 
+                disabled={deleting}
+                className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                title="Delete boat"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
               <UserButton afterSignOutUrl="/sign-in" />
             </div>
           </div>
