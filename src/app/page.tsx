@@ -38,6 +38,7 @@ export default function Dashboard() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(true); // Default true to avoid flash
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
@@ -225,6 +226,16 @@ export default function Dashboard() {
               >
                 <Settings className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
+              {!isInstalled && (
+                <Button 
+                  onClick={installPrompt ? handleInstallClick : () => setShowInstallModal(true)} 
+                  size="sm" 
+                  className="bg-teal-600 hover:bg-teal-700 text-white border-0"
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  Install
+                </Button>
+              )}
               <Button onClick={() => setShowAddBoat(true)} size="sm" className="bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 text-gray-800 dark:text-white border-0">
                 <Plus className="w-4 h-4 mr-1" />
                 Add Boat
@@ -467,6 +478,59 @@ export default function Dashboard() {
             fetchBoats();
           }}
         />
+      )}
+
+      {/* Install App Modal */}
+      {showInstallModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-6 shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-xl flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Install App</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Add to your home screen</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              {isIOS ? (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    To install on iPhone/iPad:
+                  </p>
+                  <ol className="text-sm text-gray-600 dark:text-gray-300 space-y-2 list-decimal list-inside">
+                    <li>Open this page in <strong>Safari</strong></li>
+                    <li>Tap the <strong>Share</strong> button <span className="inline-block w-5 h-5 align-middle">↑</span></li>
+                    <li>Scroll down, tap <strong>"Add to Home Screen"</strong></li>
+                    <li>Tap <strong>"Add"</strong></li>
+                  </ol>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    To install on Android:
+                  </p>
+                  <ol className="text-sm text-gray-600 dark:text-gray-300 space-y-2 list-decimal list-inside">
+                    <li>Tap the <strong>⋮ menu</strong> (3 dots) in your browser</li>
+                    <li>Tap <strong>"Install app"</strong> or <strong>"Add to Home Screen"</strong></li>
+                    <li>Tap <strong>"Install"</strong> or <strong>"Add"</strong></li>
+                  </ol>
+                </>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowInstallModal(false)}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
