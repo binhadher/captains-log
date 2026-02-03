@@ -266,17 +266,10 @@ export default function BoatDetailPage() {
               <Link href="/" className="p-2 hover:bg-gray-200 dark:hover:bg-white/20 rounded-lg transition-colors flex-shrink-0">
                 <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
-              <div className="min-w-0">
-                <h1 className="text-lg font-bold text-teal-700 dark:text-white truncate">{boat.name}</h1>
-                {boat.make && boat.model && (
-                  <p className="text-xs text-teal-600 dark:text-gray-300 truncate">{boat.make} {boat.model}</p>
-                )}
-              </div>
+              <h1 className="text-lg font-bold text-teal-700 dark:text-white truncate">{boat.name}</h1>
             </div>
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              <div className="hidden sm:block">
-                <CurrencyToggle />
-              </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <CurrencyToggle />
               <ThemeToggle />
               <Link 
                 href={`/boats/${params.id}/gallery`}
@@ -287,7 +280,7 @@ export default function BoatDetailPage() {
               </Link>
               <Link 
                 href="/settings" 
-                className="hidden sm:flex p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
+                className="p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
                 title="Settings"
               >
                 <Settings className="w-5 h-5 text-gray-700 dark:text-white" />
@@ -324,6 +317,14 @@ export default function BoatDetailPage() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {(boat.make || boat.model) && (
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Model</p>
+                <p className="text-gray-900 dark:text-white font-medium text-sm">
+                  {[boat.make, boat.model].filter(Boolean).join(' ')}
+                </p>
+              </div>
+            )}
             {boat.year && (
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Year</p>
