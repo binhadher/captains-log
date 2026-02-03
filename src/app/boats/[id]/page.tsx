@@ -316,40 +316,40 @@ export default function BoatDetailPage() {
             </button>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {(boat.make || boat.model) && (
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Model</p>
-                <p className="text-gray-900 dark:text-white font-medium text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Model:</span>
+                <span className="text-gray-900 dark:text-white font-medium text-sm">
                   {[boat.make, boat.model].filter(Boolean).join(' ')}
-                </p>
+                </span>
               </div>
             )}
             {boat.year && (
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Year</p>
-                <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.year}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Year:</span>
+                <span className="text-gray-900 dark:text-white font-medium text-sm">{boat.year}</span>
               </div>
             )}
             {boat.length && (
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Length</p>
-                <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.length} ft</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Length:</span>
+                <span className="text-gray-900 dark:text-white font-medium text-sm">{boat.length} ft</span>
               </div>
             )}
             {boat.hull_id && (
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Hull ID</p>
-                <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.hull_id}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Hull:</span>
+                <span className="text-gray-900 dark:text-white font-medium text-sm">{boat.hull_id}</span>
               </div>
             )}
             {boat.home_port && (
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide">Home Port</p>
-                <p className="text-gray-900 dark:text-white font-medium text-sm flex items-center gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Port:</span>
+                <span className="text-gray-900 dark:text-white font-medium text-sm flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   {boat.home_port}
-                </p>
+                </span>
               </div>
             )}
           </div>
