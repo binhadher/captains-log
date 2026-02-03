@@ -15,7 +15,10 @@ import {
   Save,
   Loader2,
   Check,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Share,
+  CheckCircle2
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -43,6 +46,11 @@ const defaultPreferences: NotificationPreferences = {
   digest_mode: 'immediate',
 };
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
@@ -52,14 +60,37 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pushSupported, setPushSupported] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     // Check if push notifications are supported
     if ('Notification' in window && 'serviceWorker' in navigator) {
       setPushSupported(true);
     }
+
+    // Check if already installed (standalone mode)
+    const standalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone === true;
+    setIsInstalled(standalone);
+
+    // Check if iOS
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(iOS);
+
+    // Capture the install prompt event
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     
     fetchPreferences();
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   const fetchPreferences = async () => {
@@ -122,6 +153,22 @@ export default function SettingsPage() {
     setPreferences(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleInstallApp = async () => {
+    if (!installPrompt) return;
+
+    try {
+      await installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+        setInstallPrompt(null);
+      }
+    } catch (err) {
+      console.error('Install error:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-400 via-teal-500 to-blue-600 flex items-center justify-center">
@@ -182,6 +229,71 @@ export default function SettingsPage() {
             {error}
           </div>
         )}
+
+        {/* Install App */}
+        <div className="bg-white/95 backdrop-blur rounded-xl shadow-lg overflow-hidden">
+          <div className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                  {isInstalled ? (
+                    <CheckCircle2 className="w-5 h-5 text-teal-600" />
+                  ) : (
+                    <Download className="w-5 h-5 text-teal-600" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="font-semibold text-gray-900 dark:text-white">Install App</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {isInstalled 
+                      ? "Captain's Log is installed!" 
+                      : "Add to home screen for quick access"
+                    }
+                  </p>
+                </div>
+              </div>
+              {!isInstalled && (
+                installPrompt ? (
+                  <button
+                    onClick={handleInstallApp}
+                    className="px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Install
+                  </button>
+                ) : isIOS ? (
+                  <div className="flex items-center gap-1 text-gray-400">
+                    <Share className="w-4 h-4" />
+                    <span className="text-xs">Use Safari</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-400">Available in menu</span>
+                )
+              )}
+            </div>
+
+            {!isInstalled && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <strong>How to install:</strong>
+                </p>
+                {isIOS ? (
+                  <ol className="text-sm text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                    <li>Open this page in <strong>Safari</strong></li>
+                    <li>Tap the <Share className="w-4 h-4 inline" /> Share button at the bottom</li>
+                    <li>Scroll and tap <strong>"Add to Home Screen"</strong></li>
+                  </ol>
+                ) : (
+                  <ol className="text-sm text-gray-500 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                    <li>Tap the <strong>⋮ menu</strong> (three dots) in Chrome</li>
+                    <li>Tap <strong>"Add to Home Screen"</strong> or <strong>"Install app"</strong></li>
+                    <li>Tap <strong>"Add"</strong> to confirm</li>
+                  </ol>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Email Notifications */}
         <div className="bg-white/95 backdrop-blur rounded-xl shadow-lg overflow-hidden">
