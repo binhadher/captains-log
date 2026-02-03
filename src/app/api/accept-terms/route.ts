@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -33,10 +33,19 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (userError || !user) {
+      // Get user info from Clerk to create database record
+      const clerkUser = await currentUser();
+      const email = clerkUser?.emailAddresses?.[0]?.emailAddress || `${userId}@temp.local`;
+      const name = clerkUser?.fullName || clerkUser?.firstName || null;
+      
       // Auto-create user if not exists
       const { data: newUser, error: createError } = await supabase
         .from('users')
-        .insert([{ clerk_id: userId }])
+        .insert([{ 
+          clerk_id: userId,
+          email: email,
+          name: name
+        }])
         .select('id')
         .single();
       
