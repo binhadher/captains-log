@@ -15,134 +15,71 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { termsAccepted, privacyAccepted, termsVersion, privacyVersion } = body;
-
-    if (!termsAccepted || !privacyAccepted) {
-      return NextResponse.json(
-        { error: 'Both Terms and Privacy Policy must be accepted' },
-        { status: 400 }
-      );
-    }
-
-    // Get user from database, or create if doesn't exist
-    let { data: user, error: userError } = await supabase
+    // Check if user exists
+    const { data: existingUser } = await supabase
       .from('users')
       .select('id')
       .eq('clerk_id', userId)
       .single();
 
-    if (userError || !user) {
-      // Get user info from Clerk to create database record
+    let dbUserId = existingUser?.id;
+
+    // Create user if doesn't exist
+    if (!dbUserId) {
       const clerkUser = await currentUser();
-      const email = clerkUser?.emailAddresses?.[0]?.emailAddress || `${userId}@temp.local`;
-      const name = clerkUser?.fullName || clerkUser?.firstName || null;
+      const email = clerkUser?.emailAddresses?.[0]?.emailAddress || `${userId}@user.local`;
       
-      // Auto-create user if not exists
       const { data: newUser, error: createError } = await supabase
         .from('users')
-        .insert([{ 
-          clerk_id: userId,
-          email: email,
-          name: name
-        }])
+        .insert({ clerk_id: userId, email })
         .select('id')
         .single();
       
-      if (createError || !newUser) {
-        console.error('Error creating user:', createError);
-        return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+      if (createError) {
+        console.error('Create user error:', createError);
+        return NextResponse.json({ error: 'Failed to create user', detail: createError.message }, { status: 500 });
       }
-      user = newUser;
+      dbUserId = newUser?.id;
     }
 
-    const now = new Date().toISOString();
-
-    // Get request metadata for audit
-    const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
-    const userAgent = req.headers.get('user-agent') || 'unknown';
-
-    // Update user with consent timestamps
+    // Update terms acceptance
     const { error: updateError } = await supabase
       .from('users')
       .update({
-        terms_accepted_at: now,
-        privacy_accepted_at: now,
-        terms_version: termsVersion || '1.0',
-        privacy_version: privacyVersion || '1.0',
-        updated_at: now,
+        terms_accepted_at: new Date().toISOString(),
+        privacy_accepted_at: new Date().toISOString(),
       })
-      .eq('id', user.id);
+      .eq('id', dbUserId);
 
     if (updateError) {
-      console.error('Error updating user consent:', updateError);
-      return NextResponse.json({ error: 'Failed to record consent' }, { status: 500 });
-    }
-
-    // Record in consent history for audit trail
-    const { error: historyError } = await supabase
-      .from('user_consent_history')
-      .insert([
-        {
-          user_id: user.id,
-          consent_type: 'terms',
-          version: termsVersion || '1.0',
-          accepted_at: now,
-          ip_address: ipAddress,
-          user_agent: userAgent,
-        },
-        {
-          user_id: user.id,
-          consent_type: 'privacy',
-          version: privacyVersion || '1.0',
-          accepted_at: now,
-          ip_address: ipAddress,
-          user_agent: userAgent,
-        },
-      ]);
-
-    if (historyError) {
-      // Log but don't fail - the main consent record was already saved
-      console.error('Error recording consent history:', historyError);
+      console.error('Update error:', updateError);
+      return NextResponse.json({ error: 'Failed to save', detail: updateError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error accepting terms:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error:', error);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
 
-// GET endpoint to check if user has accepted terms
 export async function GET() {
   try {
     const { userId } = await auth();
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('terms_accepted_at, privacy_accepted_at, terms_version, privacy_version')
-      .eq('clerk_id', userId)
-      .single();
-
-    if (error || !user) {
       return NextResponse.json({ accepted: false });
     }
 
-    const accepted = !!(user.terms_accepted_at && user.privacy_accepted_at);
+    const { data: user } = await supabase
+      .from('users')
+      .select('terms_accepted_at, privacy_accepted_at')
+      .eq('clerk_id', userId)
+      .single();
 
-    return NextResponse.json({
-      accepted,
-      termsAcceptedAt: user.terms_accepted_at,
-      privacyAcceptedAt: user.privacy_accepted_at,
-      termsVersion: user.terms_version,
-      privacyVersion: user.privacy_version,
-    });
-  } catch (error) {
-    console.error('Error checking terms acceptance:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const accepted = !!(user?.terms_accepted_at && user?.privacy_accepted_at);
+    return NextResponse.json({ accepted });
+  } catch {
+    return NextResponse.json({ accepted: false });
   }
 }
