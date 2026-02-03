@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
-import { Plus, Ship, AlertTriangle, Clock, FileText, Wrench, ChevronRight, Anchor, Settings } from 'lucide-react';
+import { Plus, Ship, AlertTriangle, Clock, FileText, Wrench, ChevronRight, Anchor, Settings, Download, X, Smartphone } from 'lucide-react';
 import { Skeleton, AlertsListSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -15,6 +15,11 @@ import { Alert, formatDueIn, formatHoursDue, SEVERITY_COLORS } from '@/lib/alert
 import { ActivityFeed, ActivityItem } from '@/components/activity/ActivityFeed';
 import { SpendingCard, CostSummary } from '@/components/costs/SpendingCard';
 import { WeatherWidget } from '@/components/weather/WeatherWidget';
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
 
 export default function Dashboard() {
   const [boats, setBoats] = useState<Boat[]>([]);
@@ -28,12 +33,51 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showAddBoat, setShowAddBoat] = useState(false);
   const [setupWizardBoat, setSetupWizardBoat] = useState<Boat | null>(null);
+  
+  // PWA Install state
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(true); // Default true to avoid flash
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     fetchBoats();
     fetchAlerts();
     fetchActivity();
     fetchCosts();
+  }, []);
+
+  // PWA Install detection
+  useEffect(() => {
+    // Check if already installed
+    const standalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone === true;
+    setIsInstalled(standalone);
+
+    // Check if iOS
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(iOS);
+
+    // Check if banner was dismissed recently (within 7 days)
+    const dismissed = localStorage.getItem('install-banner-dismissed');
+    const dismissedTime = dismissed ? parseInt(dismissed, 10) : 0;
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+    // Show banner if not installed and not recently dismissed
+    if (!standalone && dismissedTime < sevenDaysAgo) {
+      setShowInstallBanner(true);
+    }
+
+    // Capture install prompt event
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   const fetchBoats = async () => {
@@ -104,6 +148,27 @@ export default function Dashboard() {
     setSetupWizardBoat(boat);
   };
 
+  const handleInstallClick = async () => {
+    if (installPrompt) {
+      try {
+        await installPrompt.prompt();
+        const { outcome } = await installPrompt.userChoice;
+        if (outcome === 'accepted') {
+          setIsInstalled(true);
+          setShowInstallBanner(false);
+        }
+      } catch (err) {
+        console.error('Install error:', err);
+      }
+      setInstallPrompt(null);
+    }
+  };
+
+  const handleDismissInstall = () => {
+    setShowInstallBanner(false);
+    localStorage.setItem('install-banner-dismissed', Date.now().toString());
+  };
+
   const getAlertIcon = (alert: Alert) => {
     switch (alert.type) {
       case 'document_expiry':
@@ -169,6 +234,48 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
+
+      {/* Install App Banner */}
+      {showInstallBanner && !isInstalled && (
+        <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+          <div className="max-w-4xl mx-auto px-4 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Install Captain&apos;s Log</p>
+                  <p className="text-xs text-white/80">
+                    {isIOS 
+                      ? "Tap Share ↑ then 'Add to Home Screen'" 
+                      : "Quick access from your home screen"
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {installPrompt && !isIOS && (
+                  <button
+                    onClick={handleInstallClick}
+                    className="px-4 py-2 bg-white text-teal-700 text-sm font-medium rounded-lg hover:bg-white/90 transition-colors flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Install
+                  </button>
+                )}
+                <button
+                  onClick={handleDismissInstall}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  aria-label="Dismiss"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content - Centered */}
       <main className="max-w-4xl mx-auto px-4 py-6">
