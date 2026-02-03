@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserButton } from '@clerk/nextjs';
+import { UserButton, useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
+import { LandingPage } from '@/components/landing/LandingPage';
 import { Plus, Ship, AlertTriangle, Clock, FileText, Wrench, ChevronRight, Anchor, Settings, Download, X, Smartphone } from 'lucide-react';
 import { Skeleton, AlertsListSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
@@ -22,6 +23,8 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function Dashboard() {
+  const { isSignedIn, isLoaded } = useAuth();
+  
   const [boats, setBoats] = useState<Boat[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
@@ -42,11 +45,26 @@ export default function Dashboard() {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    fetchBoats();
-    fetchAlerts();
-    fetchActivity();
-    fetchCosts();
-  }, []);
+    if (isSignedIn) {
+      fetchBoats();
+      fetchAlerts();
+      fetchActivity();
+      fetchCosts();
+    }
+  }, [isSignedIn]);
+
+  // Show landing page for unauthenticated visitors
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return <LandingPage />;
+  }
 
   // PWA Install detection
   useEffect(() => {
