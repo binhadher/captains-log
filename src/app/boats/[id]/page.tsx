@@ -11,7 +11,6 @@ import {
   Wrench,
   Calendar,
   MapPin,
-  Loader2,
   Pencil,
   Trash2,
   Plus,
@@ -20,6 +19,7 @@ import {
   ChevronRight,
   Camera
 } from 'lucide-react';
+import { BoatDetailSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
@@ -234,11 +234,7 @@ export default function BoatDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-dubai flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-      </div>
-    );
+    return <BoatDetailSkeleton />;
   }
 
   if (error || !boat) {

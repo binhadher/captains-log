@@ -10,9 +10,9 @@ import {
   Calendar,
   FileText,
   Image,
-  Loader2,
   Trash2
 } from 'lucide-react';
+import { ComponentDetailSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { UserButton } from '@clerk/nextjs';
@@ -157,11 +157,7 @@ export default function ComponentDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-dubai flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-      </div>
-    );
+    return <ComponentDetailSkeleton />;
   }
 
   if (error || !component) {

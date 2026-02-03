@@ -18,6 +18,7 @@ import {
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
+import { CostsPageSkeleton } from '@/components/ui/Skeleton';
 import { UserButton } from '@clerk/nextjs';
 
 interface ComponentCost {
@@ -138,11 +139,7 @@ export default function BoatCostsPage({ params }: { params: Promise<{ id: string
   }, [boatId]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cyan-400 via-teal-500 to-blue-600 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent" />
-      </div>
-    );
+    return <CostsPageSkeleton />;
   }
 
   if (!data) {

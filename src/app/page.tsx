@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
-import { Plus, Ship, AlertTriangle, Clock, FileText, Loader2, Wrench, ChevronRight, Anchor, Settings } from 'lucide-react';
+import { Plus, Ship, AlertTriangle, Clock, FileText, Wrench, ChevronRight, Anchor, Settings } from 'lucide-react';
+import { Skeleton, AlertsListSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { BoatCard } from '@/components/boats/BoatCard';
@@ -190,11 +191,22 @@ export default function Dashboard() {
             {/* Boats - takes 2 columns */}
             <div className="lg:col-span-2">
               {loading ? (
-                <div className="glass-card rounded-xl p-6 text-center h-full flex items-center justify-center">
-                  <div>
-                    <Loader2 className="w-5 h-5 text-cyan-500 mx-auto mb-2 animate-spin" />
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="glass-card rounded-xl p-4">
+                      <div className="flex items-start gap-3">
+                        <Skeleton variant="custom" className="w-14 h-14 rounded-xl" />
+                        <div className="flex-1">
+                          <Skeleton variant="text" width="70%" className="mb-2" />
+                          <Skeleton variant="text" width="50%" height={12} className="mb-2" />
+                          <div className="flex gap-2">
+                            <Skeleton variant="custom" className="w-16 h-5 rounded-full" />
+                            <Skeleton variant="custom" className="w-20 h-5 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : error ? (
                 <div className="glass-card rounded-xl p-4 h-full">
@@ -241,8 +253,8 @@ export default function Dashboard() {
               </h2>
               
               {alertsLoading ? (
-                <div className="glass-card rounded-xl p-4 text-center">
-                  <Loader2 className="w-4 h-4 text-cyan-500 animate-spin mx-auto" />
+                <div className="glass-card rounded-xl p-4">
+                  <AlertsListSkeleton />
                 </div>
               ) : alerts.length === 0 ? (
                 <div className="glass-card rounded-xl p-4 text-center">
@@ -281,8 +293,14 @@ export default function Dashboard() {
               </h2>
               
               {costsLoading ? (
-                <div className="glass-card rounded-xl p-4 text-center">
-                  <Loader2 className="w-4 h-4 text-cyan-500 animate-spin mx-auto" />
+                <div className="glass-card rounded-xl p-4">
+                  <Skeleton variant="text" width={80} height={12} className="mb-3" />
+                  <Skeleton variant="heading" width={120} className="mb-2" />
+                  <Skeleton variant="text" width="100%" height={8} className="mb-2" />
+                  <div className="flex justify-between">
+                    <Skeleton variant="text" width={60} height={10} />
+                    <Skeleton variant="text" width={60} height={10} />
+                  </div>
                 </div>
               ) : (
                 <div className="glass-card rounded-xl overflow-hidden">
@@ -302,8 +320,17 @@ export default function Dashboard() {
             </h2>
             <div className="glass-card rounded-xl p-4">
               {activityLoading ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="w-4 h-4 text-cyan-500 animate-spin" />
+                <div className="space-y-3 py-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton variant="custom" className="w-8 h-8 rounded-full" />
+                      <div className="flex-1">
+                        <Skeleton variant="text" width="60%" className="mb-1" />
+                        <Skeleton variant="text" width="40%" height={10} />
+                      </div>
+                      <Skeleton variant="text" width={50} height={10} />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <ActivityFeed items={activity.slice(0, 5)} showBoatName={boats.length > 1} compact />
