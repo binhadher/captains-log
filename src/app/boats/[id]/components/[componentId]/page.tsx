@@ -27,9 +27,19 @@ import { ServiceScheduleModal } from '@/components/maintenance/ServiceScheduleMo
 import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
 import { EditPartModal } from '@/components/parts/EditPartModal';
-import { Package, Settings, Pencil, Copy, Check, Share2 } from 'lucide-react';
+import { ComponentDocumentUpload } from '@/components/documents/ComponentDocumentUpload';
+import { Package, Settings, Pencil, Copy, Check, Share2, Trash2 as TrashIcon, FileText as FileIcon, Image as ImageIcon } from 'lucide-react';
 import { Confetti } from '@/components/ui/Confetti';
 import { useConfetti } from '@/hooks/useConfetti';
+
+interface ComponentDocument {
+  id: string;
+  name: string;
+  file_url: string;
+  file_type: string;
+  file_size: number;
+  uploaded_at: string;
+}
 
 interface Document {
   id: string;
@@ -81,6 +91,8 @@ export default function ComponentDetailPage() {
   const [editingPart, setEditingPart] = useState<Part | null>(null);
   const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
   const [copiedLogId, setCopiedLogId] = useState<string | null>(null);
+  const [componentDocs, setComponentDocs] = useState<ComponentDocument[]>([]);
+  const [showDocUpload, setShowDocUpload] = useState(false);
   const confetti = useConfetti();
 
   // Check if we should auto-open schedule modal
@@ -117,6 +129,9 @@ export default function ComponentDetailPage() {
       
       // Fetch all components for the boat (needed for "apply to all engines" feature)
       fetchAllComponents(data.component.boat_id);
+      
+      // Fetch documents for this component
+      fetchComponentDocs(componentId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load component');
     } finally {
@@ -137,6 +152,33 @@ export default function ComponentDetailPage() {
       }
     } catch (err) {
       console.error('Error fetching parts:', err);
+    }
+  };
+
+  const fetchComponentDocs = async (componentId: string) => {
+    try {
+      const response = await fetch(`/api/components/${componentId}/documents`);
+      if (response.ok) {
+        const data = await response.json();
+        setComponentDocs(data.documents || []);
+      }
+    } catch (err) {
+      console.error('Error fetching component documents:', err);
+    }
+  };
+
+  const handleDeleteDoc = async (docId: string) => {
+    if (!component || !confirm('Delete this document?')) return;
+    
+    try {
+      const response = await fetch(`/api/components/${component.id}/documents?docId=${docId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setComponentDocs(docs => docs.filter(d => d.id !== docId));
+      }
+    } catch (err) {
+      console.error('Error deleting document:', err);
     }
   };
 
@@ -498,18 +540,56 @@ export default function ComponentDetailPage() {
           />
         </div>
 
-        {/* Documents Section - Placeholder */}
+        {/* Documents Section */}
         <div className="glass-card rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Documents & Photos</h2>
-            <Button size="sm" disabled>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              Documents & Photos
+              {componentDocs.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-gray-500">({componentDocs.length})</span>
+              )}
+            </h2>
+            <Button size="sm" onClick={() => setShowDocUpload(true)}>
               <Plus className="w-4 h-4 mr-1" />
               Upload
             </Button>
           </div>
-          <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-3">
-            Document uploads coming soon
-          </p>
+          {componentDocs.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-3">
+              No documents or photos uploaded yet
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {componentDocs.map((doc) => (
+                <div key={doc.id} className="relative group">
+                  <a
+                    href={doc.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 hover:opacity-90 transition-opacity"
+                  >
+                    {doc.file_type.startsWith('image/') ? (
+                      <img src={doc.file_url} alt={doc.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-2">
+                        <FileIcon className="w-8 h-8 text-gray-400 mb-2" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400 text-center truncate w-full">
+                          {doc.name}
+                        </span>
+                      </div>
+                    )}
+                  </a>
+                  <button
+                    onClick={() => handleDeleteDoc(doc.id)}
+                    className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Delete"
+                  >
+                    <TrashIcon className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
@@ -572,6 +652,15 @@ export default function ComponentDetailPage() {
 
       {/* Confetti celebration for completed maintenance */}
       <Confetti isActive={confetti.isActive} onComplete={confetti.onComplete} />
+
+      {/* Component Document Upload Modal */}
+      <ComponentDocumentUpload
+        isOpen={showDocUpload}
+        onClose={() => setShowDocUpload(false)}
+        componentId={component.id}
+        boatId={component.boat_id}
+        onSuccess={() => fetchComponentDocs(component.id)}
+      />
     </div>
   );
 }
