@@ -10,7 +10,9 @@ import {
   Calendar,
   FileText,
   Image,
-  Trash2
+  Trash2,
+  AlertTriangle,
+  AlertCircle
 } from 'lucide-react';
 import { ComponentDetailSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
@@ -71,6 +73,67 @@ function formatCurrencyDisplay(amount: number, currencyCode: string): string {
   if (currencyCode === 'USD') return `$${formatted}`;
   if (currencyCode === 'EUR') return `€${formatted}`;
   return `AED ${formatted}`; // Use text for share/copy since SVG won't work in text
+}
+
+// Health status calculation for component
+type HealthStatus = 'good' | 'warning' | 'overdue' | 'unknown';
+
+interface HealthInfo {
+  status: HealthStatus;
+  message: string;
+  dueType?: 'date' | 'hours';
+  daysUntil?: number;
+  hoursUntil?: number;
+}
+
+function getComponentHealthInfo(component: BoatComponent): HealthInfo {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Check date-based service
+  if (component.next_service_date) {
+    const serviceDate = new Date(component.next_service_date);
+    const daysUntil = Math.ceil((serviceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntil < 0) {
+      return { 
+        status: 'overdue', 
+        message: `Service overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) !== 1 ? 's' : ''}`,
+        dueType: 'date',
+        daysUntil,
+      };
+    } else if (daysUntil <= 7) {
+      return { 
+        status: 'warning', 
+        message: `Service due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`,
+        dueType: 'date',
+        daysUntil,
+      };
+    }
+  }
+  
+  // Check hours-based service
+  if (component.next_service_hours && component.current_hours !== undefined) {
+    const hoursUntil = component.next_service_hours - component.current_hours;
+    
+    if (hoursUntil < 0) {
+      return { 
+        status: 'overdue', 
+        message: `Service overdue by ${Math.abs(hoursUntil).toLocaleString()} hours`,
+        dueType: 'hours',
+        hoursUntil,
+      };
+    } else if (hoursUntil <= 25) {
+      return { 
+        status: 'warning', 
+        message: `Service due in ${hoursUntil.toLocaleString()} hours`,
+        dueType: 'hours',
+        hoursUntil,
+      };
+    }
+  }
+  
+  return { status: 'good', message: '' };
 }
 
 export default function ComponentDetailPage() {
@@ -265,6 +328,50 @@ export default function ComponentDetailPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Service Status Banner */}
+        {(() => {
+          const health = getComponentHealthInfo(component);
+          if (health.status === 'overdue') {
+            return (
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 animate-fade-in">
+                <div className="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <p className="font-semibold text-red-700 dark:text-red-300">Overdue</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{health.message}</p>
+                </div>
+                <button
+                  onClick={() => setShowAddLog(true)}
+                  className="ml-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  Log Service
+                </button>
+              </div>
+            );
+          }
+          if (health.status === 'warning') {
+            return (
+              <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-3 animate-fade-in">
+                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-700 dark:text-amber-300">Service Due Soon</p>
+                  <p className="text-sm text-amber-600 dark:text-amber-400">{health.message}</p>
+                </div>
+                <button
+                  onClick={() => setShowSchedule(true)}
+                  className="ml-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  View Schedule
+                </button>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         {/* Component Info */}
         <div className="glass-card rounded-xl p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
