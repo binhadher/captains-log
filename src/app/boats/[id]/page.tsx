@@ -548,7 +548,13 @@ export default function BoatDetailPage() {
                 <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({alerts.length})</span>
               </h2>
             </div>
-            <AlertsList alerts={alerts} boatId={boat.id} compact />
+            <AlertsList 
+              alerts={alerts} 
+              boatId={boat.id} 
+              compact 
+              onAlertDismissed={() => fetchAlerts(boat.id)}
+              onAlertCompleted={() => fetchAlerts(boat.id)}
+            />
           </div>
         )}
 

@@ -162,6 +162,7 @@ export default function ComponentDetailPage() {
   const [copiedLogId, setCopiedLogId] = useState<string | null>(null);
   const [componentDocs, setComponentDocs] = useState<ComponentDocument[]>([]);
   const [showDocUpload, setShowDocUpload] = useState(false);
+  const [alertProcessing, setAlertProcessing] = useState(false);
   const confetti = useConfetti();
 
   // Check if we should auto-open schedule modal
@@ -272,6 +273,50 @@ export default function ComponentDetailPage() {
     confetti.trigger();
   };
 
+  // Quick dismiss - just pushes next service date forward
+  const handleQuickDismiss = async (dueType: 'date' | 'hours') => {
+    if (!component) return;
+    if (!confirm('Dismiss this alert? It will reappear when the next service is due.')) return;
+    
+    setAlertProcessing(true);
+    try {
+      const response = await fetch(`/api/components/${component.id}/dismiss-alert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alertType: dueType === 'date' ? 'maintenance_date' : 'maintenance_hours' }),
+      });
+      if (response.ok) {
+        fetchComponent(component.id);
+      }
+    } catch (err) {
+      console.error('Error dismissing alert:', err);
+    }
+    setAlertProcessing(false);
+  };
+
+  // Quick complete - logs service and updates next date
+  const handleQuickComplete = async (dueType: 'date' | 'hours', serviceName: string) => {
+    if (!component) return;
+    setAlertProcessing(true);
+    try {
+      const response = await fetch(`/api/components/${component.id}/quick-complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          alertType: dueType === 'date' ? 'maintenance_date' : 'maintenance_hours',
+          serviceName,
+        }),
+      });
+      if (response.ok) {
+        fetchComponent(component.id);
+        confetti.trigger();
+      }
+    } catch (err) {
+      console.error('Error completing service:', err);
+    }
+    setAlertProcessing(false);
+  };
+
   if (loading) {
     return <ComponentDetailSkeleton />;
   }
@@ -351,16 +396,18 @@ export default function ComponentDetailPage() {
                 </div>
                 <div className="flex gap-2 mt-3 ml-13">
                   <button
-                    onClick={() => setShowAddLog(true)}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    onClick={() => handleQuickComplete(health.dueType || 'date', health.serviceName)}
+                    disabled={alertProcessing}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
-                    ✓ Completed
+                    {alertProcessing ? '...' : '✓ Completed'}
                   </button>
                   <button
-                    onClick={() => setShowSchedule(true)}
-                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+                    onClick={() => handleQuickDismiss(health.dueType || 'date')}
+                    disabled={alertProcessing}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
-                    Dismiss
+                    {alertProcessing ? '...' : 'Dismiss'}
                   </button>
                 </div>
               </div>
@@ -380,16 +427,18 @@ export default function ComponentDetailPage() {
                 </div>
                 <div className="flex gap-2 mt-3 ml-13">
                   <button
-                    onClick={() => setShowAddLog(true)}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    onClick={() => handleQuickComplete(health.dueType || 'date', health.serviceName)}
+                    disabled={alertProcessing}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
-                    ✓ Completed
+                    {alertProcessing ? '...' : '✓ Completed'}
                   </button>
                   <button
-                    onClick={() => setShowSchedule(true)}
-                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+                    onClick={() => handleQuickDismiss(health.dueType || 'date')}
+                    disabled={alertProcessing}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
-                    Dismiss
+                    {alertProcessing ? '...' : 'Dismiss'}
                   </button>
                 </div>
               </div>

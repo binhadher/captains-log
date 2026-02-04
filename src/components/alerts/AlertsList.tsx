@@ -1,13 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Clock, FileText, Bell, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Clock, FileText, Bell, ChevronRight, Check, X } from 'lucide-react';
 import { Alert, SEVERITY_COLORS, formatDueIn, formatHoursDue } from '@/lib/alerts';
 
 interface AlertsListProps {
   alerts: Alert[];
   boatId: string;
   compact?: boolean;
+  onAlertDismissed?: (alertId: string) => void;
+  onAlertCompleted?: (alert: Alert) => void;
 }
 
 const TYPE_ICONS: Record<Alert['type'], React.ReactNode> = {
@@ -17,8 +20,76 @@ const TYPE_ICONS: Record<Alert['type'], React.ReactNode> = {
   health_check: <Bell className="w-4 h-4" />,
 };
 
-export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps) {
-  if (alerts.length === 0) {
+export function AlertsList({ alerts, boatId, compact = false, onAlertDismissed, onAlertCompleted }: AlertsListProps) {
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const handleDismiss = async (e: React.MouseEvent, alert: Alert) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!confirm('Dismiss this alert? It will reappear when the next service is due.')) return;
+    
+    setProcessingId(alert.id);
+    
+    // For maintenance alerts, push the next service date forward by the interval
+    if (alert.componentId && (alert.type === 'maintenance_date' || alert.type === 'maintenance_hours')) {
+      try {
+        const response = await fetch(`/api/components/${alert.componentId}/dismiss-alert`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ alertType: alert.type }),
+        });
+        
+        if (response.ok) {
+          setDismissedIds(prev => new Set([...prev, alert.id]));
+          onAlertDismissed?.(alert.id);
+        }
+      } catch (err) {
+        console.error('Error dismissing alert:', err);
+      }
+    } else {
+      // For document expiry, just hide locally
+      setDismissedIds(prev => new Set([...prev, alert.id]));
+      onAlertDismissed?.(alert.id);
+    }
+    
+    setProcessingId(null);
+  };
+
+  const handleComplete = async (e: React.MouseEvent, alert: Alert) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!alert.componentId) return;
+    
+    setProcessingId(alert.id);
+    
+    try {
+      // Quick complete - log service and update next service date
+      const response = await fetch(`/api/components/${alert.componentId}/quick-complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          alertType: alert.type,
+          serviceName: alert.title.replace(' service due', ''),
+        }),
+      });
+      
+      if (response.ok) {
+        setDismissedIds(prev => new Set([...prev, alert.id]));
+        onAlertCompleted?.(alert);
+      }
+    } catch (err) {
+      console.error('Error completing service:', err);
+    }
+    
+    setProcessingId(null);
+  };
+
+  const visibleAlerts = alerts.filter(a => !dismissedIds.has(a.id));
+
+  if (visibleAlerts.length === 0) {
     return (
       <div className="text-center py-6">
         <Bell className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
@@ -31,46 +102,60 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
   if (compact) {
     return (
       <div className="space-y-2">
-        {alerts.slice(0, 5).map((alert) => {
+        {visibleAlerts.slice(0, 5).map((alert) => {
           const colors = SEVERITY_COLORS[alert.severity];
           const daysUntilDue = alert.dueDate 
             ? Math.ceil((new Date(alert.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
             : null;
-
-          const linkHref = alert.componentId 
-            ? `/boats/${boatId}/components/${alert.componentId}?openSchedule=true`
-            : `/boats/${boatId}`;
+          const isProcessing = processingId === alert.id;
+          const isMaintenanceAlert = alert.type === 'maintenance_date' || alert.type === 'maintenance_hours';
 
           return (
-            <Link key={alert.id} href={linkHref}>
-              <div 
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:shadow-md transition-all ${colors.bg} ${colors.border}`}
-              >
-                <div className={colors.text}>
-                  {TYPE_ICONS[alert.type]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-medium text-sm ${colors.text}`}>{alert.title}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{alert.description}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`text-sm font-medium ${colors.text}`}>
-                    {daysUntilDue !== null 
-                      ? formatDueIn(daysUntilDue)
-                      : alert.dueHours && alert.currentHours
-                        ? formatHoursDue(alert.dueHours - alert.currentHours, alert.currentHours)
-                        : ''
-                    }
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-400" />
-                </div>
+            <div 
+              key={alert.id}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${colors.bg} ${colors.border} ${isProcessing ? 'opacity-50' : ''}`}
+            >
+              <div className={colors.text}>
+                {TYPE_ICONS[alert.type]}
               </div>
-            </Link>
+              <div className="flex-1 min-w-0">
+                <p className={`font-medium text-sm ${colors.text}`}>{alert.title}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{alert.description}</p>
+              </div>
+              <div className={`text-sm font-medium ${colors.text} whitespace-nowrap`}>
+                {daysUntilDue !== null 
+                  ? formatDueIn(daysUntilDue)
+                  : alert.dueHours && alert.currentHours
+                    ? formatHoursDue(alert.dueHours - alert.currentHours, alert.currentHours)
+                    : ''
+                }
+              </div>
+              <div className="flex items-center gap-1">
+                {isMaintenanceAlert && alert.componentId && (
+                  <button
+                    onClick={(e) => handleComplete(e, alert)}
+                    disabled={isProcessing}
+                    className="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                    title="Mark as completed"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={(e) => handleDismiss(e, alert)}
+                  disabled={isProcessing}
+                  className="p-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg transition-colors disabled:opacity-50"
+                  title="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           );
         })}
-        {alerts.length > 5 && (
+        {visibleAlerts.length > 5 && (
           <p className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
-            +{alerts.length - 5} more alerts
+            +{visibleAlerts.length - 5} more alerts
           </p>
         )}
       </div>
@@ -79,20 +164,22 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
 
   return (
     <div className="space-y-3">
-      {alerts.map((alert) => {
+      {visibleAlerts.map((alert) => {
         const colors = SEVERITY_COLORS[alert.severity];
         const daysUntilDue = alert.dueDate 
           ? Math.ceil((new Date(alert.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
           : null;
+        const isProcessing = processingId === alert.id;
+        const isMaintenanceAlert = alert.type === 'maintenance_date' || alert.type === 'maintenance_hours';
 
         const linkHref = alert.componentId 
           ? `/boats/${boatId}/components/${alert.componentId}`
           : `/boats/${boatId}`;
 
         return (
-          <Link key={alert.id} href={linkHref}>
-            <div className={`flex items-center gap-4 p-4 rounded-lg border transition-all hover:shadow-md ${colors.bg} ${colors.border}`}>
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colors.text} bg-white/50`}>
+          <div key={alert.id} className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${colors.bg} ${colors.border} ${isProcessing ? 'opacity-50' : ''}`}>
+            <Link href={linkHref} className="flex items-center gap-4 flex-1 min-w-0">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colors.text} bg-white/50 flex-shrink-0`}>
                 {alert.severity === 'overdue' ? (
                   <AlertTriangle className="w-5 h-5" />
                 ) : (
@@ -118,9 +205,28 @@ export function AlertsList({ alerts, boatId, compact = false }: AlertsListProps)
                   </p>
                 )}
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-400" />
+            </Link>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {isMaintenanceAlert && alert.componentId && (
+                <button
+                  onClick={(e) => handleComplete(e, alert)}
+                  disabled={isProcessing}
+                  className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                  title="Mark as completed"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={(e) => handleDismiss(e, alert)}
+                disabled={isProcessing}
+                className="p-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-lg transition-colors disabled:opacity-50"
+                title="Dismiss"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-          </Link>
+          </div>
         );
       })}
     </div>
