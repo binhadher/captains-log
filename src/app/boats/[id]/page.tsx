@@ -15,7 +15,7 @@ import {
   Trash2,
   Plus,
   Cog,
-  DollarSign,
+  Coins,
   ChevronRight,
   Camera
 } from 'lucide-react';
@@ -23,6 +23,7 @@ import { BoatDetailSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
+import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
 import { UserButton } from '@clerk/nextjs';
 import { Boat, BoatComponent, Part, HealthCheck, Document } from '@/types/database';
 import { ComponentList } from '@/components/boats/ComponentList';
@@ -54,7 +55,9 @@ import { FAB } from '@/components/ui/FAB';
 export default function BoatDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { currency } = useCurrency();
   const [boat, setBoat] = useState<Boat | null>(null);
+  const [totalCost, setTotalCost] = useState<number>(0);
   const [components, setComponents] = useState<BoatComponent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,8 +92,21 @@ export default function BoatDetailPage() {
       fetchAlerts(params.id as string);
       fetchDocuments(params.id as string);
       fetchCrew(params.id as string);
+      fetchCosts(params.id as string);
     }
   }, [params.id]);
+
+  const fetchCosts = async (boatId: string) => {
+    try {
+      const response = await fetch(`/api/boats/${boatId}/costs`);
+      if (response.ok) {
+        const data = await response.json();
+        setTotalCost(data.summary?.totalAllTime || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching costs:', err);
+    }
+  };
 
   const fetchComponents = async (boatId: string) => {
     try {
@@ -543,11 +559,20 @@ export default function BoatDetailPage() {
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <Coins className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
               <h2 className="text-base font-semibold text-gray-900 dark:text-white">Cost Tracking</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">View spending trends & breakdown</p>
+              {totalCost > 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  Total: {currency === 'AED' && <AedSymbol className="w-3 h-3 inline" />}
+                  {currency === 'USD' && '$'}
+                  {currency === 'EUR' && '€'}
+                  {totalCost.toLocaleString()}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">View spending trends & breakdown</p>
+              )}
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
