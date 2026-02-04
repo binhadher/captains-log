@@ -15,7 +15,8 @@ import {
   Play,
   Plus,
   Settings,
-  Share2
+  Share2,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -36,6 +37,7 @@ interface GalleryItem {
 interface Boat {
   id: string;
   name: string;
+  photo_url?: string | null;
 }
 
 export default function GalleryPage() {
@@ -51,6 +53,7 @@ export default function GalleryPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCameraCapture, setShowCameraCapture] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [settingCover, setSettingCover] = useState(false);
 
   const shareFile = async (item: GalleryItem) => {
     setSharing(true);
@@ -82,6 +85,32 @@ export default function GalleryPage() {
       }
     } finally {
       setSharing(false);
+    }
+  };
+
+  const handleSetAsCover = async (item: GalleryItem) => {
+    if (item.file_type !== 'image') return;
+    
+    setSettingCover(true);
+    try {
+      const res = await fetch(`/api/boats/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo_url: item.file_url }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to set cover photo');
+      }
+
+      const { boat: updatedBoat } = await res.json();
+      setBoat(updatedBoat);
+      setSelectedItem(null);
+    } catch (err) {
+      console.error('Set cover error:', err);
+      setError('Failed to set cover photo');
+    } finally {
+      setSettingCover(false);
     }
   };
 
@@ -542,6 +571,29 @@ export default function GalleryPage() {
                 <Share2 className="w-6 h-6" />
               )}
             </button>
+
+            {/* Set as Cover - only for images */}
+            {selectedItem.file_type === 'image' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSetAsCover(selectedItem);
+                }}
+                disabled={settingCover || boat?.photo_url === selectedItem.file_url}
+                className={`absolute top-4 left-28 p-2 text-white rounded-full transition-colors disabled:opacity-50 ${
+                  boat?.photo_url === selectedItem.file_url 
+                    ? 'bg-amber-500 cursor-default' 
+                    : 'hover:bg-amber-600'
+                }`}
+                title={boat?.photo_url === selectedItem.file_url ? 'Current cover photo' : 'Set as cover photo'}
+              >
+                {settingCover ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : (
+                  <Star className={`w-6 h-6 ${boat?.photo_url === selectedItem.file_url ? 'fill-current' : ''}`} />
+                )}
+              </button>
+            )}
 
             <div 
               className="max-w-5xl max-h-[90vh] w-full"

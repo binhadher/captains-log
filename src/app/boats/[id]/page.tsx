@@ -48,6 +48,7 @@ import { EditBoatModal } from '@/components/boats/EditBoatModal';
 import { EditEnginesModal } from '@/components/boats/EditEnginesModal';
 import { EditComponentModal } from '@/components/boats/EditComponentModal';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
+import { BoatHero } from '@/components/boats/BoatHero';
 
 export default function BoatDetailPage() {
   const params = useParams();
@@ -302,6 +303,14 @@ export default function BoatDetailPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Hero Photo */}
+        <BoatHero
+          boatId={boat.id}
+          boatName={boat.name}
+          photoUrl={boat.photo_url}
+          onPhotoChange={(url) => setBoat({ ...boat, photo_url: url || undefined })}
+        />
+
         {/* Boat Info Card */}
         <div className="glass-card rounded-xl p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
