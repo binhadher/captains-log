@@ -6,12 +6,16 @@ import { Boat } from '@/types/database';
 
 interface BoatCardProps {
   boat: Boat;
+  index?: number;
 }
 
-export function BoatCard({ boat }: BoatCardProps) {
+export function BoatCard({ boat, index = 0 }: BoatCardProps) {
+  // Calculate stagger delay (max 6 items)
+  const staggerClass = index < 6 ? `animate-stagger-${index + 1}` : '';
+  
   return (
     <Link href={`/boats/${boat.id}`}>
-      <div className="glass-card rounded-xl p-4 hover:scale-[1.01] hover:shadow-lg transition-all cursor-pointer group">
+      <div className={`glass-card glass-card-interactive rounded-xl p-4 hover:scale-[1.01] transition-all cursor-pointer group animate-slide-in-up animate-fill-both ${staggerClass}`}>
         <div className="flex items-center gap-3">
           {boat.photo_url ? (
             <img 

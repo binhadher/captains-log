@@ -161,7 +161,7 @@ export function BoatHero({ boatId, boatName, photoUrl, onPhotoChange }: BoatHero
             className="fixed inset-0 z-10" 
             onClick={() => setShowOptions(false)} 
           />
-          <div className="absolute top-14 right-3 z-20 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[160px]">
+          <div className="absolute top-14 right-3 z-20 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[160px] animate-scale-in">
             <button
               onClick={() => fileInputRef.current?.click()}
               className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"

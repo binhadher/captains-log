@@ -70,10 +70,29 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--card-border);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .dark .glass-card {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* Interactive cards get hover lift effect */
+.glass-card-interactive {
+  cursor: pointer;
+}
+
+.glass-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .glass-card-interactive:hover {
+  box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.4), 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card-interactive:active {
+  transform: translateY(0);
 }
 
 /* Dark mode text handled by Tailwind classes on each component */
@@ -112,7 +131,25 @@ body {
   background: var(--primary-500);
 }
 
-/* Animation for slide in */
+/* ============================================
+   MICRO-ANIMATIONS
+   ============================================ */
+
+/* Fade in - for cards and content */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Slide in from top */
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -126,6 +163,51 @@ body {
 
 .animate-slide-in {
   animation: slideIn 0.2s ease-out;
+}
+
+/* Slide in from bottom - for cards appearing */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.4s ease-out;
+}
+
+/* Scale in - for modals and popups */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Staggered animation delays for lists */
+.animate-stagger-1 { animation-delay: 0.05s; }
+.animate-stagger-2 { animation-delay: 0.1s; }
+.animate-stagger-3 { animation-delay: 0.15s; }
+.animate-stagger-4 { animation-delay: 0.2s; }
+.animate-stagger-5 { animation-delay: 0.25s; }
+.animate-stagger-6 { animation-delay: 0.3s; }
+
+/* Fill mode for staggered animations */
+.animate-fill-both {
+  animation-fill-mode: both;
 }
 
 /* Animation for slide up (PWA prompt) */

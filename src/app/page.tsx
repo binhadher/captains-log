@@ -362,8 +362,8 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {boats.map((boat) => (
-                    <BoatCard key={boat.id} boat={boat} />
+                  {boats.map((boat, index) => (
+                    <BoatCard key={boat.id} boat={boat} index={index} />
                   ))}
                 </div>
               )}
