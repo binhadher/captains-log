@@ -41,17 +41,19 @@ export function BoatHero({ boatId, boatName, photoUrl, onPhotoChange }: BoatHero
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          filename: `boat-hero-${boatId}-${Date.now()}.${file.name.split('.').pop()}`,
-          contentType: file.type,
-          bucket: 'boat-photos',
+          fileName: `boat-hero-${Date.now()}.${file.name.split('.').pop()}`,
+          fileType: file.type,
+          fileSize: file.size,
+          boatId: boatId,
         }),
       });
 
       if (!signedUrlRes.ok) {
-        throw new Error('Failed to get upload URL');
+        const errData = await signedUrlRes.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to get upload URL');
       }
 
-      const { signedUrl, path } = await signedUrlRes.json();
+      const { signedUrl, publicUrl } = await signedUrlRes.json();
 
       // Upload directly to Supabase
       const uploadRes = await fetch(signedUrl, {
@@ -63,9 +65,6 @@ export function BoatHero({ boatId, boatName, photoUrl, onPhotoChange }: BoatHero
       if (!uploadRes.ok) {
         throw new Error('Failed to upload image');
       }
-
-      // Get the public URL
-      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/boat-photos/${path}`;
 
       // Update boat with new photo URL
       const updateRes = await fetch(`/api/boats/${boatId}`, {
