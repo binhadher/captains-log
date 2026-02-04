@@ -28,6 +28,8 @@ import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
 import { EditPartModal } from '@/components/parts/EditPartModal';
 import { Package, Settings, Pencil, Copy, Check, Share2 } from 'lucide-react';
+import { Confetti } from '@/components/ui/Confetti';
+import { useConfetti } from '@/hooks/useConfetti';
 
 interface Document {
   id: string;
@@ -79,6 +81,7 @@ export default function ComponentDetailPage() {
   const [editingPart, setEditingPart] = useState<Part | null>(null);
   const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
   const [copiedLogId, setCopiedLogId] = useState<string | null>(null);
+  const confetti = useConfetti();
 
   // Check if we should auto-open schedule modal
   useEffect(() => {
@@ -154,6 +157,8 @@ export default function ComponentDetailPage() {
       fetchComponent(params.componentId as string);
     }
     setShowAddLog(false);
+    // Celebrate! 🎉
+    confetti.trigger();
   };
 
   if (loading) {
@@ -564,6 +569,9 @@ export default function ComponentDetailPage() {
         onSuccess={() => fetchComponent(component.id)}
         onDelete={() => fetchComponent(component.id)}
       />
+
+      {/* Confetti celebration for completed maintenance */}
+      <Confetti isActive={confetti.isActive} onComplete={confetti.onComplete} />
     </div>
   );
 }

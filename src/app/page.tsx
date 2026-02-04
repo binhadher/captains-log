@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { UserButton, useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { LandingPage } from '@/components/landing/LandingPage';
-import { Plus, Ship, AlertTriangle, Clock, FileText, Wrench, ChevronRight, Anchor, Settings, Download, X, Smartphone } from 'lucide-react';
+import { Plus, Ship, AlertTriangle, Clock, FileText, Wrench, ChevronRight, Anchor, Settings, Download, X, Smartphone, Search } from 'lucide-react';
 import { Skeleton, AlertsListSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -16,6 +16,7 @@ import { Alert, formatDueIn, formatHoursDue, SEVERITY_COLORS } from '@/lib/alert
 import { ActivityFeed, ActivityItem } from '@/components/activity/ActivityFeed';
 import { SpendingCard, CostSummary } from '@/components/costs/SpendingCard';
 import { WeatherWidget } from '@/components/weather/WeatherWidget';
+import { GlobalSearch } from '@/components/search/GlobalSearch';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -43,6 +44,7 @@ export default function Dashboard() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   // PWA Install detection - must be before conditional returns
   useEffect(() => {
@@ -75,6 +77,18 @@ export default function Dashboard() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
+  }, []);
+
+  // Keyboard shortcut for search (Cmd+K or Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   useEffect(() => {
@@ -236,6 +250,13 @@ export default function Dashboard() {
               <h1 className="text-lg font-bold text-teal-700 dark:text-white">Captain&apos;s Log</h1>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowSearch(true)}
+                className="p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"
+                title="Search (⌘K)"
+              >
+                <Search className="w-5 h-5 text-gray-700 dark:text-white" />
+              </button>
               <ThemeToggle />
               <Link 
                 href="/settings" 
@@ -549,6 +570,9 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Global Search */}
+      <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </div>
   );
 }

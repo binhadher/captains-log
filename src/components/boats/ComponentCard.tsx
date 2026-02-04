@@ -10,10 +10,56 @@ import {
   Clock,
   Calendar,
   Battery,
-  Pencil
+  Pencil,
+  Circle
 } from 'lucide-react';
 import { BoatComponent } from '@/types/database';
 import { formatDate } from '@/lib/utils';
+
+// Health status calculation
+type HealthStatus = 'good' | 'warning' | 'overdue' | 'unknown';
+
+function getHealthStatus(component: BoatComponent): { status: HealthStatus; label: string } {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Check date-based service
+  if (component.next_service_date) {
+    const serviceDate = new Date(component.next_service_date);
+    const daysUntil = Math.ceil((serviceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntil < 0) {
+      return { status: 'overdue', label: `${Math.abs(daysUntil)}d overdue` };
+    } else if (daysUntil <= 7) {
+      return { status: 'warning', label: `Due in ${daysUntil}d` };
+    } else {
+      return { status: 'good', label: 'OK' };
+    }
+  }
+  
+  // Check hours-based service
+  if (component.next_service_hours && component.current_hours !== undefined) {
+    const hoursUntil = component.next_service_hours - component.current_hours;
+    
+    if (hoursUntil < 0) {
+      return { status: 'overdue', label: `${Math.abs(hoursUntil)}h overdue` };
+    } else if (hoursUntil <= 25) {
+      return { status: 'warning', label: `${hoursUntil}h left` };
+    } else {
+      return { status: 'good', label: 'OK' };
+    }
+  }
+  
+  // No service schedule set
+  return { status: 'unknown', label: '' };
+}
+
+const HEALTH_COLORS: Record<HealthStatus, string> = {
+  good: 'text-green-500',
+  warning: 'text-amber-500',
+  overdue: 'text-red-500',
+  unknown: 'text-gray-300 dark:text-gray-600',
+};
 
 interface ComponentCardProps {
   component: BoatComponent;
@@ -66,6 +112,7 @@ export function ComponentCard({ component, boatId, onEdit }: ComponentCardProps)
   const icon = TYPE_ICONS[component.type] || <Cog className="w-5 h-5" />;
   const colorClass = TYPE_COLORS[component.type] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
   const isBattery = isBatteryType(component.type);
+  const health = getHealthStatus(component);
 
   // Calculate battery age if it's a battery with install date
   const getBatteryAge = () => {
@@ -87,8 +134,16 @@ export function ComponentCard({ component, boatId, onEdit }: ComponentCardProps)
     <div className="bg-white dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm transition-all">
       <div className="flex items-center justify-between">
         <Link href={`/boats/${boatId}/components/${component.id}`} className="flex items-center gap-3 flex-1 min-w-0">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
-            {icon}
+          <div className="relative flex-shrink-0">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass}`}>
+              {icon}
+            </div>
+            {/* Health badge */}
+            {health.status !== 'unknown' && (
+              <div className={`absolute -top-1 -right-1 ${HEALTH_COLORS[health.status]}`} title={health.label}>
+                <Circle className="w-3 h-3 fill-current" />
+              </div>
+            )}
           </div>
           <div className="min-w-0">
             <h4 className="font-medium text-gray-900 dark:text-white truncate">{component.name}</h4>

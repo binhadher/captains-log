@@ -49,6 +49,7 @@ import { EditEnginesModal } from '@/components/boats/EditEnginesModal';
 import { EditComponentModal } from '@/components/boats/EditComponentModal';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 import { BoatHero } from '@/components/boats/BoatHero';
+import { FAB } from '@/components/ui/FAB';
 
 export default function BoatDetailPage() {
   const params = useParams();
@@ -670,6 +671,9 @@ export default function BoatDetailPage() {
           />
         </div>
       </main>
+
+      {/* Floating Action Button */}
+      <FAB boatId={boat.id} />
 
       {/* Add Component Modal (single component) */}
       <AddComponentModal
