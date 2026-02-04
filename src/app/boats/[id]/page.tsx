@@ -28,6 +28,7 @@ import { Boat, BoatComponent, Part, HealthCheck, Document } from '@/types/databa
 import { ComponentList } from '@/components/boats/ComponentList';
 import { ComponentSetupModal } from '@/components/boats/ComponentSetupModal';
 import { BoatSetupWizard } from '@/components/boats/BoatSetupWizard';
+import { AddComponentModal } from '@/components/boats/AddComponentModal';
 import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
 import { EditPartModal } from '@/components/parts/EditPartModal';
@@ -58,6 +59,7 @@ export default function BoatDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [showAddComponent, setShowAddComponent] = useState(false);
   const [parts, setParts] = useState<Part[]>([]);
   const [showAddPart, setShowAddPart] = useState(false);
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([]);
@@ -553,6 +555,7 @@ export default function BoatDetailPage() {
             components={components} 
             boatId={boat.id}
             onSetupClick={() => setShowWizard(true)}
+            onAddClick={() => setShowAddComponent(true)}
             onEditComponent={(comp) => setEditingComponent(comp)}
           />
         </div>
@@ -658,6 +661,14 @@ export default function BoatDetailPage() {
           />
         </div>
       </main>
+
+      {/* Add Component Modal (single component) */}
+      <AddComponentModal
+        isOpen={showAddComponent}
+        onClose={() => setShowAddComponent(false)}
+        boatId={boat.id}
+        onSuccess={() => fetchComponents(boat.id)}
+      />
 
       {/* Boat Setup Wizard (new guided flow) */}
       <BoatSetupWizard

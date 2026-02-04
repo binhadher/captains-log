@@ -9,6 +9,7 @@ interface ComponentListProps {
   components: BoatComponent[];
   boatId: string;
   onSetupClick: () => void;
+  onAddClick: () => void;
   onEditComponent?: (component: BoatComponent) => void;
 }
 
@@ -55,7 +56,7 @@ const CATEGORY_INFO: Record<ComponentCategory, { label: string; icon: React.Reac
   },
 };
 
-export function ComponentList({ components, boatId, onSetupClick, onEditComponent }: ComponentListProps) {
+export function ComponentList({ components, boatId, onSetupClick, onAddClick, onEditComponent }: ComponentListProps) {
   // Group components by category
   const grouped = components.reduce((acc, comp) => {
     if (!acc[comp.category]) {
@@ -209,7 +210,7 @@ export function ComponentList({ components, boatId, onSetupClick, onEditComponen
       })}
       
       <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-        <Button variant="outline" size="sm" onClick={onSetupClick}>
+        <Button variant="outline" size="sm" onClick={onAddClick}>
           <Plus className="w-4 h-4 mr-1" />
           Add Component
         </Button>
