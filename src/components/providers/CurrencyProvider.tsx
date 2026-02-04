@@ -59,8 +59,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
 export function useCurrency() {
   const context = useContext(CurrencyContext);
+  // Provide safe default during SSR/hydration
   if (context === undefined) {
-    throw new Error('useCurrency must be used within a CurrencyProvider');
+    return {
+      currency: 'AED' as Currency,
+      setCurrency: () => {},
+      formatAmount: (amount: number) => amount.toLocaleString(),
+      symbol: '',
+    };
   }
   return context;
 }
