@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Camera, Ship, X, Loader2 } from 'lucide-react';
+import { Camera, Ship, X, Loader2, ImageIcon } from 'lucide-react';
 
 interface BoatHeroProps {
   boatId: string;
@@ -14,6 +14,7 @@ export function BoatHero({ boatId, boatName, photoUrl, onPhotoChange }: BoatHero
   const [uploading, setUploading] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -157,13 +158,26 @@ export function BoatHero({ boatId, boatName, photoUrl, onPhotoChange }: BoatHero
             className="fixed inset-0 z-10" 
             onClick={() => setShowOptions(false)} 
           />
-          <div className="absolute top-14 right-3 z-20 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[160px] animate-scale-in">
+          <div className="absolute top-14 right-3 z-20 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[180px] animate-scale-in">
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                setShowOptions(false);
+                fileInputRef.current?.click();
+              }}
+              className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            >
+              <ImageIcon className="w-4 h-4" />
+              Choose from Gallery
+            </button>
+            <button
+              onClick={() => {
+                setShowOptions(false);
+                cameraInputRef.current?.click();
+              }}
               className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
             >
               <Camera className="w-4 h-4" />
-              {photoUrl ? 'Change photo' : 'Upload photo'}
+              Take Photo
             </button>
             {photoUrl && (
               <button
@@ -178,11 +192,19 @@ export function BoatHero({ boatId, boatName, photoUrl, onPhotoChange }: BoatHero
         </>
       )}
 
-      {/* Hidden file input */}
+      {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
         onChange={handleFileSelect}
         className="hidden"
       />
