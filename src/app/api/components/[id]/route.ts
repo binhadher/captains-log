@@ -137,6 +137,7 @@ export async function PUT(
         current_hours: body.current_hours ?? existing.current_hours,
         notes: body.notes ?? existing.notes,
         // Service schedule fields
+        scheduled_service_name: body.scheduled_service_name ?? existing.scheduled_service_name,
         service_interval_days: body.service_interval_days ?? existing.service_interval_days,
         service_interval_hours: body.service_interval_hours ?? existing.service_interval_hours,
         next_service_date: body.next_service_date ?? existing.next_service_date,
@@ -203,7 +204,7 @@ export async function PATCH(
     const allowedFields = [
       'name', 'position', 'brand', 'model', 'serial_number', 
       'install_date', 'current_hours', 'notes',
-      'service_interval_days', 'service_interval_hours',
+      'scheduled_service_name', 'service_interval_days', 'service_interval_hours',
       'next_service_date', 'next_service_hours',
       'last_service_date', 'last_service_hours'
     ];

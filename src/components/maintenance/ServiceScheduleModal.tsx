@@ -12,6 +12,7 @@ interface ServiceScheduleModalProps {
   componentType: string;
   currentHours?: number;
   currentSchedule?: {
+    scheduled_service_name?: string;
     service_interval_days?: number;
     service_interval_hours?: number;
     next_service_date?: string;
@@ -19,6 +20,19 @@ interface ServiceScheduleModalProps {
   };
   onSuccess: () => void;
 }
+
+// Common service types per component type
+const SERVICE_SUGGESTIONS: Record<string, string[]> = {
+  engine: ['Oil Change', 'Fuel Filter', 'Oil Filter', 'Impeller', 'Belts', 'Zincs', 'Annual Service'],
+  inboard_engine: ['Oil Change', 'Fuel Filter', 'Oil Filter', 'Impeller', 'Belts', 'Zincs', 'Annual Service'],
+  outboard_engine: ['Oil Change', 'Gear Oil', 'Fuel Filter', 'Spark Plugs', 'Impeller', 'Zincs', 'Annual Service'],
+  generator: ['Oil Change', 'Fuel Filter', 'Air Filter', 'Impeller', 'Belts', 'Annual Service'],
+  ac_chiller: ['Filter Clean', 'Refrigerant Check', 'Annual Service'],
+  ac_air_handler: ['Filter Clean', 'Coil Clean', 'Annual Service'],
+  bow_thruster: ['Seals Check', 'Oil Change', 'Zincs', 'Annual Service'],
+  stern_thruster: ['Seals Check', 'Oil Change', 'Zincs', 'Annual Service'],
+  default: ['Annual Service', 'Inspection', 'Maintenance'],
+};
 
 export function ServiceScheduleModal({
   isOpen,
@@ -32,9 +46,11 @@ export function ServiceScheduleModal({
 }: ServiceScheduleModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const showHours = ['engine', 'generator'].includes(componentType);
+  const showHours = ['engine', 'inboard_engine', 'outboard_engine', 'generator'].includes(componentType);
+  const suggestions = SERVICE_SUGGESTIONS[componentType] || SERVICE_SUGGESTIONS.default;
   
   const [formData, setFormData] = useState({
+    scheduled_service_name: currentSchedule?.scheduled_service_name || '',
     service_interval_days: currentSchedule?.service_interval_days?.toString() || '',
     service_interval_hours: currentSchedule?.service_interval_hours?.toString() || '',
     next_service_date: currentSchedule?.next_service_date || '',
@@ -53,6 +69,7 @@ export function ServiceScheduleModal({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          scheduled_service_name: formData.scheduled_service_name || null,
           service_interval_days: formData.service_interval_days ? parseInt(formData.service_interval_days) : null,
           service_interval_hours: formData.service_interval_hours ? parseInt(formData.service_interval_hours) : null,
           next_service_date: formData.next_service_date || null,
@@ -97,6 +114,30 @@ export function ServiceScheduleModal({
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Service Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Service Type *
+              </label>
+              <input
+                type="text"
+                list="service-suggestions"
+                value={formData.scheduled_service_name}
+                onChange={(e) => setFormData({ ...formData, scheduled_service_name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Oil Change, Fuel Filter, Impeller..."
+                required
+              />
+              <datalist id="service-suggestions">
+                {suggestions.map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                What service is being scheduled?
+              </p>
+            </div>
+
             {/* Date-based scheduling */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">

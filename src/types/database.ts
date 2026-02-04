@@ -72,6 +72,7 @@ export interface BoatComponent {
   notes?: string;
   sort_order: number;
   // Service schedule
+  scheduled_service_name?: string; // e.g., "Oil Change", "Fuel Filter", "Impeller"
   service_interval_days?: number;
   service_interval_hours?: number;
   last_service_date?: string;

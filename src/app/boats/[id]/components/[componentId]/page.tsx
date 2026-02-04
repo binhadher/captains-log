@@ -80,6 +80,7 @@ type HealthStatus = 'good' | 'warning' | 'overdue' | 'unknown';
 
 interface HealthInfo {
   status: HealthStatus;
+  serviceName: string;
   message: string;
   dueType?: 'date' | 'hours';
   daysUntil?: number;
@@ -89,6 +90,7 @@ interface HealthInfo {
 function getComponentHealthInfo(component: BoatComponent): HealthInfo {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const serviceName = component.scheduled_service_name || 'Service';
   
   // Check date-based service
   if (component.next_service_date) {
@@ -98,14 +100,16 @@ function getComponentHealthInfo(component: BoatComponent): HealthInfo {
     if (daysUntil < 0) {
       return { 
         status: 'overdue', 
-        message: `Service overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) !== 1 ? 's' : ''}`,
+        serviceName,
+        message: `Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) !== 1 ? 's' : ''}`,
         dueType: 'date',
         daysUntil,
       };
     } else if (daysUntil <= 7) {
       return { 
         status: 'warning', 
-        message: `Service due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`,
+        serviceName,
+        message: `Due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`,
         dueType: 'date',
         daysUntil,
       };
@@ -119,21 +123,23 @@ function getComponentHealthInfo(component: BoatComponent): HealthInfo {
     if (hoursUntil < 0) {
       return { 
         status: 'overdue', 
-        message: `Service overdue by ${Math.abs(hoursUntil).toLocaleString()} hours`,
+        serviceName,
+        message: `Overdue by ${Math.abs(hoursUntil).toLocaleString()} hours`,
         dueType: 'hours',
         hoursUntil,
       };
     } else if (hoursUntil <= 25) {
       return { 
         status: 'warning', 
-        message: `Service due in ${hoursUntil.toLocaleString()} hours`,
+        serviceName,
+        message: `Due in ${hoursUntil.toLocaleString()} hours`,
         dueType: 'hours',
         hoursUntil,
       };
     }
   }
   
-  return { status: 'good', message: '' };
+  return { status: 'good', serviceName, message: '' };
 }
 
 export default function ComponentDetailPage() {
@@ -333,39 +339,59 @@ export default function ComponentDetailPage() {
           const health = getComponentHealthInfo(component);
           if (health.status === 'overdue') {
             return (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 animate-fade-in">
-                <div className="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-red-700 dark:text-red-300">{health.serviceName}</p>
+                    <p className="text-sm text-red-600 dark:text-red-400">{health.message}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-red-700 dark:text-red-300">Overdue</p>
-                  <p className="text-sm text-red-600 dark:text-red-400">{health.message}</p>
+                <div className="flex gap-2 mt-3 ml-13">
+                  <button
+                    onClick={() => setShowAddLog(true)}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    ✓ Completed
+                  </button>
+                  <button
+                    onClick={() => setShowSchedule(true)}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Dismiss
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowAddLog(true)}
-                  className="ml-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  Log Service
-                </button>
               </div>
             );
           }
           if (health.status === 'warning') {
             return (
-              <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-3 animate-fade-in">
-                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-amber-700 dark:text-amber-300">{health.serviceName}</p>
+                    <p className="text-sm text-amber-600 dark:text-amber-400">{health.message}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-amber-700 dark:text-amber-300">Service Due Soon</p>
-                  <p className="text-sm text-amber-600 dark:text-amber-400">{health.message}</p>
+                <div className="flex gap-2 mt-3 ml-13">
+                  <button
+                    onClick={() => setShowAddLog(true)}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    ✓ Completed
+                  </button>
+                  <button
+                    onClick={() => setShowSchedule(true)}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Dismiss
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowSchedule(true)}
-                  className="ml-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  View Schedule
-                </button>
               </div>
             );
           }
@@ -730,6 +756,7 @@ export default function ComponentDetailPage() {
         componentType={component.type}
         currentHours={component.current_hours}
         currentSchedule={{
+          scheduled_service_name: component.scheduled_service_name,
           service_interval_days: component.service_interval_days,
           service_interval_hours: component.service_interval_hours,
           next_service_date: component.next_service_date,
