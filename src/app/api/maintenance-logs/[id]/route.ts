@@ -28,7 +28,7 @@ export async function PATCH(
 
     // Verify ownership through component -> boat
     const { data: log } = await supabase
-      .from('maintenance_logs')
+      .from('log_entries')
       .select('*, boat_components!inner(boat_id, boats!inner(owner_id))')
       .eq('id', id)
       .single();
@@ -40,7 +40,7 @@ export async function PATCH(
     const body = await request.json();
 
     const { data: updated, error } = await supabase
-      .from('maintenance_logs')
+      .from('log_entries')
       .update({
         maintenance_item: body.maintenance_item || log.maintenance_item,
         date: body.date || log.date,
@@ -92,7 +92,7 @@ export async function DELETE(
 
     // Verify ownership through component -> boat
     const { data: log } = await supabase
-      .from('maintenance_logs')
+      .from('log_entries')
       .select('*, boat_components!inner(boat_id, boats!inner(owner_id))')
       .eq('id', id)
       .single();
@@ -102,7 +102,7 @@ export async function DELETE(
     }
 
     const { error } = await supabase
-      .from('maintenance_logs')
+      .from('log_entries')
       .delete()
       .eq('id', id);
 
