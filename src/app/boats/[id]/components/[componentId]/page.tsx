@@ -587,10 +587,10 @@ export default function ComponentDetailPage() {
               {logs.length > 0 && (
                 <button
                   onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-                  className={`text-xs px-2 py-1 rounded transition-colors ${
+                  className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
                     selectMode 
-                      ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300' 
-                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                      ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300' 
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
                   {selectMode ? 'Cancel' : 'Select'}
