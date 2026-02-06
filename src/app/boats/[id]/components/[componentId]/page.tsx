@@ -340,12 +340,14 @@ export default function ComponentDetailPage() {
           title: `${component.name} - Maintenance History`,
           text: text,
         });
+        exitSelectMode();
       } catch (err) {
-        // User cancelled
+        // User cancelled - don't exit select mode
       }
     } else {
       await navigator.clipboard.writeText(text);
       alert('Copied to clipboard!');
+      exitSelectMode();
     }
   };
 
