@@ -48,6 +48,7 @@ import { Package, Activity, AlertTriangle, Users } from 'lucide-react';
 import { EditBoatModal } from '@/components/boats/EditBoatModal';
 import { EditEnginesModal } from '@/components/boats/EditEnginesModal';
 import { EditComponentModal } from '@/components/boats/EditComponentModal';
+import { AddMaintenanceModal } from '@/components/maintenance/AddMaintenanceModal';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 import { BoatHero } from '@/components/boats/BoatHero';
 import { FAB } from '@/components/ui/FAB';
@@ -82,6 +83,18 @@ export default function BoatDetailPage() {
   const [editingHealthCheck, setEditingHealthCheck] = useState<HealthCheck | null>(null);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [editingComponent, setEditingComponent] = useState<BoatComponent | null>(null);
+  const [maintenanceAlert, setMaintenanceAlert] = useState<{ alert: Alert; component: BoatComponent } | null>(null);
+
+  // Handle alert completion - open maintenance modal
+  const handleAlertCompleted = (alert: Alert) => {
+    if (!alert.componentId) return;
+    
+    // Find the component for this alert
+    const component = components.find(c => c.id === alert.componentId);
+    if (component) {
+      setMaintenanceAlert({ alert, component });
+    }
+  };
 
   useEffect(() => {
     if (params.id) {
@@ -553,7 +566,7 @@ export default function BoatDetailPage() {
               boatId={boat.id} 
               compact 
               onAlertDismissed={() => fetchAlerts(boat.id)}
-              onAlertCompleted={() => fetchAlerts(boat.id)}
+              onAlertCompleted={handleAlertCompleted}
             />
           </div>
         )}
@@ -845,6 +858,21 @@ export default function BoatDetailPage() {
         onClose={() => setEditingComponent(null)}
         component={editingComponent}
         onSuccess={() => fetchComponents(boat.id)}
+      />
+
+      {/* Add Maintenance Modal (from alert completion) */}
+      <AddMaintenanceModal
+        isOpen={!!maintenanceAlert}
+        onClose={() => setMaintenanceAlert(null)}
+        componentId={maintenanceAlert?.component.id || ''}
+        componentType={maintenanceAlert?.component.type || ''}
+        componentName={maintenanceAlert?.component.name || ''}
+        currentHours={maintenanceAlert?.component.current_hours || undefined}
+        onSuccess={() => {
+          setMaintenanceAlert(null);
+          fetchAlerts(boat.id);
+          fetchComponents(boat.id);
+        }}
       />
     </div>
   );

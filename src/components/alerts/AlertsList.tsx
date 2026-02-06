@@ -57,34 +57,15 @@ export function AlertsList({ alerts, boatId, compact = false, onAlertDismissed, 
     setProcessingId(null);
   };
 
-  const handleComplete = async (e: React.MouseEvent, alert: Alert) => {
+  const handleComplete = (e: React.MouseEvent, alert: Alert) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (!alert.componentId) return;
     
-    setProcessingId(alert.id);
-    
-    try {
-      // Quick complete - log service and update next service date
-      const response = await fetch(`/api/components/${alert.componentId}/quick-complete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          alertType: alert.type,
-          serviceName: alert.title.replace(' service due', ''),
-        }),
-      });
-      
-      if (response.ok) {
-        setDismissedIds(prev => new Set([...prev, alert.id]));
-        onAlertCompleted?.(alert);
-      }
-    } catch (err) {
-      console.error('Error completing service:', err);
-    }
-    
-    setProcessingId(null);
+    // Call parent to open maintenance modal with alert info
+    // Parent will handle showing the form and logging the maintenance
+    onAlertCompleted?.(alert);
   };
 
   const visibleAlerts = alerts.filter(a => !dismissedIds.has(a.id));
