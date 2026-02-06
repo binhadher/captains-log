@@ -21,17 +21,31 @@ interface ServiceScheduleModalProps {
   onSuccess: () => void;
 }
 
-// Common service types per component type
+// Common service types per component type - must match labels in maintenance-items.ts
 const SERVICE_SUGGESTIONS: Record<string, string[]> = {
-  engine: ['Oil Change', 'Fuel Filter', 'Oil Filter', 'Impeller', 'Belts', 'Zincs', 'Annual Service'],
-  inboard_engine: ['Oil Change', 'Fuel Filter', 'Oil Filter', 'Impeller', 'Belts', 'Zincs', 'Annual Service'],
-  outboard_engine: ['Oil Change', 'Gear Oil', 'Fuel Filter', 'Spark Plugs', 'Impeller', 'Zincs', 'Annual Service'],
-  generator: ['Oil Change', 'Fuel Filter', 'Air Filter', 'Impeller', 'Belts', 'Annual Service'],
-  ac_chiller: ['Filter Clean', 'Refrigerant Check', 'Annual Service'],
-  ac_air_handler: ['Filter Clean', 'Coil Clean', 'Annual Service'],
-  bow_thruster: ['Seals Check', 'Oil Change', 'Zincs', 'Annual Service'],
-  stern_thruster: ['Seals Check', 'Oil Change', 'Zincs', 'Annual Service'],
-  default: ['Annual Service', 'Inspection', 'Maintenance'],
+  engine: ['Oil Change', 'Fuel Filters', 'Oil Filters', 'Air Filters', 'Water Separators', 'Water Impeller', 'Belts', 'Zincs/Anodes', 'Annual Service'],
+  inboard_engine: ['Oil Change', 'Fuel Filters', 'Oil Filters', 'Air Filters', 'Water Separators', 'Water Impeller', 'Belts', 'Zincs/Anodes', 'Annual Service'],
+  outboard_engine: ['Oil Change', 'Gear Oil', 'Fuel Filter', 'Spark Plugs', 'Water Pump Impeller', 'Anodes', 'Propeller Inspection', 'Grease Points', 'Thermostat', 'Annual Service'],
+  generator: ['Oil Change', 'Fuel Filters', 'Oil Filters', 'Air Filters', 'Water Separators', 'Water Impeller', 'Belts', 'Zincs/Anodes', 'Annual Service'],
+  drive_pod: ['Oil Change', 'Gear Oil', 'Steering Fluid', 'Anodes', 'Bellows Inspection', 'Propeller Inspection', 'Software Update', 'Annual Service'],
+  shaft: ['Inspection', 'Seal Replacement', 'Bearing Service', 'Coupling Service', 'Annual Service'],
+  propeller: ['Inspection', 'Cleaning', 'Balancing', 'Repair', 'Zincs/Anodes', 'Annual Service'],
+  hydraulic: ['Fluid Change', 'Filter Replacement', 'Hose Inspection', 'Pump Service', 'Cylinder Service', 'Annual Service'],
+  hydraulic_system: ['Fluid Change', 'Filter Replacement', 'Hose Inspection', 'Pump Service', 'Cylinder Service', 'Annual Service'],
+  bow_thruster: ['Inspection', 'Gear Oil Change', 'Zincs/Anodes', 'Motor Service', 'Propeller Service', 'Annual Service'],
+  stern_thruster: ['Inspection', 'Gear Oil Change', 'Zincs/Anodes', 'Motor Service', 'Propeller Service', 'Annual Service'],
+  swim_platform: ['Fluid Check', 'Function Test', 'Hinge Lubrication', 'Seal Inspection', 'Annual Service'],
+  tender_crane: ['Fluid Check', 'Function Test', 'Wire Inspection', 'Lubrication', 'Load Test', 'Annual Service'],
+  passerelle: ['Fluid Check', 'Function Test', 'Hinge Lubrication', 'Teak Care', 'Annual Service'],
+  tender_outboard: ['Engine Service', 'Oil Change', 'Fuel System', 'Tube Inspection', 'Floor Inspection', 'Annual Service'],
+  tender_jet: ['Engine Service', 'Oil Change', 'Spark Plugs', 'Jet Pump Inspection', 'Hull Inspection', 'Winterization', 'Annual Service'],
+  ac_chiller: ['Chemical Cleaning', 'Sea Water Pump', 'Chiller Pump', 'Refrigerant Service', 'Filter Cleaning', 'Electrical Check', 'Annual Service'],
+  ac_air_handler: ['Filter Cleaning', 'Coil Cleaning', 'Drain Cleaning', 'Fan/Blower Service', 'Thermostat Service', 'Annual Service'],
+  engine_battery: ['Voltage Check', 'Load Test', 'Clean Terminals', 'Check Water Level', 'Replacement'],
+  generator_battery: ['Voltage Check', 'Load Test', 'Clean Terminals', 'Check Water Level', 'Replacement'],
+  house_battery: ['Voltage Check', 'Equalization Charge', 'Clean Terminals', 'Check Water Level', 'Capacity Test', 'Replacement'],
+  thruster_battery: ['Voltage Check', 'Load Test', 'Clean Terminals', 'Replacement'],
+  default: ['Annual Service', 'Inspection', 'General Service', 'Repair'],
 };
 
 export function ServiceScheduleModal({
