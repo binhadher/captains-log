@@ -30,7 +30,7 @@ import { PartsList } from '@/components/parts/PartsList';
 import { AddPartModal } from '@/components/parts/AddPartModal';
 import { EditPartModal } from '@/components/parts/EditPartModal';
 import { ComponentDocumentUpload } from '@/components/documents/ComponentDocumentUpload';
-import { Package, Settings, Pencil, Copy, Check, Share2, Trash2 as TrashIcon, FileText as FileIcon, Image as ImageIcon } from 'lucide-react';
+import { Package, Settings, Pencil, Copy, Check, Share2, Trash2 as TrashIcon, FileText as FileIcon, Image as ImageIcon, CheckSquare, Square, X } from 'lucide-react';
 import { Confetti } from '@/components/ui/Confetti';
 import { useConfetti } from '@/hooks/useConfetti';
 
@@ -164,6 +164,11 @@ export default function ComponentDetailPage() {
   const [showDocUpload, setShowDocUpload] = useState(false);
   const [alertProcessing, setAlertProcessing] = useState(false);
   const confetti = useConfetti();
+  
+  // Multi-select state
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedLogs, setSelectedLogs] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Check if we should auto-open schedule modal
   useEffect(() => {
@@ -271,6 +276,77 @@ export default function ComponentDetailPage() {
     setShowAddLog(false);
     // Celebrate! 🎉
     confetti.trigger();
+  };
+
+  // Multi-select handlers
+  const toggleLogSelection = (logId: string) => {
+    setSelectedLogs(prev => {
+      const next = new Set(prev);
+      if (next.has(logId)) {
+        next.delete(logId);
+      } else {
+        next.add(logId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedLogs.size === logs.length) {
+      setSelectedLogs(new Set());
+    } else {
+      setSelectedLogs(new Set(logs.map(l => l.id)));
+    }
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedLogs(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedLogs.size === 0) return;
+    if (!confirm(`Delete ${selectedLogs.size} maintenance log${selectedLogs.size > 1 ? 's' : ''}?`)) return;
+    
+    setBulkDeleting(true);
+    try {
+      const deletePromises = Array.from(selectedLogs).map(id =>
+        fetch(`/api/maintenance-logs/${id}`, { method: 'DELETE' })
+      );
+      await Promise.all(deletePromises);
+      fetchComponent(params.componentId as string);
+      exitSelectMode();
+    } catch (err) {
+      console.error('Error bulk deleting:', err);
+    }
+    setBulkDeleting(false);
+  };
+
+  const handleBulkShare = async () => {
+    if (selectedLogs.size === 0 || !component) return;
+    
+    const selectedLogEntries = logs.filter(l => selectedLogs.has(l.id));
+    const text = selectedLogEntries.map(log => [
+      `${getMaintenanceItemLabel(component.type, log.maintenance_item)} - ${formatDate(log.date)}`,
+      log.description && `  Description: ${log.description}`,
+      log.hours_at_service && `  Hours: ${log.hours_at_service.toLocaleString()}`,
+      log.cost && `  Cost: ${formatCurrencyDisplay(log.cost, currency)}`,
+      log.notes && `  Notes: ${log.notes}`,
+    ].filter(Boolean).join('\n')).join('\n\n');
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${component.name} - Maintenance History`,
+          text: text,
+        });
+      } catch (err) {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      alert('Copied to clipboard!');
+    }
   };
 
   // Quick dismiss - just pushes next service date forward
@@ -505,7 +581,21 @@ export default function ComponentDetailPage() {
         <div className="glass-card rounded-xl p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">Maintenance History</h2>
-            <span className="text-xs text-gray-500 dark:text-gray-400">{logs.length} entries</span>
+            <div className="flex items-center gap-2">
+              {logs.length > 0 && (
+                <button
+                  onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+                  className={`text-xs px-2 py-1 rounded transition-colors ${
+                    selectMode 
+                      ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300' 
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  }`}
+                >
+                  {selectMode ? 'Cancel' : 'Select'}
+                </button>
+              )}
+              <span className="text-xs text-gray-500 dark:text-gray-400">{logs.length} entries</span>
+            </div>
           </div>
 
           {logs.length === 0 ? (
@@ -525,7 +615,28 @@ export default function ComponentDetailPage() {
           ) : (
             <div className="space-y-2">
               {logs.map((log) => (
-                <div key={log.id} className="flex items-start gap-3 p-3 bg-gray-50/50 dark:bg-gray-800/50 rounded-lg">
+                <div 
+                  key={log.id} 
+                  className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                    selectMode && selectedLogs.has(log.id)
+                      ? 'bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800'
+                      : 'bg-gray-50/50 dark:bg-gray-800/50'
+                  }`}
+                  onClick={() => selectMode && toggleLogSelection(log.id)}
+                >
+                  {/* Checkbox when in select mode */}
+                  {selectMode && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleLogSelection(log.id); }}
+                      className="mt-0.5 flex-shrink-0"
+                    >
+                      {selectedLogs.has(log.id) ? (
+                        <CheckSquare className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                      ) : (
+                        <Square className="w-5 h-5 text-gray-400" />
+                      )}
+                    </button>
+                  )}
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
@@ -536,65 +647,67 @@ export default function ComponentDetailPage() {
                           {formatDate(log.date)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => setEditingLog(log)}
-                          className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
-                          title="Edit"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={async () => {
-                            const text = [
-                              `${getMaintenanceItemLabel(component.type, log.maintenance_item)} - ${formatDate(log.date)}`,
-                              log.description && `Description: ${log.description}`,
-                              log.hours_at_service && `Hours: ${log.hours_at_service.toLocaleString()}`,
-                              log.cost && `Cost: ${formatCurrencyDisplay(log.cost, currency)}`,
-                              log.notes && `Notes: ${log.notes}`,
-                            ].filter(Boolean).join('\n');
-                            if (navigator.share) {
+                      {!selectMode && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setEditingLog(log)}
+                            className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
+                            title="Edit"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const text = [
+                                `${getMaintenanceItemLabel(component.type, log.maintenance_item)} - ${formatDate(log.date)}`,
+                                log.description && `Description: ${log.description}`,
+                                log.hours_at_service && `Hours: ${log.hours_at_service.toLocaleString()}`,
+                                log.cost && `Cost: ${formatCurrencyDisplay(log.cost, currency)}`,
+                                log.notes && `Notes: ${log.notes}`,
+                              ].filter(Boolean).join('\n');
+                              if (navigator.share) {
+                                try {
+                                  await navigator.share({
+                                    title: getMaintenanceItemLabel(component.type, log.maintenance_item),
+                                    text: text,
+                                  });
+                                } catch (err) {
+                                  // User cancelled
+                                }
+                              } else {
+                                await navigator.clipboard.writeText(text);
+                                setCopiedLogId(log.id);
+                                setTimeout(() => setCopiedLogId(null), 2000);
+                              }
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded transition-all"
+                            title="Share"
+                          >
+                            {copiedLogId === log.id ? (
+                              <Check className="w-3.5 h-3.5 text-green-500" />
+                            ) : (
+                              <Share2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!confirm('Delete this maintenance log?')) return;
                               try {
-                                await navigator.share({
-                                  title: getMaintenanceItemLabel(component.type, log.maintenance_item),
-                                  text: text,
-                                });
+                                const response = await fetch(`/api/maintenance-logs/${log.id}`, { method: 'DELETE' });
+                                if (response.ok) {
+                                  fetchComponent(params.componentId as string);
+                                }
                               } catch (err) {
-                                // User cancelled
+                                console.error('Error deleting log:', err);
                               }
-                            } else {
-                              await navigator.clipboard.writeText(text);
-                              setCopiedLogId(log.id);
-                              setTimeout(() => setCopiedLogId(null), 2000);
-                            }
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded transition-all"
-                          title="Share"
-                        >
-                          {copiedLogId === log.id ? (
-                            <Check className="w-3.5 h-3.5 text-green-500" />
-                          ) : (
-                            <Share2 className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!confirm('Delete this maintenance log?')) return;
-                            try {
-                              const response = await fetch(`/api/maintenance-logs/${log.id}`, { method: 'DELETE' });
-                              if (response.ok) {
-                                fetchComponent(params.componentId as string);
-                              }
-                            } catch (err) {
-                              console.error('Error deleting log:', err);
-                            }
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     {log.description && (
                       <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">{log.description}</p>
@@ -809,6 +922,52 @@ export default function ComponentDetailPage() {
         boatId={component.boat_id}
         onSuccess={() => fetchComponentDocs(component.id)}
       />
+
+      {/* Floating Action Bar for Multi-Select */}
+      {selectMode && selectedLogs.size > 0 && (
+        <div className="fixed bottom-20 left-0 right-0 z-50 px-4 animate-slide-up">
+          <div className="max-w-md mx-auto bg-gray-900 dark:bg-gray-800 text-white rounded-2xl shadow-2xl p-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleSelectAll}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                title={selectedLogs.size === logs.length ? "Deselect all" : "Select all"}
+              >
+                {selectedLogs.size === logs.length ? (
+                  <CheckSquare className="w-5 h-5 text-teal-400" />
+                ) : (
+                  <Square className="w-5 h-5" />
+                )}
+              </button>
+              <span className="text-sm font-medium">{selectedLogs.size} selected</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleBulkShare}
+                className="flex items-center gap-1.5 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors text-sm font-medium"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+                className="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                {bulkDeleting ? '...' : 'Delete'}
+              </button>
+              <button
+                onClick={exitSelectMode}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                title="Cancel"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
