@@ -158,8 +158,8 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cyan-400 via-teal-500 to-blue-600 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-white">
+      <div className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-gray-700 dark:text-white">
           <Loader2 className="w-6 h-6 animate-spin" />
           <span>Loading admin dashboard...</span>
         </div>
@@ -169,8 +169,8 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cyan-400 via-teal-500 to-blue-600 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
-        <div className="glass-card p-6 text-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+        <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6 text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button 
             onClick={fetchData}
@@ -184,17 +184,17 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-400 via-teal-500 to-blue-600 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 text-white hover:opacity-80 transition-opacity">
+            <Link href="/" className="flex items-center gap-2 text-teal-700 dark:text-white hover:opacity-80 transition-opacity">
               <Anchor className="w-8 h-8" />
               <span className="text-xl font-semibold">Captain&apos;s Log</span>
             </Link>
-            <span className="text-white/60">/</span>
-            <div className="flex items-center gap-2 text-white">
+            <span className="text-gray-400 dark:text-white/60">/</span>
+            <div className="flex items-center gap-2 text-gray-700 dark:text-white">
               <Shield className="w-5 h-5" />
               <span className="font-medium">Admin</span>
             </div>
@@ -202,7 +202,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-4">
             <ThemeToggle />
             <Link href="/settings">
-              <Settings className="w-5 h-5 text-white/80 hover:text-white transition-colors cursor-pointer" />
+              <Settings className="w-5 h-5 text-gray-500 hover:text-gray-700 dark:text-white/80 dark:hover:text-white transition-colors cursor-pointer" />
             </Link>
             <UserButton afterSignOutUrl="/sign-in" />
           </div>
@@ -210,29 +210,29 @@ export default function AdminDashboard() {
 
         {/* Admin Setup Notice */}
         {currentUserId && (
-          <div className="glass-card p-4 mb-6 border-l-4 border-amber-400">
+          <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-4 mb-6 border-l-4 border-amber-400">
             <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
+              <Shield className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-white mb-1">Your Clerk User ID:</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Your Clerk User ID:</p>
                 <div className="flex items-center gap-2">
-                  <code className="bg-black/20 px-2 py-1 rounded text-xs text-white/90 font-mono">
+                  <code className="bg-gray-100 dark:bg-black/20 px-2 py-1 rounded text-xs text-gray-700 dark:text-white/90 font-mono">
                     {currentUserId}
                   </code>
                   <button
                     onClick={copyUserId}
-                    className="p-1 hover:bg-white/10 rounded transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded transition-colors"
                     title="Copy ID"
                   >
                     {copied ? (
-                      <Check className="w-4 h-4 text-green-400" />
+                      <Check className="w-4 h-4 text-green-500" />
                     ) : (
-                      <Copy className="w-4 h-4 text-white/60" />
+                      <Copy className="w-4 h-4 text-gray-400 dark:text-white/60" />
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-white/60 mt-2">
-                  Add this ID to <code className="bg-black/20 px-1 rounded">src/lib/admin.ts</code> to lock down admin access.
+                <p className="text-xs text-gray-500 dark:text-white/60 mt-2">
+                  Add this ID to <code className="bg-gray-100 dark:bg-black/20 px-1 rounded">src/lib/admin.ts</code> to lock down admin access.
                 </p>
               </div>
             </div>
@@ -282,21 +282,21 @@ export default function AdminDashboard() {
         </div>
 
         {/* Users List */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <Users className="w-5 h-5" />
             All Users ({users.length})
           </h2>
           
           {users.length === 0 ? (
-            <p className="text-white/60 text-center py-8">No users yet</p>
+            <p className="text-gray-500 dark:text-white/60 text-center py-8">No users yet</p>
           ) : (
             <div className="space-y-3">
               {users.map((user) => (
-                <div key={user.id} className="bg-white/10 rounded-lg overflow-hidden">
+                <div key={user.id} className="bg-gray-50 dark:bg-white/10 rounded-lg overflow-hidden">
                   <button
                     onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)}
-                    className="w-full p-4 flex items-center gap-4 hover:bg-white/5 transition-colors text-left"
+                    className="w-full p-4 flex items-center gap-4 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-left"
                   >
                     {/* Avatar */}
                     {user.avatar_url ? (
@@ -313,60 +313,60 @@ export default function AdminDashboard() {
                     
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white truncate">{user.name || 'Unnamed'}</p>
-                      <p className="text-sm text-white/60 truncate">{user.email}</p>
+                      <p className="font-medium text-gray-900 dark:text-white truncate">{user.name || 'Unnamed'}</p>
+                      <p className="text-sm text-gray-500 dark:text-white/60 truncate">{user.email}</p>
                     </div>
                     
                     {/* Stats */}
                     <div className="hidden sm:flex items-center gap-6 text-sm">
                       <div className="text-center">
-                        <p className="font-medium text-white">{user.boatCount}</p>
-                        <p className="text-white/60 text-xs">boats</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{user.boatCount}</p>
+                        <p className="text-gray-500 dark:text-white/60 text-xs">boats</p>
                       </div>
                       <div className="text-center">
-                        <p className="font-medium text-white">{formatRelativeTime(user.lastActivity)}</p>
-                        <p className="text-white/60 text-xs">last active</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{formatRelativeTime(user.lastActivity)}</p>
+                        <p className="text-gray-500 dark:text-white/60 text-xs">last active</p>
                       </div>
                       <div className="text-center">
-                        <p className="font-medium text-white">{formatDate(user.created_at)}</p>
-                        <p className="text-white/60 text-xs">joined</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{formatDate(user.created_at)}</p>
+                        <p className="text-gray-500 dark:text-white/60 text-xs">joined</p>
                       </div>
                     </div>
                     
-                    <ChevronRight className={`w-5 h-5 text-white/40 transition-transform ${expandedUser === user.id ? 'rotate-90' : ''}`} />
+                    <ChevronRight className={`w-5 h-5 text-gray-400 dark:text-white/40 transition-transform ${expandedUser === user.id ? 'rotate-90' : ''}`} />
                   </button>
                   
                   {/* Expanded Details */}
                   {expandedUser === user.id && (
-                    <div className="px-4 pb-4 pt-0 border-t border-white/10">
+                    <div className="px-4 pb-4 pt-0 border-t border-gray-200 dark:border-white/10">
                       <div className="pt-4">
                         {/* Mobile stats */}
                         <div className="sm:hidden grid grid-cols-3 gap-4 mb-4 text-center">
                           <div>
-                            <p className="font-medium text-white">{user.boatCount}</p>
-                            <p className="text-white/60 text-xs">boats</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{user.boatCount}</p>
+                            <p className="text-gray-500 dark:text-white/60 text-xs">boats</p>
                           </div>
                           <div>
-                            <p className="font-medium text-white">{formatRelativeTime(user.lastActivity)}</p>
-                            <p className="text-white/60 text-xs">last active</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{formatRelativeTime(user.lastActivity)}</p>
+                            <p className="text-gray-500 dark:text-white/60 text-xs">last active</p>
                           </div>
                           <div>
-                            <p className="font-medium text-white">{formatDate(user.created_at)}</p>
-                            <p className="text-white/60 text-xs">joined</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{formatDate(user.created_at)}</p>
+                            <p className="text-gray-500 dark:text-white/60 text-xs">joined</p>
                           </div>
                         </div>
                         
                         {/* Boats */}
                         {user.boats && user.boats.length > 0 ? (
                           <div>
-                            <p className="text-xs font-medium text-white/60 mb-2 uppercase tracking-wide">Boats</p>
+                            <p className="text-xs font-medium text-gray-500 dark:text-white/60 mb-2 uppercase tracking-wide">Boats</p>
                             <div className="space-y-2">
                               {user.boats.map((boat) => (
-                                <div key={boat.id} className="flex items-center gap-3 bg-black/20 rounded-lg p-3">
-                                  <Ship className="w-4 h-4 text-teal-400" />
+                                <div key={boat.id} className="flex items-center gap-3 bg-gray-100 dark:bg-black/20 rounded-lg p-3">
+                                  <Ship className="w-4 h-4 text-teal-500" />
                                   <div>
-                                    <p className="text-sm font-medium text-white">{boat.name}</p>
-                                    <p className="text-xs text-white/60">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{boat.name}</p>
+                                    <p className="text-xs text-gray-500 dark:text-white/60">
                                       {[boat.year, boat.make, boat.model].filter(Boolean).join(' ') || 'No details'}
                                     </p>
                                   </div>
@@ -375,30 +375,30 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         ) : (
-                          <p className="text-sm text-white/40 italic">No boats added yet</p>
+                          <p className="text-sm text-gray-400 dark:text-white/40 italic">No boats added yet</p>
                         )}
                         
                         {/* User IDs for debugging */}
-                        <div className="mt-4 pt-4 border-t border-white/10">
-                          <p className="text-xs text-white/40">
-                            Clerk ID: <code className="bg-black/20 px-1 rounded">{user.clerk_id}</code>
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
+                          <p className="text-xs text-gray-400 dark:text-white/40">
+                            Clerk ID: <code className="bg-gray-100 dark:bg-black/20 px-1 rounded">{user.clerk_id}</code>
                           </p>
-                          <p className="text-xs text-white/40 mt-1">
-                            DB ID: <code className="bg-black/20 px-1 rounded">{user.id}</code>
+                          <p className="text-xs text-gray-400 dark:text-white/40 mt-1">
+                            DB ID: <code className="bg-gray-100 dark:bg-black/20 px-1 rounded">{user.id}</code>
                           </p>
                         </div>
                         
                         {/* Delete User */}
-                        <div className="mt-4 pt-4 border-t border-white/10">
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
                           {confirmDelete === user.id ? (
-                            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
+                            <div className="bg-red-50 dark:bg-red-500/20 border border-red-200 dark:border-red-500/50 rounded-lg p-4">
                               <div className="flex items-start gap-3">
-                                <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                                <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
                                 <div className="flex-1">
-                                  <p className="text-sm font-medium text-red-400 mb-1">
+                                  <p className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">
                                     Delete this user?
                                   </p>
-                                  <p className="text-xs text-white/60 mb-3">
+                                  <p className="text-xs text-gray-600 dark:text-white/60 mb-3">
                                     This will permanently delete the user, their boats, maintenance logs, documents, and all associated data. This cannot be undone.
                                   </p>
                                   <div className="flex gap-2">
@@ -416,7 +416,7 @@ export default function AdminDashboard() {
                                     </button>
                                     <button
                                       onClick={() => setConfirmDelete(null)}
-                                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg"
+                                      className="px-3 py-1.5 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-700 dark:text-white text-sm rounded-lg"
                                     >
                                       Cancel
                                     </button>
@@ -428,7 +428,7 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => setConfirmDelete(user.id)}
                               disabled={user.clerk_id === currentUserId}
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                               <Trash2 className="w-4 h-4" />
                               {user.clerk_id === currentUserId ? "Can't delete yourself" : 'Delete User'}
@@ -462,20 +462,20 @@ function StatCard({
   subtitle?: string;
 }) {
   const colorClasses: Record<string, string> = {
-    blue: 'text-blue-400',
-    teal: 'text-teal-400',
-    orange: 'text-orange-400',
-    purple: 'text-purple-400',
-    green: 'text-green-400',
-    indigo: 'text-indigo-400',
+    blue: 'text-blue-500 dark:text-blue-400',
+    teal: 'text-teal-500 dark:text-teal-400',
+    orange: 'text-orange-500 dark:text-orange-400',
+    purple: 'text-purple-500 dark:text-purple-400',
+    green: 'text-green-500 dark:text-green-400',
+    indigo: 'text-indigo-500 dark:text-indigo-400',
   };
 
   return (
-    <div className="glass-card p-4">
+    <div className="bg-white dark:bg-white/10 backdrop-blur-sm rounded-xl shadow-lg p-4">
       <div className={`${colorClasses[color]} mb-2`}>{icon}</div>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="text-xs text-white/60">{label}</p>
-      {subtitle && <p className="text-xs text-white/40">{subtitle}</p>}
+      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+      <p className="text-xs text-gray-500 dark:text-white/60">{label}</p>
+      {subtitle && <p className="text-xs text-gray-400 dark:text-white/40">{subtitle}</p>}
     </div>
   );
 }
