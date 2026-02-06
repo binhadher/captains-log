@@ -569,30 +569,12 @@ export default function ComponentDetailPage() {
                             }
                           }}
                           className="p-1.5 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded transition-all"
-                          title="Share"
-                        >
-                          <Share2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={async () => {
-                            const text = [
-                              `${getMaintenanceItemLabel(component.type, log.maintenance_item)} - ${formatDate(log.date)}`,
-                              log.description && `Description: ${log.description}`,
-                              log.hours_at_service && `Hours: ${log.hours_at_service.toLocaleString()}`,
-                              log.cost && `Cost: ${formatCurrencyDisplay(log.cost, currency)}`,
-                              log.notes && `Notes: ${log.notes}`,
-                            ].filter(Boolean).join('\n');
-                            await navigator.clipboard.writeText(text);
-                            setCopiedLogId(log.id);
-                            setTimeout(() => setCopiedLogId(null), 2000);
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-all"
-                          title="Copy"
+                          title={navigator.share ? "Share" : "Copy"}
                         >
                           {copiedLogId === log.id ? (
                             <Check className="w-3.5 h-3.5 text-green-500" />
                           ) : (
-                            <Copy className="w-3.5 h-3.5" />
+                            <Share2 className="w-3.5 h-3.5" />
                           )}
                         </button>
                         <button
