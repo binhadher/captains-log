@@ -49,6 +49,7 @@ import { EditBoatModal } from '@/components/boats/EditBoatModal';
 import { EditEnginesModal } from '@/components/boats/EditEnginesModal';
 import { EditComponentModal } from '@/components/boats/EditComponentModal';
 import { AddMaintenanceModal } from '@/components/maintenance/AddMaintenanceModal';
+import { PDFExport } from '@/components/export/PDFExport';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 import { BoatHero } from '@/components/boats/BoatHero';
 import { FAB } from '@/components/ui/FAB';
@@ -84,6 +85,30 @@ export default function BoatDetailPage() {
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [editingComponent, setEditingComponent] = useState<BoatComponent | null>(null);
   const [maintenanceAlert, setMaintenanceAlert] = useState<{ alert: Alert; component: BoatComponent } | null>(null);
+  const [maintenanceLogs, setMaintenanceLogs] = useState<Array<{
+    id: string;
+    maintenance_item: string;
+    date: string;
+    description?: string;
+    cost?: number;
+    currency?: string;
+    hours_at_service?: number;
+    notes?: string;
+    component_name?: string;
+  }>>([]);
+
+  // Fetch all maintenance logs for PDF export
+  const fetchMaintenanceLogs = async (boatId: string) => {
+    try {
+      const response = await fetch(`/api/boats/${boatId}/logs`);
+      if (response.ok) {
+        const data = await response.json();
+        setMaintenanceLogs(data.logs || []);
+      }
+    } catch (err) {
+      console.error('Error fetching maintenance logs:', err);
+    }
+  };
 
   // Handle alert completion - open maintenance modal
   const handleAlertCompleted = (alert: Alert) => {
@@ -106,6 +131,7 @@ export default function BoatDetailPage() {
       fetchDocuments(params.id as string);
       fetchCrew(params.id as string);
       fetchCosts(params.id as string);
+      fetchMaintenanceLogs(params.id as string);
     }
   }, [params.id]);
 
@@ -311,6 +337,12 @@ export default function BoatDetailPage() {
               >
                 <Camera className="w-5 h-5 text-gray-700 dark:text-white" />
               </Link>
+              <PDFExport
+                boat={boat}
+                components={components}
+                logs={maintenanceLogs}
+                documents={documents}
+              />
               <Link 
                 href="/settings" 
                 className="p-2 bg-gray-200 dark:bg-white/20 hover:bg-gray-300 dark:hover:bg-white/30 rounded-lg transition-colors"

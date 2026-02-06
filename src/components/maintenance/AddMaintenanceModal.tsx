@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Receipt, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';
+import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
+import { ReceiptScanner } from '@/components/ui/ReceiptScanner';
 import { getMaintenanceItems } from '@/lib/maintenance-items';
 import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
 
@@ -31,6 +33,9 @@ export function AddMaintenanceModal({
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'form' | 'upload'>('form');
   const [savedLogId, setSavedLogId] = useState<string | null>(null);
+  const [showReceiptScanner, setShowReceiptScanner] = useState(false);
+  const [voiceNote, setVoiceNote] = useState<{ blob: Blob; duration: number } | null>(null);
+  const [receiptImage, setReceiptImage] = useState<Blob | null>(null);
   const [formData, setFormData] = useState({
     maintenance_item: '',
     date: new Date().toISOString().split('T')[0],
@@ -46,6 +51,8 @@ export function AddMaintenanceModal({
   const resetAndClose = () => {
     setStep('form');
     setSavedLogId(null);
+    setVoiceNote(null);
+    setReceiptImage(null);
     setFormData({
       maintenance_item: '',
       date: new Date().toISOString().split('T')[0],
@@ -57,7 +64,37 @@ export function AddMaintenanceModal({
     onClose();
   };
 
+  const handleReceiptScanned = (data: { cost?: number; date?: string; vendor?: string }, imageBlob: Blob) => {
+    setReceiptImage(imageBlob);
+    setShowReceiptScanner(false);
+    
+    // Auto-fill form with extracted data
+    if (data.cost) {
+      setFormData(prev => ({ ...prev, cost: data.cost!.toString() }));
+    }
+    if (data.date) {
+      setFormData(prev => ({ ...prev, date: data.date! }));
+    }
+    if (data.vendor) {
+      setFormData(prev => ({ ...prev, notes: prev.notes ? `${prev.notes}\nVendor: ${data.vendor}` : `Vendor: ${data.vendor}` }));
+    }
+  };
+
+  const handleVoiceRecording = (blob: Blob, duration: number) => {
+    setVoiceNote({ blob, duration });
+  };
+
   if (!isOpen) return null;
+
+  // Show receipt scanner if active
+  if (showReceiptScanner) {
+    return (
+      <ReceiptScanner
+        onDataExtracted={handleReceiptScanned}
+        onCancel={() => setShowReceiptScanner(false)}
+      />
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,32 +226,49 @@ export function AddMaintenanceModal({
             )}
 
             {/* Cost */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Cost
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.cost}
-                  onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                  placeholder="0.00"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                <button
+                  type="button"
+                  onClick={() => setShowReceiptScanner(true)}
+                  className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300"
+                >
+                  <Receipt className="w-3 h-3" />
+                  Scan Receipt
+                </button>
               </div>
-              <div className="flex items-end">
-                <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                  {currency === 'AED' ? (
-                    <AedSymbol className="w-4 h-4" />
-                  ) : currency === 'USD' ? (
-                    '$'
-                  ) : (
-                    '€'
-                  )}
-                  <span className="text-sm">{currency}</span>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.cost}
+                    onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div className="flex items-center">
+                  <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                    {currency === 'AED' ? (
+                      <AedSymbol className="w-4 h-4" />
+                    ) : currency === 'USD' ? (
+                      '$'
+                    ) : (
+                      '€'
+                    )}
+                    <span className="text-sm">{currency}</span>
+                  </div>
                 </div>
               </div>
+              {receiptImage && (
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+                  <Receipt className="w-3 h-3" /> Receipt captured
+                </p>
+              )}
             </div>
 
             {/* Notes */}
@@ -228,6 +282,17 @@ export function AddMaintenanceModal({
                 placeholder="Additional notes, vendor info, parts used..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 rows={2}
+              />
+            </div>
+
+            {/* Voice Note */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Voice Note
+              </label>
+              <VoiceRecorder
+                onRecordingComplete={handleVoiceRecording}
+                onRecordingDelete={() => setVoiceNote(null)}
               />
             </div>
 
