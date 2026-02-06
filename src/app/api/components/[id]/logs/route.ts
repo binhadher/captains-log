@@ -141,12 +141,18 @@ export async function POST(
       const serviceDate = new Date(body.date || new Date());
       serviceDate.setDate(serviceDate.getDate() + component.service_interval_days);
       updates.next_service_date = serviceDate.toISOString().split('T')[0];
+    } else {
+      // No interval set - clear any existing due date since service was completed
+      updates.next_service_date = null;
     }
 
     // Calculate next service hours based on interval
     if (component.service_interval_hours) {
       const currentHours = body.hours_at_service || component.current_hours || 0;
       updates.next_service_hours = currentHours + component.service_interval_hours;
+    } else {
+      // No interval set - clear any existing hours threshold
+      updates.next_service_hours = null;
     }
 
     // Apply updates to component
