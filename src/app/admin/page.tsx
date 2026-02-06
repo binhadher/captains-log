@@ -16,7 +16,9 @@ import {
   Copy,
   Check,
   Anchor,
-  Settings
+  Settings,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
@@ -55,6 +57,8 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -93,6 +97,41 @@ export default function AdminDashboard() {
       navigator.clipboard.writeText(currentUserId);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, clerkId: string) => {
+    if (clerkId === currentUserId) {
+      alert("You can't delete your own account!");
+      return;
+    }
+
+    setDeletingUser(userId);
+    try {
+      const response = await fetch(`/api/admin/users?id=${userId}&clerkId=${clerkId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete user');
+      }
+
+      // Remove user from local state
+      setUsers(users.filter(u => u.id !== userId));
+      setConfirmDelete(null);
+      setExpandedUser(null);
+      
+      // Refresh stats
+      const statsRes = await fetch('/api/admin/stats');
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData.stats);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete user');
+    } finally {
+      setDeletingUser(null);
     }
   };
 
@@ -347,6 +386,54 @@ export default function AdminDashboard() {
                           <p className="text-xs text-white/40 mt-1">
                             DB ID: <code className="bg-black/20 px-1 rounded">{user.id}</code>
                           </p>
+                        </div>
+                        
+                        {/* Delete User */}
+                        <div className="mt-4 pt-4 border-t border-white/10">
+                          {confirmDelete === user.id ? (
+                            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
+                              <div className="flex items-start gap-3">
+                                <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-red-400 mb-1">
+                                    Delete this user?
+                                  </p>
+                                  <p className="text-xs text-white/60 mb-3">
+                                    This will permanently delete the user, their boats, maintenance logs, documents, and all associated data. This cannot be undone.
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleDeleteUser(user.id, user.clerk_id)}
+                                      disabled={deletingUser === user.id}
+                                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg flex items-center gap-2"
+                                    >
+                                      {deletingUser === user.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                      )}
+                                      Yes, Delete
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmDelete(null)}
+                                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDelete(user.id)}
+                              disabled={user.clerk_id === currentUserId}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              {user.clerk_id === currentUserId ? "Can't delete yourself" : 'Delete User'}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
