@@ -294,27 +294,10 @@ export default function ComponentDetailPage() {
     setAlertProcessing(false);
   };
 
-  // Quick complete - logs service and updates next date
-  const handleQuickComplete = async (dueType: 'date' | 'hours', serviceName: string) => {
+  // Open maintenance modal to log the completed service
+  const handleQuickComplete = () => {
     if (!component) return;
-    setAlertProcessing(true);
-    try {
-      const response = await fetch(`/api/components/${component.id}/quick-complete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          alertType: dueType === 'date' ? 'maintenance_date' : 'maintenance_hours',
-          serviceName,
-        }),
-      });
-      if (response.ok) {
-        fetchComponent(component.id);
-        confetti.trigger();
-      }
-    } catch (err) {
-      console.error('Error completing service:', err);
-    }
-    setAlertProcessing(false);
+    setShowAddLog(true);
   };
 
   if (loading) {
@@ -396,7 +379,7 @@ export default function ComponentDetailPage() {
                 </div>
                 <div className="flex gap-2 mt-3 ml-13">
                   <button
-                    onClick={() => handleQuickComplete(health.dueType || 'date', health.serviceName)}
+                    onClick={handleQuickComplete}
                     disabled={alertProcessing}
                     className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
@@ -427,7 +410,7 @@ export default function ComponentDetailPage() {
                 </div>
                 <div className="flex gap-2 mt-3 ml-13">
                   <button
-                    onClick={() => handleQuickComplete(health.dueType || 'date', health.serviceName)}
+                    onClick={handleQuickComplete}
                     disabled={alertProcessing}
                     className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
