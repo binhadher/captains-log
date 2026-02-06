@@ -125,11 +125,35 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to create log' }, { status: 500 });
     }
 
+    // Update component with service info
+    const updates: Record<string, unknown> = {
+      last_service_date: body.date || new Date().toISOString().split('T')[0],
+    };
+
     // Update component hours if provided
     if (body.hours_at_service && body.hours_at_service > (component.current_hours || 0)) {
+      updates.current_hours = body.hours_at_service;
+      updates.last_service_hours = body.hours_at_service;
+    }
+
+    // Calculate next service date based on interval
+    if (component.service_interval_days) {
+      const serviceDate = new Date(body.date || new Date());
+      serviceDate.setDate(serviceDate.getDate() + component.service_interval_days);
+      updates.next_service_date = serviceDate.toISOString().split('T')[0];
+    }
+
+    // Calculate next service hours based on interval
+    if (component.service_interval_hours) {
+      const currentHours = body.hours_at_service || component.current_hours || 0;
+      updates.next_service_hours = currentHours + component.service_interval_hours;
+    }
+
+    // Apply updates to component
+    if (Object.keys(updates).length > 0) {
       await supabase
         .from('boat_components')
-        .update({ current_hours: body.hours_at_service })
+        .update(updates)
         .eq('id', componentId);
     }
 
