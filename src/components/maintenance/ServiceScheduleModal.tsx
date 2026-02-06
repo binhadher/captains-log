@@ -56,6 +56,10 @@ export function ServiceScheduleModal({
     next_service_date: currentSchedule?.next_service_date || '',
     next_service_hours: currentSchedule?.next_service_hours?.toString() || '',
   });
+  
+  // Check if current value is a custom one (not in suggestions)
+  const isCustomService = formData.scheduled_service_name && !suggestions.includes(formData.scheduled_service_name);
+  const [showCustomInput, setShowCustomInput] = useState(isCustomService);
 
   if (!isOpen) return null;
 
@@ -119,20 +123,49 @@ export function ServiceScheduleModal({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Service Type *
               </label>
-              <input
-                type="text"
-                list="service-suggestions"
-                value={formData.scheduled_service_name}
-                onChange={(e) => setFormData({ ...formData, scheduled_service_name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., Oil Change, Fuel Filter, Impeller..."
-                required
-              />
-              <datalist id="service-suggestions">
-                {suggestions.map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
+              {showCustomInput ? (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={formData.scheduled_service_name}
+                    onChange={(e) => setFormData({ ...formData, scheduled_service_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter custom service type..."
+                    required
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCustomInput(false);
+                      setFormData({ ...formData, scheduled_service_name: '' });
+                    }}
+                    className="text-xs text-teal-600 dark:text-teal-400 hover:underline"
+                  >
+                    ← Back to list
+                  </button>
+                </div>
+              ) : (
+                <select
+                  value={suggestions.includes(formData.scheduled_service_name) ? formData.scheduled_service_name : ''}
+                  onChange={(e) => {
+                    if (e.target.value === '__custom__') {
+                      setShowCustomInput(true);
+                      setFormData({ ...formData, scheduled_service_name: '' });
+                    } else {
+                      setFormData({ ...formData, scheduled_service_name: e.target.value });
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">Select service type...</option>
+                  {suggestions.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                  <option value="__custom__">Other (custom)...</option>
+                </select>
+              )}
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 What service is being scheduled?
               </p>
