@@ -569,7 +569,7 @@ export default function ComponentDetailPage() {
                             }
                           }}
                           className="p-1.5 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded transition-all"
-                          title={navigator.share ? "Share" : "Copy"}
+                          title="Share"
                         >
                           {copiedLogId === log.id ? (
                             <Check className="w-3.5 h-3.5 text-green-500" />

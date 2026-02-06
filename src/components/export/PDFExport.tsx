@@ -32,7 +32,7 @@ interface Component {
 interface Document {
   id: string;
   name: string;
-  document_type: string;
+  category: string;
   expiry_date?: string;
 }
 
@@ -223,7 +223,7 @@ export function PDFExport({ boat, components, logs, documents }: PDFExportProps)
 
         const docData = documents.map(d => [
           d.name,
-          d.document_type.replace(/_/g, ' '),
+          d.category.replace(/_/g, ' '),
           d.expiry_date ? new Date(d.expiry_date).toLocaleDateString('en-GB') : '-',
         ]);
 

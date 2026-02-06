@@ -64,12 +64,15 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch logs' }, { status: 500 });
     }
 
-    // Flatten component name
-    const formattedLogs = (logs || []).map(log => ({
-      ...log,
-      component_name: log.boat_components?.name || null,
-      boat_components: undefined,
-    }));
+    // Flatten component name (boat_components comes as object from single FK relation)
+    const formattedLogs = (logs || []).map(log => {
+      const comp = log.boat_components as unknown as { name: string } | null;
+      return {
+        ...log,
+        component_name: comp?.name || null,
+        boat_components: undefined,
+      };
+    });
 
     return NextResponse.json({ logs: formattedLogs });
   } catch (error) {
