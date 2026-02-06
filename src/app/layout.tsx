@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { CurrencyProvider } from '@/components/providers/CurrencyProvider';
 import { TermsCheck } from '@/components/providers/TermsCheck';
 import { PWAInstallPrompt } from '@/components/pwa/InstallPrompt';
+import { BottomNav } from '@/components/layout/BottomNav';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -54,7 +55,10 @@ export default function RootLayout({
           <ThemeProvider>
             <CurrencyProvider>
               <TermsCheck>
-                {children}
+                <div className="pb-20 md:pb-0">
+                  {children}
+                </div>
+                <BottomNav />
                 <PWAInstallPrompt />
               </TermsCheck>
             </CurrencyProvider>

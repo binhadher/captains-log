@@ -290,4 +290,20 @@ body {
   border-radius: 0.75rem;
   padding: 1rem;
 }
-/* Build trigger Tue Feb  3 20:55:32 +04 2026 */
+
+/* Safe area for iPhone notch/home indicator */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Bottom nav specific adjustments */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-20 {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+/* Build trigger Thu Feb  6 19:45:00 +04 2026 */
