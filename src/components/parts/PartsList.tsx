@@ -137,9 +137,12 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete, onBul
       <div className="flex justify-end mb-2">
         <button
           onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-          className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+          className={`text-xs px-2.5 py-1 rounded-md font-medium transition-colors ${
+            selectMode 
+              ? 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300' 
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
         >
-          {selectMode ? <X className="w-3 h-3" /> : <CheckSquare className="w-3 h-3" />}
           {selectMode ? 'Cancel' : 'Select'}
         </button>
       </div>
@@ -285,43 +288,52 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete, onBul
         })}
       </div>
 
-      {/* Bulk action bar */}
+      {/* Floating Action Bar for Multi-Select */}
       {selectMode && selectedParts.size > 0 && (
-        <div className="sticky bottom-0 mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleSelectAll}
-              className="text-sm text-teal-600 dark:text-teal-400 hover:underline"
-            >
-              {selectedParts.size === parts.length ? 'Deselect all' : 'Select all'}
-            </button>
-            <span className="text-sm text-gray-500">
-              {selectedParts.size} selected
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleBulkShare}
-            >
-              <Share2 className="w-4 h-4 mr-1" />
-              Share
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleBulkDelete}
-              disabled={bulkDeleting}
-              className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30"
-            >
-              {bulkDeleting ? (
-                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-              ) : (
-                <Trash2 className="w-4 h-4 mr-1" />
-              )}
-              Delete
-            </Button>
+        <div className="fixed bottom-20 left-0 right-0 z-50 px-4 animate-slide-up">
+          <div className="max-w-md mx-auto bg-gray-900 dark:bg-gray-800 text-white rounded-2xl shadow-2xl p-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleSelectAll}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                title={selectedParts.size === parts.length ? "Deselect all" : "Select all"}
+              >
+                {selectedParts.size === parts.length ? (
+                  <CheckSquare className="w-5 h-5 text-teal-400" />
+                ) : (
+                  <Square className="w-5 h-5" />
+                )}
+              </button>
+              <span className="text-sm font-medium">{selectedParts.size} selected</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleBulkShare}
+                className="flex items-center gap-1.5 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg transition-colors text-sm font-medium"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+                className="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                {bulkDeleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                Delete
+              </button>
+              <button
+                onClick={exitSelectMode}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                title="Cancel"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       )}
