@@ -665,6 +665,38 @@ export default function BoatDetailPage() {
           />
         </div>
 
+        {/* Safety Equipment Section */}
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Safety Equipment
+              {safetyEquipment.length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({safetyEquipment.length})</span>
+              )}
+            </h2>
+            <Button size="sm" onClick={() => setShowAddSafetyEquipment(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Add
+            </Button>
+          </div>
+          <SafetyEquipmentList
+            equipment={safetyEquipment}
+            onEdit={(item) => setEditingSafetyEquipment(item)}
+            onDelete={async (item) => {
+              try {
+                const response = await fetch(`/api/safety-equipment/${item.id}`, { method: 'DELETE' });
+                if (response.ok) {
+                  fetchSafetyEquipment(boat!.id);
+                  fetchAlerts(boat!.id);
+                }
+              } catch (err) {
+                console.error('Error deleting safety equipment:', err);
+              }
+            }}
+          />
+        </div>
+
         {/* Boat Health */}
         <div className="glass-card rounded-xl p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
@@ -740,38 +772,6 @@ export default function BoatDetailPage() {
             documents={documents}
             onEdit={(doc) => setEditingDocument(doc)}
             onDelete={handleDeleteDocument}
-          />
-        </div>
-
-        {/* Safety Equipment Section */}
-        <div className="glass-card rounded-xl p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              Safety Equipment
-              {safetyEquipment.length > 0 && (
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({safetyEquipment.length})</span>
-              )}
-            </h2>
-            <Button size="sm" onClick={() => setShowAddSafetyEquipment(true)}>
-              <Plus className="w-4 h-4 mr-1" />
-              Add
-            </Button>
-          </div>
-          <SafetyEquipmentList
-            equipment={safetyEquipment}
-            onEdit={(item) => setEditingSafetyEquipment(item)}
-            onDelete={async (item) => {
-              try {
-                const response = await fetch(`/api/safety-equipment/${item.id}`, { method: 'DELETE' });
-                if (response.ok) {
-                  fetchSafetyEquipment(boat!.id);
-                  fetchAlerts(boat!.id);
-                }
-              } catch (err) {
-                console.error('Error deleting safety equipment:', err);
-              }
-            }}
           />
         </div>
 
