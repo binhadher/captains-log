@@ -17,45 +17,44 @@ import { BoatComponent } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 
 // Health status calculation
-type HealthStatus = 'good' | 'warning' | 'overdue' | 'unknown';
+type HealthStatus = 'warning' | 'overdue' | 'unknown';
 
 function getHealthStatus(component: BoatComponent): { status: HealthStatus; label: string } {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
   // Check date-based service
+  // Only show badge when action needed: <= 30 days = warning, < 0 = overdue
   if (component.next_service_date) {
     const serviceDate = new Date(component.next_service_date);
     const daysUntil = Math.ceil((serviceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysUntil < 0) {
       return { status: 'overdue', label: `${Math.abs(daysUntil)}d overdue` };
-    } else if (daysUntil <= 7) {
-      return { status: 'warning', label: `Due in ${daysUntil}d` };
-    } else {
-      return { status: 'good', label: 'OK' };
+    } else if (daysUntil <= 30) {
+      return { status: 'warning', label: daysUntil <= 7 ? `Due in ${daysUntil}d` : `${daysUntil}d` };
     }
+    // > 30 days = no badge needed
   }
   
   // Check hours-based service
+  // Only show badge when action needed: <= 50 hours = warning, < 0 = overdue
   if (component.next_service_hours && component.current_hours !== undefined) {
     const hoursUntil = component.next_service_hours - component.current_hours;
     
     if (hoursUntil < 0) {
       return { status: 'overdue', label: `${Math.abs(hoursUntil)}h overdue` };
-    } else if (hoursUntil <= 25) {
+    } else if (hoursUntil <= 50) {
       return { status: 'warning', label: `${hoursUntil}h left` };
-    } else {
-      return { status: 'good', label: 'OK' };
     }
+    // > 50 hours = no badge needed
   }
   
-  // No service schedule set
+  // No badge: either no service schedule, or service is far out
   return { status: 'unknown', label: '' };
 }
 
 const HEALTH_COLORS: Record<HealthStatus, string> = {
-  good: 'text-green-500',
   warning: 'text-amber-500',
   overdue: 'text-red-500',
   unknown: 'text-gray-300 dark:text-gray-600',
