@@ -100,9 +100,14 @@ export function DocumentsList({ documents, onEdit, onDelete, onBulkDelete, maxHe
       if (onBulkDelete) {
         await onBulkDelete(Array.from(selectedDocs));
       } else if (onDelete) {
-        // Fallback to individual deletes
-        for (const id of selectedDocs) {
-          await onDelete(id);
+        // Delete all items sequentially
+        const idsToDelete = Array.from(selectedDocs);
+        for (const id of idsToDelete) {
+          try {
+            await onDelete(id);
+          } catch (err) {
+            console.error('Error deleting document:', id, err);
+          }
         }
       }
       exitSelectMode();

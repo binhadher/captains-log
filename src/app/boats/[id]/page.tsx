@@ -257,7 +257,8 @@ export default function BoatDetailPage() {
         method: 'DELETE',
       });
       if (response.ok) {
-        setDocuments(documents.filter(d => d.id !== docId));
+        // Use functional update to handle bulk deletes correctly
+        setDocuments(prev => prev.filter(d => d.id !== docId));
         // Refresh alerts since a document with expiry might have been deleted
         fetchAlerts(params.id as string);
       }

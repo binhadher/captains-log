@@ -81,7 +81,11 @@ export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete
         await onBulkDelete(checksToDelete);
       } else if (onDelete) {
         for (const check of checksToDelete) {
-          await onDelete(check);
+          try {
+            await onDelete(check);
+          } catch (err) {
+            console.error('Error deleting health check:', check.id, err);
+          }
         }
       }
       exitSelectMode();

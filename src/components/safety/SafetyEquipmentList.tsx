@@ -158,7 +158,11 @@ export function SafetyEquipmentList({ equipment, onEdit, onDelete, onBulkDelete 
         await onBulkDelete(itemsToDelete);
       } else if (onDelete) {
         for (const item of itemsToDelete) {
-          await onDelete(item);
+          try {
+            await onDelete(item);
+          } catch (err) {
+            console.error('Error deleting safety item:', item.id, err);
+          }
         }
       }
       exitSelectMode();

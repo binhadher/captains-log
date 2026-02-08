@@ -66,7 +66,11 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete, onBul
         await onBulkDelete(partsToDelete);
       } else if (onDelete) {
         for (const part of partsToDelete) {
-          await onDelete(part);
+          try {
+            await onDelete(part);
+          } catch (err) {
+            console.error('Error deleting part:', part.id, err);
+          }
         }
       }
       exitSelectMode();
