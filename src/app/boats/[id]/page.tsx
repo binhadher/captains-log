@@ -57,7 +57,7 @@ import { SafetyEquipmentList } from '@/components/safety/SafetyEquipmentList';
 import { AddSafetyEquipmentModal } from '@/components/safety/AddSafetyEquipmentModal';
 import { EditSafetyEquipmentModal } from '@/components/safety/EditSafetyEquipmentModal';
 import { SafetyEquipmentDetailModal } from '@/components/safety/SafetyEquipmentDetailModal';
-import { DocumentDetailModal } from '@/components/documents/DocumentDetailModal';
+import { DocumentPreviewModal } from '@/components/documents/DocumentPreviewModal';
 import { PartDetailModal } from '@/components/parts/PartDetailModal';
 import { HealthCheckDetailModal } from '@/components/health/HealthCheckDetailModal';
 
@@ -997,8 +997,8 @@ export default function BoatDetailPage() {
         }}
       />
 
-      {/* Document Detail Modal */}
-      <DocumentDetailModal
+      {/* Document Preview Modal */}
+      <DocumentPreviewModal
         isOpen={!!viewingDocument}
         onClose={() => setViewingDocument(null)}
         document={viewingDocument}
