@@ -1,19 +1,47 @@
 'use client';
 
-import { Package, Copy, Check, Pencil, Trash2, Calendar, Share2 } from 'lucide-react';
+import { Package, Copy, Check, Pencil, Trash2, Calendar, Share2, CheckSquare, Square, X, Loader2 } from 'lucide-react';
 import { Part } from '@/types/database';
 import { useState } from 'react';
 import { formatDate } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
 
 interface PartsListProps {
   parts: Part[];
   showComponent?: boolean;
   onEdit?: (part: Part) => void;
   onDelete?: (part: Part) => void;
+  onBulkDelete?: (parts: Part[]) => Promise<void>;
 }
 
-export function PartsList({ parts, showComponent = true, onEdit, onDelete }: PartsListProps) {
+export function PartsList({ parts, showComponent = true, onEdit, onDelete, onBulkDelete }: PartsListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedParts, setSelectedParts] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleSelection = (id: string) => {
+    const newSet = new Set(selectedParts);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedParts(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedParts.size === parts.length) {
+      setSelectedParts(new Set());
+    } else {
+      setSelectedParts(new Set(parts.map(p => p.id)));
+    }
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedParts(new Set());
+  };
 
   const getPartText = (part: Part) => {
     return [
@@ -27,6 +55,48 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete }: Par
     ].filter(Boolean).join('\n');
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedParts.size === 0) return;
+    if (!confirm(`Delete ${selectedParts.size} part${selectedParts.size > 1 ? 's' : ''}?`)) return;
+
+    setBulkDeleting(true);
+    try {
+      const partsToDelete = parts.filter(p => selectedParts.has(p.id));
+      if (onBulkDelete) {
+        await onBulkDelete(partsToDelete);
+      } else if (onDelete) {
+        for (const part of partsToDelete) {
+          await onDelete(part);
+        }
+      }
+      exitSelectMode();
+    } catch (err) {
+      console.error('Error bulk deleting:', err);
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleBulkShare = async () => {
+    if (selectedParts.size === 0) return;
+    
+    const selectedPartsList = parts.filter(p => selectedParts.has(p.id));
+    const text = selectedPartsList.map(getPartText).join('\n\n---\n\n');
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${selectedParts.size} Parts`,
+          text: text,
+        });
+      } catch (err) {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+    }
+  };
+
   const sharePart = async (part: Part) => {
     const text = getPartText(part);
     if (navigator.share) {
@@ -36,10 +106,9 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete }: Par
           text: text,
         });
       } catch (err) {
-        // User cancelled - do nothing
+        // User cancelled
       }
     } else {
-      // Fallback to copy
       await navigator.clipboard.writeText(text);
       setCopiedId(part.id);
       setTimeout(() => setCopiedId(null), 2000);
@@ -63,117 +132,199 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete }: Par
   }
 
   return (
-    <div className="space-y-3">
-      {parts.map((part) => (
-        <div key={part.id} className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          {/* Photo */}
-          {part.photo_url ? (
-            <a href={part.photo_url} target="_blank" rel="noopener noreferrer">
-              <img 
-                src={part.photo_url} 
-                alt={part.name}
-                className="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-700 flex-shrink-0"
-              />
-            </a>
-          ) : (
-            <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Package className="w-8 h-8 text-gray-400" />
-            </div>
-          )}
+    <div className="relative">
+      {/* Select mode toggle */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+          className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+        >
+          {selectMode ? <X className="w-3 h-3" /> : <CheckSquare className="w-3 h-3" />}
+          {selectMode ? 'Cancel' : 'Select'}
+        </button>
+      </div>
 
-          {/* Details */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">{part.name}</h4>
-                {showComponent && part.component_name && (
-                  <p className="text-xs text-blue-600 dark:text-blue-400">{part.component_name}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                {onEdit && (
-                  <button
-                    onClick={() => onEdit(part)}
-                    className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-all"
-                    title="Edit part"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                )}
+      <div className="space-y-3">
+        {parts.map((part) => {
+          const isSelected = selectedParts.has(part.id);
+          
+          return (
+            <div 
+              key={part.id} 
+              className={`flex gap-4 p-4 rounded-lg transition-colors cursor-pointer ${
+                isSelected
+                  ? 'bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700'
+                  : 'bg-gray-50 dark:bg-gray-800/50'
+              }`}
+              onClick={() => selectMode && toggleSelection(part.id)}
+            >
+              {/* Checkbox in select mode */}
+              {selectMode && (
                 <button
-                  onClick={() => sharePart(part)}
-                  className="p-2 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-all"
-                  title="Share"
+                  onClick={(e) => { e.stopPropagation(); toggleSelection(part.id); }}
+                  className="flex-shrink-0 text-teal-600 dark:text-teal-400 self-center"
                 >
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => copyToClipboard(part)}
-                  className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
-                  title="Copy"
-                >
-                  {copiedId === part.id ? (
-                    <Check className="w-4 h-4 text-green-500" />
+                  {isSelected ? (
+                    <CheckSquare className="w-5 h-5" />
                   ) : (
-                    <Copy className="w-4 h-4" />
+                    <Square className="w-5 h-5" />
                   )}
                 </button>
-                {onDelete && (
-                  <button
-                    onClick={() => {
-                      if (confirm(`Delete "${part.name}"?`)) {
-                        onDelete(part);
-                      }
-                    }}
-                    className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"
-                    title="Delete part"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+              )}
+
+              {/* Photo */}
+              {part.photo_url ? (
+                <a href={part.photo_url} target="_blank" rel="noopener noreferrer" onClick={(e) => selectMode && e.preventDefault()}>
+                  <img 
+                    src={part.photo_url} 
+                    alt={part.name}
+                    className="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                  />
+                </a>
+              ) : (
+                <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Package className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
+
+              {/* Details */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white">{part.name}</h4>
+                    {showComponent && part.component_name && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400">{part.component_name}</p>
+                    )}
+                  </div>
+                  {!selectMode && (
+                    <div className="flex items-center gap-1">
+                      {onEdit && (
+                        <button
+                          onClick={() => onEdit(part)}
+                          className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-all"
+                          title="Edit part"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => sharePart(part)}
+                        className="p-2 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-all"
+                        title="Share"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => copyToClipboard(part)}
+                        className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
+                        title="Copy"
+                      >
+                        {copiedId === part.id ? (
+                          <Check className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </button>
+                      {onDelete && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Delete "${part.name}"?`)) {
+                              onDelete(part);
+                            }
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                          title="Delete part"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  {part.brand && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Brand: </span>
+                      <span className="text-gray-900 dark:text-white">{part.brand}</span>
+                    </div>
+                  )}
+                  {part.part_number && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Part #: </span>
+                      <span className="text-gray-900 dark:text-white font-mono">{part.part_number}</span>
+                    </div>
+                  )}
+                  {part.size_specs && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Size: </span>
+                      <span className="text-gray-900 dark:text-white">{part.size_specs}</span>
+                    </div>
+                  )}
+                  {part.supplier && (
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Supplier: </span>
+                      <span className="text-gray-900 dark:text-white">{part.supplier}</span>
+                    </div>
+                  )}
+                  {part.install_date && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-gray-400" />
+                      <span className="text-gray-500 dark:text-gray-400">Installed: </span>
+                      <span className="text-gray-900 dark:text-white">{formatDate(part.install_date)}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {part.notes && (
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 italic">{part.notes}</p>
                 )}
               </div>
             </div>
-            
-            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              {part.brand && (
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Brand: </span>
-                  <span className="text-gray-900 dark:text-white">{part.brand}</span>
-                </div>
+          );
+        })}
+      </div>
+
+      {/* Bulk action bar */}
+      {selectMode && selectedParts.size > 0 && (
+        <div className="sticky bottom-0 mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleSelectAll}
+              className="text-sm text-teal-600 dark:text-teal-400 hover:underline"
+            >
+              {selectedParts.size === parts.length ? 'Deselect all' : 'Select all'}
+            </button>
+            <span className="text-sm text-gray-500">
+              {selectedParts.size} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleBulkShare}
+            >
+              <Share2 className="w-4 h-4 mr-1" />
+              Share
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30"
+            >
+              {bulkDeleting ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-1" />
               )}
-              {part.part_number && (
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Part #: </span>
-                  <span className="text-gray-900 dark:text-white font-mono">{part.part_number}</span>
-                </div>
-              )}
-              {part.size_specs && (
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Size: </span>
-                  <span className="text-gray-900 dark:text-white">{part.size_specs}</span>
-                </div>
-              )}
-              {part.supplier && (
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Supplier: </span>
-                  <span className="text-gray-900 dark:text-white">{part.supplier}</span>
-                </div>
-              )}
-              {part.install_date && (
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-gray-400" />
-                  <span className="text-gray-500 dark:text-gray-400">Installed: </span>
-                  <span className="text-gray-900 dark:text-white">{formatDate(part.install_date)}</span>
-                </div>
-              )}
-            </div>
-            
-            {part.notes && (
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 italic">{part.notes}</p>
-            )}
+              Delete
+            </Button>
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 }

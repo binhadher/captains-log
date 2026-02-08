@@ -1,15 +1,17 @@
 'use client';
 
-import { Activity, Droplet, CircleDot, Eye, MoreHorizontal, Pencil, Trash2, Copy, Check, Share2 } from 'lucide-react';
+import { Activity, Droplet, CircleDot, Eye, MoreHorizontal, Pencil, Trash2, Copy, Check, Share2, CheckSquare, Square, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { HealthCheck, HealthCheckType } from '@/types/database';
 import { formatDate } from '@/lib/utils';
+import { Button } from '@/components/ui/Button';
 
 interface HealthCheckListProps {
   checks: HealthCheck[];
   showComponent?: boolean;
   onEdit?: (check: HealthCheck) => void;
   onDelete?: (check: HealthCheck) => void;
+  onBulkDelete?: (checks: HealthCheck[]) => Promise<void>;
 }
 
 const TYPE_ICONS: Record<HealthCheckType, React.ReactNode> = {
@@ -28,8 +30,34 @@ const TYPE_COLORS: Record<HealthCheckType, string> = {
   other: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
-export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete }: HealthCheckListProps) {
+export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete, onBulkDelete }: HealthCheckListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedChecks, setSelectedChecks] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleSelection = (id: string) => {
+    const newSet = new Set(selectedChecks);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedChecks(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedChecks.size === checks.length) {
+      setSelectedChecks(new Set());
+    } else {
+      setSelectedChecks(new Set(checks.map(c => c.id)));
+    }
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedChecks(new Set());
+  };
 
   const getCheckText = (check: HealthCheck) => {
     return [
@@ -40,6 +68,48 @@ export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete
       check.quantity && `Quantity: ${check.quantity}`,
       check.notes && `Notes: ${check.notes}`,
     ].filter(Boolean).join('\n');
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedChecks.size === 0) return;
+    if (!confirm(`Delete ${selectedChecks.size} health check${selectedChecks.size > 1 ? 's' : ''}?`)) return;
+
+    setBulkDeleting(true);
+    try {
+      const checksToDelete = checks.filter(c => selectedChecks.has(c.id));
+      if (onBulkDelete) {
+        await onBulkDelete(checksToDelete);
+      } else if (onDelete) {
+        for (const check of checksToDelete) {
+          await onDelete(check);
+        }
+      }
+      exitSelectMode();
+    } catch (err) {
+      console.error('Error bulk deleting:', err);
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleBulkShare = async () => {
+    if (selectedChecks.size === 0) return;
+    
+    const selectedChecksList = checks.filter(c => selectedChecks.has(c.id));
+    const text = selectedChecksList.map(getCheckText).join('\n\n---\n\n');
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${selectedChecks.size} Health Checks`,
+          text: text,
+        });
+      } catch (err) {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+    }
   };
 
   const shareCheck = async (check: HealthCheck) => {
@@ -66,6 +136,7 @@ export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete
     setCopiedId(check.id);
     setTimeout(() => setCopiedId(null), 2000);
   };
+
   if (checks.length === 0) {
     return (
       <div className="text-center py-8">
@@ -84,79 +155,161 @@ export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete
   }, {} as Record<string, HealthCheck[]>);
 
   return (
-    <div className="space-y-4">
-      {Object.entries(grouped).map(([date, dateChecks]) => (
-        <div key={date}>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-            {formatDate(date)}
-          </p>
-          <div className="space-y-2">
-            {dateChecks.map((check) => (
-              <div key={check.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${TYPE_COLORS[check.check_type]}`}>
-                  {TYPE_ICONS[check.check_type]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 dark:text-white">{check.title}</p>
-                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                    {showComponent && check.component_name && (
-                      <span className="text-blue-600 dark:text-blue-400">{check.component_name}</span>
+    <div className="relative">
+      {/* Select mode toggle */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+          className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
+        >
+          {selectMode ? <X className="w-3 h-3" /> : <CheckSquare className="w-3 h-3" />}
+          {selectMode ? 'Cancel' : 'Select'}
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {Object.entries(grouped).map(([date, dateChecks]) => (
+          <div key={date}>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+              {formatDate(date)}
+            </p>
+            <div className="space-y-2">
+              {dateChecks.map((check) => {
+                const isSelected = selectedChecks.has(check.id);
+                
+                return (
+                  <div 
+                    key={check.id} 
+                    className={`flex items-start gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700'
+                        : 'bg-gray-50 dark:bg-gray-800/50'
+                    }`}
+                    onClick={() => selectMode && toggleSelection(check.id)}
+                  >
+                    {/* Checkbox in select mode */}
+                    {selectMode && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleSelection(check.id); }}
+                        className="flex-shrink-0 text-teal-600 dark:text-teal-400 self-center"
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="w-5 h-5" />
+                        ) : (
+                          <Square className="w-5 h-5" />
+                        )}
+                      </button>
                     )}
-                    {check.quantity && (
-                      <span>Qty: {check.quantity}</span>
+
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${TYPE_COLORS[check.check_type]}`}>
+                      {TYPE_ICONS[check.check_type]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white">{check.title}</p>
+                      <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                        {showComponent && check.component_name && (
+                          <span className="text-blue-600 dark:text-blue-400">{check.component_name}</span>
+                        )}
+                        {check.quantity && (
+                          <span>Qty: {check.quantity}</span>
+                        )}
+                      </div>
+                      {check.notes && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{check.notes}</p>
+                      )}
+                    </div>
+                    {!selectMode && (
+                      <div className="flex items-center gap-1">
+                        {onEdit && (
+                          <button
+                            onClick={() => onEdit(check)}
+                            className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
+                            title="Edit"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => shareCheck(check)}
+                          className="p-1.5 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded transition-all"
+                          title="Share"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => copyToClipboard(check)}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-all"
+                          title="Copy"
+                        >
+                          {copiedId === check.id ? (
+                            <Check className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                        {onDelete && (
+                          <button
+                            onClick={() => {
+                              if (confirm('Delete this health check?')) {
+                                onDelete(check);
+                              }
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {check.notes && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{check.notes}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  {onEdit && (
-                    <button
-                      onClick={() => onEdit(check)}
-                      className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
-                      title="Edit"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => shareCheck(check)}
-                    className="p-1.5 text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded transition-all"
-                    title="Share"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => copyToClipboard(check)}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-all"
-                    title="Copy"
-                  >
-                    {copiedId === check.id ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                  {onDelete && (
-                    <button
-                      onClick={() => {
-                        if (confirm('Delete this health check?')) {
-                          onDelete(check);
-                        }
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Bulk action bar */}
+      {selectMode && selectedChecks.size > 0 && (
+        <div className="sticky bottom-0 mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleSelectAll}
+              className="text-sm text-teal-600 dark:text-teal-400 hover:underline"
+            >
+              {selectedChecks.size === checks.length ? 'Deselect all' : 'Select all'}
+            </button>
+            <span className="text-sm text-gray-500">
+              {selectedChecks.size} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleBulkShare}
+            >
+              <Share2 className="w-4 h-4 mr-1" />
+              Share
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30"
+            >
+              {bulkDeleting ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-1" />
+              )}
+              Delete
+            </Button>
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 }
