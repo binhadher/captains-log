@@ -56,6 +56,10 @@ import { FAB } from '@/components/ui/FAB';
 import { SafetyEquipmentList } from '@/components/safety/SafetyEquipmentList';
 import { AddSafetyEquipmentModal } from '@/components/safety/AddSafetyEquipmentModal';
 import { EditSafetyEquipmentModal } from '@/components/safety/EditSafetyEquipmentModal';
+import { SafetyEquipmentDetailModal } from '@/components/safety/SafetyEquipmentDetailModal';
+import { DocumentDetailModal } from '@/components/documents/DocumentDetailModal';
+import { PartDetailModal } from '@/components/parts/PartDetailModal';
+import { HealthCheckDetailModal } from '@/components/health/HealthCheckDetailModal';
 
 export default function BoatDetailPage() {
   const params = useParams();
@@ -102,6 +106,12 @@ export default function BoatDetailPage() {
   const [safetyEquipment, setSafetyEquipment] = useState<SafetyEquipment[]>([]);
   const [showAddSafetyEquipment, setShowAddSafetyEquipment] = useState(false);
   const [editingSafetyEquipment, setEditingSafetyEquipment] = useState<SafetyEquipment | null>(null);
+  
+  // Viewing state for detail modals
+  const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
+  const [viewingPart, setViewingPart] = useState<Part | null>(null);
+  const [viewingHealthCheck, setViewingHealthCheck] = useState<HealthCheck | null>(null);
+  const [viewingSafetyEquipment, setViewingSafetyEquipment] = useState<SafetyEquipment | null>(null);
 
   // Fetch all maintenance logs for PDF export
   const fetchMaintenanceLogs = async (boatId: string) => {
@@ -683,6 +693,7 @@ export default function BoatDetailPage() {
           </div>
           <SafetyEquipmentList
             equipment={safetyEquipment}
+            onView={(item) => setViewingSafetyEquipment(item)}
             onEdit={(item) => setEditingSafetyEquipment(item)}
             onDelete={async (item) => {
               try {
@@ -712,6 +723,7 @@ export default function BoatDetailPage() {
           </div>
           <HealthCheckList 
             checks={healthChecks}
+            onView={(check) => setViewingHealthCheck(check)}
             onEdit={(check) => setEditingHealthCheck(check)}
             onDelete={async (check) => {
               try {
@@ -740,6 +752,7 @@ export default function BoatDetailPage() {
           </div>
           <PartsList 
             parts={parts}
+            onView={(part) => setViewingPart(part)}
             onEdit={(part) => setEditingPart(part)}
             onDelete={async (part) => {
               try {
@@ -771,6 +784,7 @@ export default function BoatDetailPage() {
           </div>
           <DocumentsList 
             documents={documents}
+            onView={(doc) => setViewingDocument(doc)}
             onEdit={(doc) => setEditingDocument(doc)}
             onDelete={handleDeleteDocument}
           />
@@ -980,6 +994,84 @@ export default function BoatDetailPage() {
         onSuccess={() => {
           fetchSafetyEquipment(boat.id);
           fetchAlerts(boat.id);
+        }}
+      />
+
+      {/* Document Detail Modal */}
+      <DocumentDetailModal
+        isOpen={!!viewingDocument}
+        onClose={() => setViewingDocument(null)}
+        document={viewingDocument}
+        onEdit={(doc) => {
+          setViewingDocument(null);
+          setEditingDocument(doc);
+        }}
+        onDelete={async (docId) => {
+          await handleDeleteDocument(docId);
+        }}
+      />
+
+      {/* Part Detail Modal */}
+      <PartDetailModal
+        isOpen={!!viewingPart}
+        onClose={() => setViewingPart(null)}
+        part={viewingPart}
+        onEdit={(part) => {
+          setViewingPart(null);
+          setEditingPart(part);
+        }}
+        onDelete={async (part) => {
+          try {
+            const response = await fetch(`/api/parts/${part.id}`, { method: 'DELETE' });
+            if (response.ok) {
+              fetchParts(boat.id);
+            }
+          } catch (err) {
+            console.error('Error deleting part:', err);
+          }
+        }}
+      />
+
+      {/* Health Check Detail Modal */}
+      <HealthCheckDetailModal
+        isOpen={!!viewingHealthCheck}
+        onClose={() => setViewingHealthCheck(null)}
+        check={viewingHealthCheck}
+        onEdit={(check) => {
+          setViewingHealthCheck(null);
+          setEditingHealthCheck(check);
+        }}
+        onDelete={async (check) => {
+          try {
+            const response = await fetch(`/api/health-checks/${check.id}`, { method: 'DELETE' });
+            if (response.ok) {
+              fetchHealthChecks(boat.id);
+            }
+          } catch (err) {
+            console.error('Error deleting health check:', err);
+          }
+        }}
+      />
+
+      {/* Safety Equipment Detail Modal */}
+      <SafetyEquipmentDetailModal
+        isOpen={!!viewingSafetyEquipment}
+        onClose={() => setViewingSafetyEquipment(null)}
+        equipment={viewingSafetyEquipment}
+        onEdit={(item) => {
+          setViewingSafetyEquipment(null);
+          setEditingSafetyEquipment(item);
+        }}
+        onDelete={async (item) => {
+          try {
+            const response = await fetch(`/api/safety-equipment/${item.id}`, { method: 'DELETE' });
+            if (response.ok) {
+              fetchSafetyEquipment(boat.id);
+              fetchAlerts(boat.id);
+            }
+          } catch (err) {
+            console.error('Error deleting safety equipment:', err);
+          }
         }}
       />
     </div>

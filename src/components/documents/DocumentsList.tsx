@@ -8,6 +8,7 @@ import { formatDueIn, calculateSeverity, SEVERITY_COLORS } from '@/lib/alerts';
 
 interface DocumentsListProps {
   documents: Document[];
+  onView?: (doc: Document) => void;
   onEdit?: (doc: Document) => void;
   onDelete?: (docId: string) => void;
   onBulkDelete?: (docIds: string[]) => Promise<void>;
@@ -55,7 +56,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function DocumentsList({ documents, onEdit, onDelete, onBulkDelete, maxHeight = "260px" }: DocumentsListProps) {
+export function DocumentsList({ documents, onView, onEdit, onDelete, onBulkDelete, maxHeight = "260px" }: DocumentsListProps) {
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());
@@ -246,7 +247,13 @@ export function DocumentsList({ documents, onEdit, onDelete, onBulkDelete, maxHe
                         ? 'bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700' 
                         : 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
-                    onClick={() => selectMode && toggleSelection(doc.id)}
+                    onClick={() => {
+                      if (selectMode) {
+                        toggleSelection(doc.id);
+                      } else if (onView) {
+                        onView(doc);
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       {/* Checkbox in select mode */}

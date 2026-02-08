@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/Button';
 interface PartsListProps {
   parts: Part[];
   showComponent?: boolean;
+  onView?: (part: Part) => void;
   onEdit?: (part: Part) => void;
   onDelete?: (part: Part) => void;
   onBulkDelete?: (parts: Part[]) => Promise<void>;
 }
 
-export function PartsList({ parts, showComponent = true, onEdit, onDelete, onBulkDelete }: PartsListProps) {
+export function PartsList({ parts, showComponent = true, onView, onEdit, onDelete, onBulkDelete }: PartsListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedParts, setSelectedParts] = useState<Set<string>>(new Set());
@@ -163,7 +164,13 @@ export function PartsList({ parts, showComponent = true, onEdit, onDelete, onBul
                   ? 'bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700'
                   : 'bg-gray-50 dark:bg-gray-800/50'
               }`}
-              onClick={() => selectMode && toggleSelection(part.id)}
+              onClick={() => {
+                if (selectMode) {
+                  toggleSelection(part.id);
+                } else if (onView) {
+                  onView(part);
+                }
+              }}
             >
               {/* Checkbox in select mode */}
               {selectMode && (

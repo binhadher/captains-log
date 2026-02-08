@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/Button';
 
 interface SafetyEquipmentListProps {
   equipment: SafetyEquipment[];
+  onView?: (item: SafetyEquipment) => void;
   onEdit?: (item: SafetyEquipment) => void;
   onDelete?: (item: SafetyEquipment) => void;
   onBulkDelete?: (items: SafetyEquipment[]) => Promise<void>;
@@ -106,7 +107,7 @@ const STATUS_COLORS: Record<ExpiryStatus, string> = {
   expired: 'text-red-500',
 };
 
-export function SafetyEquipmentList({ equipment, onEdit, onDelete, onBulkDelete }: SafetyEquipmentListProps) {
+export function SafetyEquipmentList({ equipment, onView, onEdit, onDelete, onBulkDelete }: SafetyEquipmentListProps) {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -233,7 +234,13 @@ export function SafetyEquipmentList({ equipment, onEdit, onDelete, onBulkDelete 
                   ? 'bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700'
                   : 'bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700'
               }`}
-              onClick={() => selectMode && toggleSelection(item.id)}
+              onClick={() => {
+                if (selectMode) {
+                  toggleSelection(item.id);
+                } else if (onView) {
+                  onView(item);
+                }
+              }}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 {/* Checkbox in select mode */}

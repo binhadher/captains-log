@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 interface HealthCheckListProps {
   checks: HealthCheck[];
   showComponent?: boolean;
+  onView?: (check: HealthCheck) => void;
   onEdit?: (check: HealthCheck) => void;
   onDelete?: (check: HealthCheck) => void;
   onBulkDelete?: (checks: HealthCheck[]) => Promise<void>;
@@ -30,7 +31,7 @@ const TYPE_COLORS: Record<HealthCheckType, string> = {
   other: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
-export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete, onBulkDelete }: HealthCheckListProps) {
+export function HealthCheckList({ checks, showComponent = true, onView, onEdit, onDelete, onBulkDelete }: HealthCheckListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedChecks, setSelectedChecks] = useState<Set<string>>(new Set());
@@ -192,7 +193,13 @@ export function HealthCheckList({ checks, showComponent = true, onEdit, onDelete
                         ? 'bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-700'
                         : 'bg-gray-50 dark:bg-gray-800/50'
                     }`}
-                    onClick={() => selectMode && toggleSelection(check.id)}
+                    onClick={() => {
+                      if (selectMode) {
+                        toggleSelection(check.id);
+                      } else if (onView) {
+                        onView(check);
+                      }
+                    }}
                   >
                     {/* Checkbox in select mode */}
                     {selectMode && (
