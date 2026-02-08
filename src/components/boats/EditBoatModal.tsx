@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Boat } from '@/types/database';
+import { Boat, EngineType } from '@/types/database';
 
 interface EditBoatModalProps {
   isOpen: boolean;
@@ -23,6 +23,7 @@ export function EditBoatModal({ isOpen, onClose, boat, onSuccess }: EditBoatModa
     length: '',
     hull_id: '',
     home_port: '',
+    engine_type: '' as EngineType | '',
   });
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export function EditBoatModal({ isOpen, onClose, boat, onSuccess }: EditBoatModa
         length: boat.length?.toString() || '',
         hull_id: boat.hull_id || '',
         home_port: boat.home_port || '',
+        engine_type: boat.engine_type || '',
       });
     }
   }, [boat]);
@@ -58,6 +60,7 @@ export function EditBoatModal({ isOpen, onClose, boat, onSuccess }: EditBoatModa
           length: formData.length ? parseFloat(formData.length) : null,
           hull_id: formData.hull_id.trim() || null,
           home_port: formData.home_port.trim() || null,
+          engine_type: formData.engine_type || null,
         }),
       });
 
@@ -161,6 +164,23 @@ export function EditBoatModal({ isOpen, onClose, boat, onSuccess }: EditBoatModa
                 className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Engine Type
+            </label>
+            <select
+              value={formData.engine_type}
+              onChange={(e) => setFormData({ ...formData, engine_type: e.target.value as EngineType | '' })}
+              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            >
+              <option value="">Select engine type</option>
+              <option value="inboard">Inboard</option>
+              <option value="outboard">Outboard</option>
+              <option value="sterndrive">Sterndrive (I/O)</option>
+              <option value="pod_drive">Pod Drive</option>
+            </select>
           </div>
 
           <div>

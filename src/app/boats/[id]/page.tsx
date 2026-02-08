@@ -25,7 +25,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
 import { UserButton } from '@clerk/nextjs';
-import { Boat, BoatComponent, Part, HealthCheck, Document } from '@/types/database';
+import { Boat, BoatComponent, Part, HealthCheck, Document, SafetyEquipment } from '@/types/database';
 import { ComponentList } from '@/components/boats/ComponentList';
 import { ComponentSetupModal } from '@/components/boats/ComponentSetupModal';
 import { BoatSetupWizard } from '@/components/boats/BoatSetupWizard';
@@ -44,7 +44,7 @@ import { CrewList, CrewMember } from '@/components/crew/CrewList';
 import { AddCrewModal } from '@/components/crew/AddCrewModal';
 import { CrewDetailModal } from '@/components/crew/CrewDetailModal';
 import { Alert } from '@/lib/alerts';
-import { Package, Activity, AlertTriangle, Users } from 'lucide-react';
+import { Package, Activity, AlertTriangle, Users, Shield } from 'lucide-react';
 import { EditBoatModal } from '@/components/boats/EditBoatModal';
 import { EditEnginesModal } from '@/components/boats/EditEnginesModal';
 import { EditComponentModal } from '@/components/boats/EditComponentModal';
@@ -53,6 +53,9 @@ import { PDFExport } from '@/components/export/PDFExport';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 import { BoatHero } from '@/components/boats/BoatHero';
 import { FAB } from '@/components/ui/FAB';
+import { SafetyEquipmentList } from '@/components/safety/SafetyEquipmentList';
+import { AddSafetyEquipmentModal } from '@/components/safety/AddSafetyEquipmentModal';
+import { EditSafetyEquipmentModal } from '@/components/safety/EditSafetyEquipmentModal';
 
 export default function BoatDetailPage() {
   const params = useParams();
@@ -96,6 +99,9 @@ export default function BoatDetailPage() {
     notes?: string;
     component_name?: string;
   }>>([]);
+  const [safetyEquipment, setSafetyEquipment] = useState<SafetyEquipment[]>([]);
+  const [showAddSafetyEquipment, setShowAddSafetyEquipment] = useState(false);
+  const [editingSafetyEquipment, setEditingSafetyEquipment] = useState<SafetyEquipment | null>(null);
 
   // Fetch all maintenance logs for PDF export
   const fetchMaintenanceLogs = async (boatId: string) => {
@@ -132,6 +138,7 @@ export default function BoatDetailPage() {
       fetchCrew(params.id as string);
       fetchCosts(params.id as string);
       fetchMaintenanceLogs(params.id as string);
+      fetchSafetyEquipment(params.id as string);
     }
   }, [params.id]);
 
@@ -144,6 +151,18 @@ export default function BoatDetailPage() {
       }
     } catch (err) {
       console.error('Error fetching costs:', err);
+    }
+  };
+
+  const fetchSafetyEquipment = async (boatId: string) => {
+    try {
+      const response = await fetch(`/api/boats/${boatId}/safety-equipment`);
+      if (response.ok) {
+        const data = await response.json();
+        setSafetyEquipment(data.equipment || []);
+      }
+    } catch (err) {
+      console.error('Error fetching safety equipment:', err);
     }
   };
 
@@ -724,6 +743,38 @@ export default function BoatDetailPage() {
           />
         </div>
 
+        {/* Safety Equipment Section */}
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Safety Equipment
+              {safetyEquipment.length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({safetyEquipment.length})</span>
+              )}
+            </h2>
+            <Button size="sm" onClick={() => setShowAddSafetyEquipment(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Add
+            </Button>
+          </div>
+          <SafetyEquipmentList
+            equipment={safetyEquipment}
+            onEdit={(item) => setEditingSafetyEquipment(item)}
+            onDelete={async (item) => {
+              try {
+                const response = await fetch(`/api/safety-equipment/${item.id}`, { method: 'DELETE' });
+                if (response.ok) {
+                  fetchSafetyEquipment(boat!.id);
+                  fetchAlerts(boat!.id);
+                }
+              } catch (err) {
+                console.error('Error deleting safety equipment:', err);
+              }
+            }}
+          />
+        </div>
+
         {/* Crew Section */}
         <div className="glass-card rounded-xl p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
@@ -904,6 +955,30 @@ export default function BoatDetailPage() {
           setMaintenanceAlert(null);
           fetchAlerts(boat.id);
           fetchComponents(boat.id);
+        }}
+      />
+
+      {/* Add Safety Equipment Modal */}
+      <AddSafetyEquipmentModal
+        isOpen={showAddSafetyEquipment}
+        onClose={() => setShowAddSafetyEquipment(false)}
+        boatId={boat.id}
+        engineType={boat.engine_type}
+        onSuccess={() => {
+          fetchSafetyEquipment(boat.id);
+          fetchAlerts(boat.id);
+        }}
+      />
+
+      {/* Edit Safety Equipment Modal */}
+      <EditSafetyEquipmentModal
+        isOpen={!!editingSafetyEquipment}
+        onClose={() => setEditingSafetyEquipment(null)}
+        equipment={editingSafetyEquipment}
+        engineType={boat.engine_type}
+        onSuccess={() => {
+          fetchSafetyEquipment(boat.id);
+          fetchAlerts(boat.id);
         }}
       />
     </div>

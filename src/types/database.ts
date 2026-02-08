@@ -4,6 +4,18 @@ export type UserRole = 'user' | 'admin';
 export type PermissionLevel = 'read' | 'edit' | 'admin';
 export type Currency = 'AED' | 'USD' | 'EUR';
 export type DocumentCategory = 'registration' | 'insurance' | 'berth' | 'warranty' | 'invoice' | 'manual' | 'other';
+export type EngineType = 'inboard' | 'outboard' | 'sterndrive' | 'pod_drive';
+export type SafetyEquipmentType = 
+  | 'fire_extinguisher'
+  | 'engine_room_fire_system'
+  | 'life_jacket'
+  | 'life_raft'
+  | 'flares'
+  | 'epirb'
+  | 'first_aid_kit'
+  | 'life_ring'
+  | 'fire_blanket'
+  | 'other';
 export type AlertType = 'document_expiry' | 'maintenance_due_date' | 'maintenance_due_hours';
 export type AlertStatus = 'pending' | 'sent' | 'acknowledged' | 'dismissed';
 
@@ -130,6 +142,7 @@ export interface Boat {
   registration_number?: string;
   home_port?: string;
   photo_url?: string;
+  engine_type?: EngineType; // inboard/outboard/sterndrive/pod_drive
   number_of_engines: number; // 1-6
   engines?: Engine[]; // Brand/model for each engine
   generator_brand?: string;
@@ -225,6 +238,24 @@ export interface BoatAccess {
   granted_by: string;
   granted_at: string;
   revoked_at?: string;
+}
+
+export interface SafetyEquipment {
+  id: string;
+  boat_id: string;
+  type: SafetyEquipmentType;
+  type_other?: string; // Custom name when type is 'other'
+  quantity: number;
+  expiry_date?: string;
+  last_service_date?: string;
+  service_interval_months?: number;
+  next_service_date?: string;
+  certification_number?: string;
+  notes?: string;
+  photo_url?: string; // Certificate or photo
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Form types for creating/editing

@@ -128,6 +128,69 @@ export async function GET(
       }
     }
 
+    // Check safety equipment expiry and service dates
+    const { data: safetyEquipment } = await supabase
+      .from('safety_equipment')
+      .select('*')
+      .eq('boat_id', boatId);
+
+    const SAFETY_TYPE_LABELS: Record<string, string> = {
+      fire_extinguisher: 'Fire Extinguishers',
+      engine_room_fire_system: 'Engine Room Fire System',
+      life_jacket: 'Life Jackets',
+      life_raft: 'Life Raft',
+      flares: 'Flares',
+      epirb: 'EPIRB',
+      first_aid_kit: 'First Aid Kit',
+      life_ring: 'Life Ring',
+      fire_blanket: 'Fire Blanket',
+      other: 'Safety Equipment',
+    };
+
+    if (safetyEquipment) {
+      for (const item of safetyEquipment) {
+        const itemName = item.type === 'other' ? item.type_other : SAFETY_TYPE_LABELS[item.type] || item.type;
+        
+        // Check expiry date
+        if (item.expiry_date) {
+          const expiryDate = new Date(item.expiry_date);
+          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (daysUntilExpiry <= 30) {
+            alerts.push({
+              id: `safety-exp-${item.id}`,
+              type: 'document_expiry', // Reuse type for expiry alerts
+              severity: calculateSeverity(daysUntilExpiry),
+              title: `${itemName} expires`,
+              description: 'Safety equipment',
+              dueDate: item.expiry_date,
+              boatId: boat.id,
+              boatName: boat.name,
+            });
+          }
+        }
+        
+        // Check service due date
+        if (item.next_service_date) {
+          const serviceDate = new Date(item.next_service_date);
+          const daysUntilService = Math.ceil((serviceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (daysUntilService <= 30) {
+            alerts.push({
+              id: `safety-svc-${item.id}`,
+              type: 'maintenance_date',
+              severity: calculateSeverity(daysUntilService),
+              title: `${itemName} service due`,
+              description: 'Safety equipment inspection',
+              dueDate: item.next_service_date,
+              boatId: boat.id,
+              boatName: boat.name,
+            });
+          }
+        }
+      }
+    }
+
     // Sort alerts by severity then date
     const severityOrder = { overdue: 0, urgent: 1, upcoming: 2, info: 3 };
     alerts.sort((a, b) => {
