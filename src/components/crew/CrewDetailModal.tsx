@@ -10,9 +10,11 @@ import {
   Copy,
   Check,
   ZoomIn,
-  Download
+  Download,
+  Pencil,
+  Users,
+  Loader2
 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
 import { CrewMember } from './CrewList';
 import { formatDate } from '@/lib/utils';
 
@@ -133,8 +135,8 @@ function getExpiryStatus(expiryDate?: string): { status: 'ok' | 'warning' | 'exp
 
 export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailModalProps) {
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
-  const [showShareMenu, setShowShareMenu] = useState(false);
 
   if (!isOpen || !member) return null;
 
@@ -166,7 +168,6 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
   };
 
   const shareText = buildShareText();
-  const encodedText = encodeURIComponent(shareText);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareText);
@@ -174,17 +175,27 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
+  const handleShare = async () => {
+    setSharing(true);
+    try {
+      if (navigator.share) {
         await navigator.share({
           title: `Crew: ${member.name}`,
           text: shareText,
         });
-      } catch (err) {
-        // User cancelled or share failed
+      } else {
+        await handleCopy();
       }
+    } catch (err) {
+      // User cancelled or share failed
+    } finally {
+      setSharing(false);
     }
+  };
+
+  const handleEdit = () => {
+    onEdit?.(member);
+    onClose();
   };
 
   // Check for native share support
@@ -215,12 +226,48 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
         
         <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-          {/* Header */}
-          <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Crew Details</h2>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
+          {/* Header with Action Icons */}
+          <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Crew Details
+            </h2>
+            
+            {/* Action Icons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleCopy}
+                className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                title="Copy"
+              >
+                {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={handleShare}
+                disabled={sharing}
+                className="p-2 text-gray-500 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-colors disabled:opacity-50"
+                title="Share"
+              >
+                {sharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
+              </button>
+              {onEdit && (
+                <button
+                  onClick={handleEdit}
+                  className="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
+                  title="Edit"
+                >
+                  <Pencil className="w-5 h-5" />
+                </button>
+              )}
+              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="p-6">
@@ -276,7 +323,7 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
             {/* Documents */}
             {(member.passport_expiry || member.emirates_id_expiry || member.marine_license_expiry || 
               member.passport_url || member.emirates_id_url || member.marine_license_url) && (
-              <div className="mb-6 space-y-3">
+              <div className="space-y-3">
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide">Documents</h4>
                 
                 {/* Passport */}
@@ -439,53 +486,6 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Share Section */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
-                Share Crew Info
-              </h4>
-              
-              <div className="flex gap-2">
-                {/* Native Share (primary) */}
-                {hasNativeShare && (
-                  <Button 
-                    variant="outline" 
-                    className="flex-1"
-                    onClick={handleNativeShare}
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
-                )}
-                
-                {/* Copy to Clipboard */}
-                <Button 
-                  variant="outline" 
-                  className={hasNativeShare ? '' : 'flex-1'}
-                  onClick={handleCopy}
-                >
-                  {copied ? (
-                    <Check className="w-4 h-4 mr-2 text-green-500" />
-                  ) : (
-                    <Copy className="w-4 h-4 mr-2" />
-                  )}
-                  {copied ? 'Copied!' : 'Copy'}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Close
-            </Button>
-            {onEdit && (
-              <Button onClick={() => { onEdit(member); onClose(); }} className="flex-1">
-                Edit
-              </Button>
             )}
           </div>
         </div>

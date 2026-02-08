@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { X, FileText, Download, Share2, Pencil, Trash2, Calendar, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
 import { Document, DocumentCategory } from '@/types/database';
-import { Button } from '@/components/ui/Button';
 import { formatDueIn, calculateSeverity, SEVERITY_COLORS } from '@/lib/alerts';
 
 interface DocumentDetailModalProps {
@@ -83,6 +82,14 @@ export function DocumentDetailModal({ isOpen, onClose, document: doc, onEdit, on
     }
   };
 
+  const handleDownload = () => {
+    const a = document.createElement('a');
+    a.href = doc.file_url;
+    a.download = doc.name;
+    a.target = '_blank';
+    a.click();
+  };
+
   const handleDelete = async () => {
     if (!confirm(`Delete "${doc.name}"?`)) return;
     
@@ -106,18 +113,58 @@ export function DocumentDetailModal({ isOpen, onClose, document: doc, onEdit, on
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+        {/* Header with Action Icons */}
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <FileText className="w-5 h-5" />
             Document
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          
+          {/* Action Icons */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleDownload}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+              title="Download"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleShare}
+              disabled={sharing}
+              className="p-2 text-gray-500 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-colors disabled:opacity-50"
+              title="Share"
+            >
+              {sharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
+            </button>
+            {onEdit && (
+              <button
+                onClick={handleEdit}
+                className="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
+                title="Edit"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                title="Delete"
+              >
+                {deleting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+              </button>
+            )}
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -172,55 +219,16 @@ export function DocumentDetailModal({ isOpen, onClose, document: doc, onEdit, on
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <a
-              href={doc.file_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Open
-            </a>
-            <a
-              href={doc.file_url}
-              download={doc.name}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Download
-            </a>
-            <button
-              onClick={handleShare}
-              disabled={sharing}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
-            >
-              {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
-              Share
-            </button>
-            {onEdit && (
-              <button
-                onClick={handleEdit}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors"
-              >
-                <Pencil className="w-4 h-4" />
-                Edit
-              </button>
-            )}
-          </div>
-
-          {/* Delete Button */}
-          {onDelete && (
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg font-medium transition-colors disabled:opacity-50"
-            >
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-              Delete Document
-            </button>
-          )}
+          {/* Open in new tab link */}
+          <a
+            href={doc.file_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Open in New Tab
+          </a>
         </div>
       </div>
     </div>

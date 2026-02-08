@@ -43,6 +43,7 @@ function getExpiryStatus(date?: string): { status: 'ok' | 'warning' | 'expired';
 
 export function SafetyEquipmentDetailModal({ isOpen, onClose, equipment, onEdit, onDelete }: SafetyEquipmentDetailModalProps) {
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   if (!isOpen || !equipment) return null;
@@ -69,18 +70,21 @@ export function SafetyEquipmentDetailModal({ isOpen, onClose, equipment, onEdit,
   };
 
   const handleShare = async () => {
-    const text = getItemText();
-    if (navigator.share) {
-      try {
+    setSharing(true);
+    try {
+      const text = getItemText();
+      if (navigator.share) {
         await navigator.share({
           title: displayName || 'Safety Equipment',
           text: text,
         });
-      } catch (err) {
-        // User cancelled
+      } else {
+        await handleCopy();
       }
-    } else {
-      await handleCopy();
+    } catch (err) {
+      // User cancelled
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -107,18 +111,58 @@ export function SafetyEquipmentDetailModal({ isOpen, onClose, equipment, onEdit,
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+        {/* Header with Action Icons */}
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Shield className="w-5 h-5" />
             Safety Equipment
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          
+          {/* Action Icons */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleCopy}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+              title="Copy"
+            >
+              {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={handleShare}
+              disabled={sharing}
+              className="p-2 text-gray-500 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-lg transition-colors disabled:opacity-50"
+              title="Share"
+            >
+              {sharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
+            </button>
+            {onEdit && (
+              <button
+                onClick={handleEdit}
+                className="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
+                title="Edit"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
+                title="Delete"
+              >
+                {deleting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+              </button>
+            )}
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -230,54 +274,17 @@ export function SafetyEquipmentDetailModal({ isOpen, onClose, equipment, onEdit,
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <button
-              onClick={handleCopy}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+          {/* View Photo Link (if photo exists) */}
+          {equipment.photo_url && (
+            <a
+              href={equipment.photo_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium transition-colors"
             >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
-            <button
-              onClick={handleShare}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors"
-            >
-              <Share2 className="w-4 h-4" />
-              Share
-            </button>
-            {onEdit && (
-              <button
-                onClick={handleEdit}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors"
-              >
-                <Pencil className="w-4 h-4" />
-                Edit
-              </button>
-            )}
-            {equipment.photo_url && (
-              <a
-                href={equipment.photo_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                View Photo
-              </a>
-            )}
-          </div>
-
-          {/* Delete Button */}
-          {onDelete && (
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg font-medium transition-colors disabled:opacity-50"
-            >
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-              Delete Item
-            </button>
+              <ExternalLink className="w-4 h-4" />
+              View Full Photo
+            </a>
           )}
         </div>
       </div>
