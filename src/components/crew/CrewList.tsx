@@ -49,6 +49,7 @@ interface CrewListProps {
 }
 
 const TITLE_LABELS: Record<string, string> = {
+  owner: 'Owner',
   captain: 'Captain',
   first_mate: 'First Mate',
   engineer: 'Engineer',
@@ -62,6 +63,7 @@ const TITLE_LABELS: Record<string, string> = {
 };
 
 const TITLE_ICONS: Record<string, string> = {
+  owner: '🚤',
   captain: '👨‍✈️',
   first_mate: '🧑‍✈️',
   engineer: '🔧',

@@ -14,6 +14,7 @@ interface AddCrewModalProps {
 }
 
 const TITLES = [
+  { value: 'owner', label: 'Owner', icon: '🚤' },
   { value: 'captain', label: 'Captain', icon: '👨‍✈️' },
   { value: 'first_mate', label: 'First Mate', icon: '🧑‍✈️' },
   { value: 'engineer', label: 'Engineer', icon: '🔧' },
