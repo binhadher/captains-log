@@ -5,6 +5,7 @@ import { X, FileText, Download, Share2, Pencil, Trash2, Calendar, AlertTriangle,
 import { Document, DocumentCategory } from '@/types/database';
 import { formatDueIn, calculateSeverity, SEVERITY_COLORS } from '@/lib/alerts';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
+import { shareContent, buildDocumentShareText } from '@/lib/share';
 
 interface DocumentDetailModalProps {
   isOpen: boolean;
@@ -57,23 +58,14 @@ export function DocumentDetailModal({ isOpen, onClose, document: doc, onEdit, on
   const handleShare = async () => {
     setSharing(true);
     try {
-      const response = await fetch(doc.file_url);
-      const blob = await response.blob();
-      const file = new File([blob], doc.name, { type: doc.file_type || 'application/octet-stream' });
-      
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: doc.name,
-        });
-      } else {
-        // Fallback: download
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = doc.name;
-        a.click();
-        URL.revokeObjectURL(a.href);
-      }
+      const text = buildDocumentShareText(doc);
+      await shareContent({
+        title: doc.name,
+        text,
+        fileUrl: doc.file_url,
+        fileName: doc.name,
+        fileType: doc.file_type || 'application/octet-stream',
+      });
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         console.error('Share failed:', err);

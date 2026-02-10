@@ -5,6 +5,7 @@ import { X, Package, Copy, Check, Share2, Pencil, Trash2, Calendar, Loader2, Ext
 import { Part } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
+import { shareContent, buildPartShareText } from '@/lib/share';
 
 interface PartDetailModalProps {
   isOpen: boolean;
@@ -21,19 +22,7 @@ export function PartDetailModal({ isOpen, onClose, part, onEdit, onDelete }: Par
 
   if (!isOpen || !part) return null;
 
-  const getPartText = () => {
-    return [
-      part.name,
-      part.brand && `Brand: ${part.brand}`,
-      part.part_number && `Part #: ${part.part_number}`,
-      part.size_specs && `Size/Specs: ${part.size_specs}`,
-      part.supplier && `Supplier: ${part.supplier}`,
-      part.install_date && `Installed: ${formatDate(part.install_date)}`,
-      part.notes && `Notes: ${part.notes}`,
-      part.photo_url && `Photo: ${part.photo_url}`,
-      part.voice_note_url && `Voice Note: ${part.voice_note_url}`,
-    ].filter(Boolean).join('\n');
-  };
+  const getPartText = () => buildPartShareText(part);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(getPartText());
@@ -45,13 +34,17 @@ export function PartDetailModal({ isOpen, onClose, part, onEdit, onDelete }: Par
     setSharing(true);
     try {
       const text = getPartText();
-      if (navigator.share) {
-        await navigator.share({
-          title: part.name,
-          text: text,
-        });
-      } else {
-        await handleCopy();
+      const result = await shareContent({
+        title: part.name,
+        text,
+        fileUrl: part.photo_url || undefined,
+        fileName: part.photo_url ? `${part.name.replace(/[^a-zA-Z0-9]/g, '_')}.jpg` : undefined,
+        fileType: 'image/jpeg',
+      });
+      
+      if (result.method === 'clipboard' && result.success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       }
     } catch (err) {
       // User cancelled

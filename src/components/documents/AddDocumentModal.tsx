@@ -102,16 +102,14 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
         return;
       }
       
-      // Validate file type
+      // Validate file type - PDF and images only (no Word docs - they can't preview)
       const allowedTypes = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic',
         'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       ];
       
       if (!allowedTypes.includes(selectedFile.type)) {
-        setError('File type not allowed. Use PDF, Word, or images.');
+        setError('Please use PDF or image files. Word documents cannot be previewed in the app.');
         return;
       }
       
@@ -348,7 +346,7 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
                   ref={fileInputRef}
                   type="file"
                   className="hidden"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.heic"
+                  accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.heic,image/*,application/pdf"
                   onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
                 />
                 

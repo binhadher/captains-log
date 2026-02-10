@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { HealthCheck, HealthCheckType } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { shareContent, buildHealthCheckShareText } from '@/lib/share';
 
 interface HealthCheckListProps {
   checks: HealthCheck[];
@@ -60,17 +61,6 @@ export function HealthCheckList({ checks, showComponent = true, onView, onEdit, 
     setSelectedChecks(new Set());
   };
 
-  const getCheckText = (check: HealthCheck) => {
-    return [
-      check.title,
-      `Type: ${check.check_type.replace('_', ' ')}`,
-      `Date: ${formatDate(check.date)}`,
-      showComponent && check.component_name && `Component: ${check.component_name}`,
-      check.quantity && `Quantity: ${check.quantity}`,
-      check.notes && `Notes: ${check.notes}`,
-    ].filter(Boolean).join('\n');
-  };
-
   const handleBulkDelete = async () => {
     if (selectedChecks.size === 0) return;
     if (!confirm(`Delete ${selectedChecks.size} health check${selectedChecks.size > 1 ? 's' : ''}?`)) return;
@@ -101,42 +91,33 @@ export function HealthCheckList({ checks, showComponent = true, onView, onEdit, 
     if (selectedChecks.size === 0) return;
     
     const selectedChecksList = checks.filter(c => selectedChecks.has(c.id));
-    const text = selectedChecksList.map(getCheckText).join('\n\n---\n\n');
+    const text = selectedChecksList.map(c => buildHealthCheckShareText(c)).join('\n\n---\n\n');
     
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${selectedChecks.size} Health Checks`,
-          text: text,
-        });
-      } catch (err) {
-        // User cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(text);
-    }
+    // For bulk share, just share text (can't share multiple photos at once on most platforms)
+    await shareContent({
+      title: `${selectedChecks.size} Health Checks`,
+      text,
+    });
   };
 
   const shareCheck = async (check: HealthCheck) => {
-    const text = getCheckText(check);
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: check.title,
-          text: text,
-        });
-      } catch (err) {
-        // User cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(text);
+    const text = buildHealthCheckShareText(check);
+    const result = await shareContent({
+      title: check.title,
+      text,
+      fileUrl: check.photo_url || undefined,
+      fileName: check.photo_url ? `${check.title.replace(/[^a-zA-Z0-9]/g, '_')}.jpg` : undefined,
+      fileType: 'image/jpeg',
+    });
+    
+    if (result.method === 'clipboard' && result.success) {
       setCopiedId(check.id);
       setTimeout(() => setCopiedId(null), 2000);
     }
   };
 
   const copyToClipboard = async (check: HealthCheck) => {
-    const text = getCheckText(check);
+    const text = buildHealthCheckShareText(check);
     await navigator.clipboard.writeText(text);
     setCopiedId(check.id);
     setTimeout(() => setCopiedId(null), 2000);

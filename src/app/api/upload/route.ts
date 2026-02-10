@@ -45,25 +45,31 @@ export async function POST(request: NextRequest) {
     // Validate file type first to determine size limit
     const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic'];
     const videoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v', 'video/3gpp', 'video/mpeg'];
-    const docTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
+    const docTypes = ['application/pdf']; // Only PDF - Word docs can't be previewed in-app
     const allowedTypes = [...imageTypes, ...videoTypes, ...docTypes];
     
     // Check by extension too (iOS Safari sometimes doesn't set MIME type correctly)
     const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
     const videoExts = ['mp4', 'webm', 'mov', 'm4v', '3gp'];
     const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic'];
+    const docExts = ['pdf'];
     const isVideoByExt = videoExts.includes(fileExt);
     const isImageByExt = imageExts.includes(fileExt);
+    const isDocByExt = docExts.includes(fileExt);
+    
+    // Reject Word documents with a helpful message
+    const wordExts = ['doc', 'docx'];
+    if (wordExts.includes(fileExt) || file.type.includes('msword') || file.type.includes('wordprocessingml')) {
+      return NextResponse.json({ 
+        error: 'Word documents cannot be previewed in the app. Please convert to PDF first.' 
+      }, { status: 400 });
+    }
     
     console.log('Upload request - file:', file.name, 'type:', file.type, 'size:', file.size, 'ext:', fileExt);
     
-    if (!allowedTypes.includes(file.type) && !isVideoByExt && !isImageByExt) {
+    if (!allowedTypes.includes(file.type) && !isVideoByExt && !isImageByExt && !isDocByExt) {
       console.error('File type not allowed:', file.type, 'ext:', fileExt);
-      return NextResponse.json({ error: `File type not allowed: ${file.type || 'unknown'}` }, { status: 400 });
+      return NextResponse.json({ error: `File type not allowed: ${file.type || 'unknown'}. Use PDF or image files.` }, { status: 400 });
     }
 
     // Validate file size (50MB for videos, 10MB for others)

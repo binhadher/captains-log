@@ -5,6 +5,7 @@ import { Part } from '@/types/database';
 import { useState } from 'react';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { shareContent, buildPartShareText } from '@/lib/share';
 
 interface PartsListProps {
   parts: Part[];
@@ -44,18 +45,6 @@ export function PartsList({ parts, showComponent = true, onView, onEdit, onDelet
     setSelectedParts(new Set());
   };
 
-  const getPartText = (part: Part) => {
-    return [
-      part.name,
-      part.brand && `Brand: ${part.brand}`,
-      part.part_number && `Part #: ${part.part_number}`,
-      part.size_specs && `Size/Specs: ${part.size_specs}`,
-      part.supplier && `Supplier: ${part.supplier}`,
-      part.install_date && `Installed: ${formatDate(part.install_date)}`,
-      part.notes && `Notes: ${part.notes}`,
-    ].filter(Boolean).join('\n');
-  };
-
   const handleBulkDelete = async () => {
     if (selectedParts.size === 0) return;
     if (!confirm(`Delete ${selectedParts.size} part${selectedParts.size > 1 ? 's' : ''}?`)) return;
@@ -86,42 +75,33 @@ export function PartsList({ parts, showComponent = true, onView, onEdit, onDelet
     if (selectedParts.size === 0) return;
     
     const selectedPartsList = parts.filter(p => selectedParts.has(p.id));
-    const text = selectedPartsList.map(getPartText).join('\n\n---\n\n');
+    const text = selectedPartsList.map(p => buildPartShareText(p)).join('\n\n---\n\n');
     
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${selectedParts.size} Parts`,
-          text: text,
-        });
-      } catch (err) {
-        // User cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(text);
-    }
+    // For bulk share, just share text (can't share multiple photos at once on most platforms)
+    await shareContent({
+      title: `${selectedParts.size} Parts`,
+      text,
+    });
   };
 
   const sharePart = async (part: Part) => {
-    const text = getPartText(part);
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: part.name,
-          text: text,
-        });
-      } catch (err) {
-        // User cancelled
-      }
-    } else {
-      await navigator.clipboard.writeText(text);
+    const text = buildPartShareText(part);
+    const result = await shareContent({
+      title: part.name,
+      text,
+      fileUrl: part.photo_url || undefined,
+      fileName: part.photo_url ? `${part.name.replace(/[^a-zA-Z0-9]/g, '_')}.jpg` : undefined,
+      fileType: 'image/jpeg',
+    });
+    
+    if (result.method === 'clipboard' && result.success) {
       setCopiedId(part.id);
       setTimeout(() => setCopiedId(null), 2000);
     }
   };
 
   const copyToClipboard = async (part: Part) => {
-    const text = getPartText(part);
+    const text = buildPartShareText(part);
     await navigator.clipboard.writeText(text);
     setCopiedId(part.id);
     setTimeout(() => setCopiedId(null), 2000);

@@ -5,6 +5,7 @@ import { FileText, Download, Trash2, Calendar, AlertTriangle, Share2, Loader2, P
 import { Document, DocumentCategory } from '@/types/database';
 import { Button } from '@/components/ui/Button';
 import { formatDueIn, calculateSeverity, SEVERITY_COLORS } from '@/lib/alerts';
+import { shareContent, buildDocumentShareText } from '@/lib/share';
 
 interface DocumentsListProps {
   documents: Document[];
@@ -159,22 +160,14 @@ export function DocumentsList({ documents, onView, onEdit, onDelete, onBulkDelet
   const shareFile = async (doc: Document) => {
     setSharingId(doc.id);
     try {
-      const response = await fetch(doc.file_url);
-      const blob = await response.blob();
-      const file = new File([blob], doc.name, { type: doc.file_type || 'application/octet-stream' });
-      
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: doc.name,
-        });
-      } else {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = doc.name;
-        a.click();
-        URL.revokeObjectURL(a.href);
-      }
+      const text = buildDocumentShareText(doc);
+      await shareContent({
+        title: doc.name,
+        text,
+        fileUrl: doc.file_url,
+        fileName: doc.name,
+        fileType: doc.file_type || 'application/octet-stream',
+      });
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         console.error('Share failed:', err);

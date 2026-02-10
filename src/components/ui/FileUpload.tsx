@@ -115,12 +115,12 @@ export function FileUpload({
           />
         )}
 
-        {/* File picker - gallery/documents */}
+        {/* File picker - gallery/documents (PDF and images only) */}
         <input
           ref={inputRef}
           type="file"
           multiple
-          accept="image/*,.pdf,.doc,.docx"
+          accept="image/*,.pdf,application/pdf"
           onChange={handleFileSelect}
           className="hidden"
           id="file-upload-compact"
@@ -197,12 +197,12 @@ export function FileUpload({
         />
       )}
 
-      {/* File picker - gallery/documents */}
+      {/* File picker - gallery/documents (PDF and images only) */}
       <input
         ref={inputRef}
         type="file"
         multiple
-        accept="image/*,.pdf,.doc,.docx"
+        accept="image/*,.pdf,application/pdf"
         onChange={handleFileSelect}
         className="hidden"
         id="file-upload"

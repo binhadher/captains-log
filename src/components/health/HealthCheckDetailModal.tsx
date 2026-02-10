@@ -5,6 +5,7 @@ import { X, Activity, Copy, Check, Share2, Pencil, Trash2, Calendar, Loader2, Dr
 import { HealthCheck, HealthCheckType } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
+import { shareContent, buildHealthCheckShareText } from '@/lib/share';
 
 interface HealthCheckDetailModalProps {
   isOpen: boolean;
@@ -45,18 +46,7 @@ export function HealthCheckDetailModal({ isOpen, onClose, check, onEdit, onDelet
 
   if (!isOpen || !check) return null;
 
-  const getCheckText = () => {
-    return [
-      check.title,
-      `Type: ${TYPE_LABELS[check.check_type]}`,
-      `Date: ${formatDate(check.date)}`,
-      check.component_name && `Component: ${check.component_name}`,
-      check.quantity && `Quantity: ${check.quantity}`,
-      check.notes && `Notes: ${check.notes}`,
-      check.photo_url && `Photo: ${check.photo_url}`,
-      check.voice_note_url && `Voice Note: ${check.voice_note_url}`,
-    ].filter(Boolean).join('\n');
-  };
+  const getCheckText = () => buildHealthCheckShareText(check);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(getCheckText());
@@ -68,13 +58,17 @@ export function HealthCheckDetailModal({ isOpen, onClose, check, onEdit, onDelet
     setSharing(true);
     try {
       const text = getCheckText();
-      if (navigator.share) {
-        await navigator.share({
-          title: check.title,
-          text: text,
-        });
-      } else {
-        await handleCopy();
+      const result = await shareContent({
+        title: check.title,
+        text,
+        fileUrl: check.photo_url || undefined,
+        fileName: check.photo_url ? `${check.title.replace(/[^a-zA-Z0-9]/g, '_')}.jpg` : undefined,
+        fileType: 'image/jpeg',
+      });
+      
+      if (result.method === 'clipboard' && result.success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       }
     } catch (err) {
       // User cancelled
