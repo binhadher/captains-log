@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Save, Loader2, Trash2, Upload } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Save, Loader2, Trash2, Upload, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { CameraCapture } from '@/components/ui/CameraCapture';
 import { Part } from '@/types/database';
 
 interface EditPartModalProps {
@@ -19,6 +20,8 @@ export function EditPartModal({ isOpen, onClose, part, onSuccess, onDelete }: Ed
   const [error, setError] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
@@ -41,15 +44,13 @@ export function EditPartModal({ isOpen, onClose, part, onSuccess, onDelete }: Ed
         notes: part.notes || '',
       });
       setPhotoUrl(part.photo_url || null);
+      setShowCamera(false);
     }
   }, [part]);
 
   if (!isOpen || !part) return null;
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadPhoto = async (file: File) => {
     setUploading(true);
     try {
       const uploadData = new FormData();
@@ -71,6 +72,21 @@ export function EditPartModal({ isOpen, onClose, part, onSuccess, onDelete }: Ed
     } finally {
       setUploading(false);
     }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadPhoto(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCameraCapture = (file: File) => {
+    setShowCamera(false);
+    uploadPhoto(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,6 +142,16 @@ export function EditPartModal({ isOpen, onClose, part, onSuccess, onDelete }: Ed
       setDeleting(false);
     }
   };
+
+  // Show camera capture overlay
+  if (showCamera) {
+    return (
+      <CameraCapture
+        onCapture={handleCameraCapture}
+        onClose={() => setShowCamera(false)}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -225,6 +251,13 @@ export function EditPartModal({ isOpen, onClose, part, onSuccess, onDelete }: Ed
             {/* Photo */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Photo</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="hidden"
+              />
               {photoUrl ? (
                 <div className="relative inline-block">
                   <img src={photoUrl} alt="Part" className="w-24 h-24 object-cover rounded-lg border" />
@@ -237,17 +270,40 @@ export function EditPartModal({ isOpen, onClose, part, onSuccess, onDelete }: Ed
                   </button>
                 </div>
               ) : (
-                <label className="block w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center cursor-pointer hover:border-teal-400">
-                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                  {uploading ? (
-                    <Loader2 className="w-6 h-6 text-teal-500 animate-spin mx-auto" />
-                  ) : (
-                    <>
-                      <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                      <span className="text-sm text-gray-500">Click to upload</span>
-                    </>
-                  )}
-                </label>
+                <div className="flex gap-3">
+                  {/* Take Photo */}
+                  <button
+                    type="button"
+                    onClick={() => setShowCamera(true)}
+                    disabled={uploading}
+                    className="flex-1 p-4 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg text-center cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-6 h-6 text-teal-500 animate-spin mx-auto" />
+                    ) : (
+                      <>
+                        <Camera className="w-6 h-6 text-teal-500 mx-auto mb-1" />
+                        <span className="text-sm text-gray-500">Take Photo</span>
+                      </>
+                    )}
+                  </button>
+                  {/* Upload from gallery */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex-1 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center cursor-pointer hover:border-teal-400 transition-colors"
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-6 h-6 text-gray-400 animate-spin mx-auto" />
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                        <span className="text-sm text-gray-500">Upload</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
             </div>
 

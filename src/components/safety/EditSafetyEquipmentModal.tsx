@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Loader2, Shield, Upload, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Loader2, Shield, Upload, Trash2, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { CameraCapture } from '@/components/ui/CameraCapture';
 import { SafetyEquipment, SafetyEquipmentType, EngineType } from '@/types/database';
 
 interface EditSafetyEquipmentModalProps {
@@ -38,6 +39,8 @@ export function EditSafetyEquipmentModal({ isOpen, onClose, equipment, engineTyp
   const [notes, setNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Filter equipment types based on engine type
   const availableTypes = EQUIPMENT_TYPES.filter(t => {
@@ -57,6 +60,7 @@ export function EditSafetyEquipmentModal({ isOpen, onClose, equipment, engineTyp
       setCertificationNumber(equipment.certification_number || '');
       setNotes(equipment.notes || '');
       setPhotoUrl(equipment.photo_url || '');
+      setShowCamera(false);
     }
   }, [equipment]);
 
@@ -97,15 +101,15 @@ export function EditSafetyEquipmentModal({ isOpen, onClose, equipment, engineTyp
     }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadPhoto = async (file: File) => {
+    if (!equipment) return;
     setUploadingPhoto(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('folder', 'safety-equipment');
+      formData.append('boat_id', equipment.boat_id);
+      formData.append('category', 'other');
+      formData.append('name', file.name);
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -114,8 +118,8 @@ export function EditSafetyEquipmentModal({ isOpen, onClose, equipment, engineTyp
 
       if (!response.ok) throw new Error('Upload failed');
 
-      const data = await response.json();
-      setPhotoUrl(data.url);
+      const { document } = await response.json();
+      setPhotoUrl(document.file_url);
     } catch (error) {
       console.error('Error uploading photo:', error);
       alert('Failed to upload photo');
@@ -124,7 +128,32 @@ export function EditSafetyEquipmentModal({ isOpen, onClose, equipment, engineTyp
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadPhoto(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCameraCapture = (file: File) => {
+    setShowCamera(false);
+    uploadPhoto(file);
+  };
+
   if (!isOpen || !equipment) return null;
+
+  // Show camera capture overlay
+  if (showCamera) {
+    return (
+      <CameraCapture
+        onCapture={handleCameraCapture}
+        onClose={() => setShowCamera(false)}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -255,6 +284,13 @@ export function EditSafetyEquipmentModal({ isOpen, onClose, equipment, engineTyp
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Photo / Certificate
             </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="hidden"
+            />
             {photoUrl ? (
               <div className="relative">
                 <img
@@ -271,23 +307,40 @@ export function EditSafetyEquipmentModal({ isOpen, onClose, equipment, engineTyp
                 </button>
               </div>
             ) : (
-              <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-teal-500 transition-colors">
-                {uploadingPhoto ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <Upload className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm text-gray-500">Upload photo or certificate</span>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
+              <div className="flex gap-3">
+                {/* Take Photo */}
+                <button
+                  type="button"
+                  onClick={() => setShowCamera(true)}
                   disabled={uploadingPhoto}
-                />
-              </label>
+                  className="flex-1 flex items-center justify-center gap-2 p-4 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+                >
+                  {uploadingPhoto ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Camera className="w-5 h-5 text-teal-500" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Take Photo</span>
+                    </>
+                  )}
+                </button>
+                {/* Upload from gallery */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="flex-1 flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-teal-500 transition-colors"
+                >
+                  {uploadingPhoto ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 text-gray-400" />
+                      <span className="text-sm text-gray-500">Upload</span>
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
 
