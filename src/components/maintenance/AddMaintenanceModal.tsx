@@ -563,7 +563,7 @@ export function AddMaintenanceModal({
                         className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </div>
-                    {isBatteryComponent && (
+                    {(isBatteryComponent || isEngineBattery) && (
                       <>
                         <div>
                           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
