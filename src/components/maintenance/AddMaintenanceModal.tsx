@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Receipt, Mic } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Receipt, Camera, Upload, Loader2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { FileUpload } from '@/components/ui/FileUpload';
 import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
+import { CameraCapture } from '@/components/ui/CameraCapture';
 import { ReceiptScanner } from '@/components/ui/ReceiptScanner';
 import { getMaintenanceItems } from '@/lib/maintenance-items';
 import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
@@ -55,12 +55,16 @@ export function AddMaintenanceModal({
 }: AddMaintenanceModalProps) {
   const { currency } = useCurrency();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'form' | 'upload'>('form');
   const [savedLogId, setSavedLogId] = useState<string | null>(null);
   const [showReceiptScanner, setShowReceiptScanner] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [voiceNote, setVoiceNote] = useState<{ blob: Blob; duration: number } | null>(null);
   const [receiptImage, setReceiptImage] = useState<Blob | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     maintenance_item: '',
     date: new Date().toISOString().split('T')[0],
@@ -105,6 +109,8 @@ export function AddMaintenanceModal({
     setSavedLogId(null);
     setVoiceNote(null);
     setReceiptImage(null);
+    setPhotoUrl(null);
+    setShowCamera(false);
     setUpdateBatteryDetails(false);
     setSelectedEnginePosition('');
     setApplyToAllEngines(false);
@@ -125,6 +131,52 @@ export function AddMaintenanceModal({
       notes: '',
     });
     onClose();
+  };
+
+  // Upload photo and attach to log entry
+  const uploadPhoto = async (file: File) => {
+    if (!savedLogId) return;
+    
+    setUploading(true);
+    setError(null);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('boat_id', componentId.split('/')[0] || ''); // Extract boat_id if possible
+      uploadFormData.append('log_entry_id', savedLogId);
+      uploadFormData.append('category', 'invoice');
+      uploadFormData.append('name', file.name);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const { document } = await response.json();
+      setPhotoUrl(document.file_url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload photo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCameraCapture = (file: File) => {
+    setShowCamera(false);
+    uploadPhoto(file);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadPhoto(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleReceiptScanned = (data: { cost?: number; date?: string; vendor?: string }, imageBlob: Blob) => {
@@ -148,6 +200,16 @@ export function AddMaintenanceModal({
   };
 
   if (!isOpen) return null;
+
+  // Show camera capture if active
+  if (showCamera) {
+    return (
+      <CameraCapture
+        onCapture={handleCameraCapture}
+        onClose={() => setShowCamera(false)}
+      />
+    );
+  }
 
   // Show receipt scanner if active
   if (showReceiptScanner) {
@@ -621,7 +683,9 @@ export function AddMaintenanceModal({
                 Cancel
               </Button>
               <Button type="submit" loading={loading} className="flex-1">
-                Save & Add Photos
+                <span>Save</span>
+                <Camera className="w-4 h-4 ml-2" />
+                <FileText className="w-4 h-4 ml-1" />
               </Button>
             </div>
           </form>
@@ -629,13 +693,84 @@ export function AddMaintenanceModal({
           /* Upload Step */
           <div className="space-y-4">
             <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
-              ✓ Maintenance log saved! Now add any photos or documents.
+              ✓ Maintenance log saved! Now add a photo or receipt.
             </div>
 
-            <FileUpload 
-              componentId={componentId}
-              logEntryId={savedLogId || undefined}
-            />
+            {error && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Show uploaded photo or upload options */}
+            {photoUrl ? (
+              <div className="relative">
+                <img 
+                  src={photoUrl} 
+                  alt="Maintenance photo" 
+                  className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPhotoUrl(null)}
+                  className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                
+                <div className="flex gap-3">
+                  {/* Take Photo */}
+                  <button
+                    type="button"
+                    onClick={() => setShowCamera(true)}
+                    disabled={uploading}
+                    className="flex-1 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg p-6 text-center cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <div className="flex flex-col items-center">
+                        <Loader2 className="w-8 h-8 text-teal-500 animate-spin mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Camera className="w-8 h-8 text-teal-500 mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Take Photo</p>
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Upload from gallery */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <div className="flex flex-col items-center">
+                        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Upload File</p>
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
 
             <div className="flex gap-3 pt-2">
               <Button 
@@ -646,17 +781,19 @@ export function AddMaintenanceModal({
                 }} 
                 className="flex-1"
               >
-                Skip
+                {photoUrl ? 'Done' : 'Skip'}
               </Button>
-              <Button 
-                onClick={() => {
-                  onSuccess();
-                  resetAndClose();
-                }}
-                className="flex-1"
-              >
-                Done
-              </Button>
+              {photoUrl && (
+                <Button 
+                  onClick={() => {
+                    onSuccess();
+                    resetAndClose();
+                  }}
+                  className="flex-1"
+                >
+                  Done
+                </Button>
+              )}
             </div>
           </div>
         )}
