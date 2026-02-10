@@ -210,7 +210,9 @@ export async function PATCH(
       // Battery fields
       'battery_count', 'battery_type', 'battery_voltage', 'battery_capacity',
       // Thruster battery fields
-      'thruster_battery_count', 'thruster_battery_brand', 'thruster_battery_model', 'thruster_battery_install_date'
+      'thruster_battery_count', 'thruster_battery_brand', 'thruster_battery_model', 'thruster_battery_install_date',
+      // Per-engine battery data (JSONB)
+      'engine_batteries'
     ];
     
     for (const field of allowedFields) {

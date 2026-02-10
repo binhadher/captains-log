@@ -33,6 +33,7 @@ import { ComponentDocumentUpload } from '@/components/documents/ComponentDocumen
 import { Package, Settings, Pencil, Copy, Check, Share2, Trash2 as TrashIcon, FileText as FileIcon, Image as ImageIcon, CheckSquare, Square, X } from 'lucide-react';
 import { Confetti } from '@/components/ui/Confetti';
 import { useConfetti } from '@/hooks/useConfetti';
+import { EngineBatteryTabs } from '@/components/boats/EngineBatteryTabs';
 
 interface ComponentDocument {
   id: string;
@@ -155,6 +156,7 @@ export default function ComponentDetailPage() {
   const [showAddPart, setShowAddPart] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
   const [boatName, setBoatName] = useState<string>('');
+  const [numberOfEngines, setNumberOfEngines] = useState<number>(2);
   const [parts, setParts] = useState<Part[]>([]);
   const [allComponents, setAllComponents] = useState<BoatComponent[]>([]);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
@@ -199,6 +201,9 @@ export default function ComponentDetailPage() {
       setLogs(data.logs || []);
       setBoatName(data.component.boat_name || '');
       
+      // Fetch boat details for number_of_engines
+      fetchBoatDetails(data.component.boat_id);
+      
       // Fetch parts for this component
       fetchParts(data.component.boat_id, componentId);
       
@@ -239,6 +244,20 @@ export default function ComponentDetailPage() {
       }
     } catch (err) {
       console.error('Error fetching component documents:', err);
+    }
+  };
+
+  const fetchBoatDetails = async (boatId: string) => {
+    try {
+      const response = await fetch(`/api/boats/${boatId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.boat?.number_of_engines) {
+          setNumberOfEngines(data.boat.number_of_engines);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching boat details:', err);
     }
   };
 
@@ -547,8 +566,23 @@ export default function ComponentDetailPage() {
             )}
           </div>
 
-          {/* Battery Details (for battery components) */}
-          {['house_battery', 'engine_battery', 'generator_battery', 'thruster_battery'].includes(component.type) && (
+          {/* Engine Battery Tabs (for engine_battery type - shows per-engine tabs) */}
+          {component.type === 'engine_battery' && (
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-3 flex items-center gap-1">
+                <span>🔋</span> Battery Details by Engine
+              </p>
+              <EngineBatteryTabs
+                componentId={component.id}
+                numberOfEngines={numberOfEngines}
+                engineBatteries={component.engine_batteries || []}
+                onUpdate={() => fetchComponent(component.id)}
+              />
+            </div>
+          )}
+
+          {/* Battery Details (for other battery components - house, generator, thruster batteries) */}
+          {['house_battery', 'generator_battery', 'thruster_battery'].includes(component.type) && (
             (component.battery_count || component.battery_type || component.battery_voltage || component.battery_capacity) ? (
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-2 flex items-center gap-1">

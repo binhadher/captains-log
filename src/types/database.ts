@@ -69,6 +69,17 @@ export interface Engine {
   data_plate_url?: string; // Photo of engine data plate
 }
 
+export interface EngineBatteryInfo {
+  position: string; // 'port', 'starboard', 'center', etc.
+  battery_count?: number;
+  battery_brand?: string;
+  battery_model?: string;
+  battery_type?: string; // AGM, Lithium, Lead Acid, Gel
+  battery_voltage?: string; // 12V, 24V
+  battery_capacity?: string; // e.g., "100Ah"
+  install_date?: string;
+}
+
 export interface BoatComponent {
   id: string;
   boat_id: string;
@@ -101,6 +112,8 @@ export interface BoatComponent {
   thruster_battery_brand?: string;
   thruster_battery_model?: string;
   thruster_battery_install_date?: string;
+  // Per-engine battery data (for engine_battery type - stores array of battery info per engine)
+  engine_batteries?: EngineBatteryInfo[];
   // Timestamps
   created_at: string;
   updated_at: string;
