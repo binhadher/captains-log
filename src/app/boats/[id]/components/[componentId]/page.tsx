@@ -999,6 +999,8 @@ export default function ComponentDetailPage() {
           service_interval_hours: component.service_interval_hours,
           next_service_date: component.next_service_date,
           next_service_hours: component.next_service_hours,
+          service_schedule_notes: component.service_schedule_notes,
+          service_schedule_doc_url: component.service_schedule_doc_url,
         }}
         onSuccess={() => fetchComponent(component.id)}
       />

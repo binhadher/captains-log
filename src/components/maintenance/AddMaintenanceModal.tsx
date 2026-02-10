@@ -97,7 +97,8 @@ export function AddMaintenanceModal({
   const isThrusterComponent = ['bow_thruster', 'stern_thruster'].includes(componentType);
   
   // Show battery update option when logging replacement
-  const showBatteryUpdateOption = (isBatteryComponent || isThrusterComponent || isEngineBattery) && formData.maintenance_item === 'replacement';
+  const showBatteryUpdateOption = (isBatteryComponent || isEngineBattery) && formData.maintenance_item === 'replacement'
+    || (isThrusterComponent && (formData.maintenance_item === 'replacement' || formData.maintenance_item === 'battery_replacement'));
 
   const resetAndClose = () => {
     setStep('form');

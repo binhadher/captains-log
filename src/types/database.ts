@@ -102,6 +102,9 @@ export interface BoatComponent {
   last_service_hours?: number;
   next_service_date?: string;
   next_service_hours?: number;
+  // Service schedule planning notes and document
+  service_schedule_notes?: string;
+  service_schedule_doc_url?: string;
   // Battery fields (for battery components: house_battery, engine_battery, generator_battery, thruster_battery)
   battery_count?: number;
   battery_type?: string; // e.g., "AGM", "Lithium", "Lead Acid", "Gel"

@@ -95,6 +95,7 @@ export const MAINTENANCE_ITEMS: Record<string, MaintenanceItem[]> = {
     { id: 'zincs', label: 'Zincs/Anodes', description: 'Replace anodes' },
     { id: 'motor_service', label: 'Motor Service', description: 'Electric motor service' },
     { id: 'propeller', label: 'Propeller Service', description: 'Thruster prop service' },
+    { id: 'battery_replacement', label: 'Battery Replacement', description: 'Replace thruster batteries' },
     { id: 'other', label: 'Other', description: 'Other maintenance' },
   ],
   stern_thruster: [
@@ -103,6 +104,7 @@ export const MAINTENANCE_ITEMS: Record<string, MaintenanceItem[]> = {
     { id: 'zincs', label: 'Zincs/Anodes', description: 'Replace anodes' },
     { id: 'motor_service', label: 'Motor Service', description: 'Electric motor service' },
     { id: 'propeller', label: 'Propeller Service', description: 'Thruster prop service' },
+    { id: 'battery_replacement', label: 'Battery Replacement', description: 'Replace thruster batteries' },
     { id: 'other', label: 'Other', description: 'Other maintenance' },
   ],
   // Batteries

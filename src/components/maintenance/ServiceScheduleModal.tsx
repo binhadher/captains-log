@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Calendar, Clock } from 'lucide-react';
+import { X, Calendar, Clock, FileText, Upload, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface ServiceScheduleModalProps {
@@ -17,6 +17,8 @@ interface ServiceScheduleModalProps {
     service_interval_hours?: number;
     next_service_date?: string;
     next_service_hours?: number;
+    service_schedule_notes?: string;
+    service_schedule_doc_url?: string;
   };
   onSuccess: () => void;
 }
@@ -32,8 +34,8 @@ const SERVICE_SUGGESTIONS: Record<string, string[]> = {
   propeller: ['Inspection', 'Cleaning', 'Balancing', 'Repair', 'Zincs/Anodes', 'Annual Service'],
   hydraulic: ['Fluid Change', 'Filter Replacement', 'Hose Inspection', 'Pump Service', 'Cylinder Service', 'Annual Service'],
   hydraulic_system: ['Fluid Change', 'Filter Replacement', 'Hose Inspection', 'Pump Service', 'Cylinder Service', 'Annual Service'],
-  bow_thruster: ['Inspection', 'Gear Oil Change', 'Zincs/Anodes', 'Motor Service', 'Propeller Service', 'Annual Service'],
-  stern_thruster: ['Inspection', 'Gear Oil Change', 'Zincs/Anodes', 'Motor Service', 'Propeller Service', 'Annual Service'],
+  bow_thruster: ['Inspection', 'Gear Oil Change', 'Zincs/Anodes', 'Motor Service', 'Propeller Service', 'Battery Replacement', 'Annual Service'],
+  stern_thruster: ['Inspection', 'Gear Oil Change', 'Zincs/Anodes', 'Motor Service', 'Propeller Service', 'Battery Replacement', 'Annual Service'],
   swim_platform: ['Fluid Check', 'Function Test', 'Hinge Lubrication', 'Seal Inspection', 'Annual Service'],
   tender_crane: ['Fluid Check', 'Function Test', 'Wire Inspection', 'Lubrication', 'Load Test', 'Annual Service'],
   passerelle: ['Fluid Check', 'Function Test', 'Hinge Lubrication', 'Teak Care', 'Annual Service'],
@@ -69,7 +71,10 @@ export function ServiceScheduleModal({
     service_interval_hours: currentSchedule?.service_interval_hours?.toString() || '',
     next_service_date: currentSchedule?.next_service_date || '',
     next_service_hours: currentSchedule?.next_service_hours?.toString() || '',
+    service_schedule_notes: currentSchedule?.service_schedule_notes || '',
+    service_schedule_doc_url: currentSchedule?.service_schedule_doc_url || '',
   });
+  const [uploading, setUploading] = useState(false);
   
   // Check if current value is a custom one (not in suggestions)
   const isCustomService = formData.scheduled_service_name && !suggestions.includes(formData.scheduled_service_name);
@@ -92,6 +97,8 @@ export function ServiceScheduleModal({
           service_interval_hours: formData.service_interval_hours ? parseInt(formData.service_interval_hours) : null,
           next_service_date: formData.next_service_date || null,
           next_service_hours: formData.next_service_hours ? parseInt(formData.next_service_hours) : null,
+          service_schedule_notes: formData.service_schedule_notes || null,
+          service_schedule_doc_url: formData.service_schedule_doc_url || null,
         }),
       });
 
@@ -256,6 +263,114 @@ export function ServiceScheduleModal({
                 </div>
               </div>
             )}
+
+            {/* Planning Notes & Document */}
+            <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Planning Notes
+              </h3>
+              
+              <div>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Notes for next service
+                </label>
+                <textarea
+                  value={formData.service_schedule_notes}
+                  onChange={(e) => setFormData({ ...formData, service_schedule_notes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Use Optima D31M batteries, order from Marine Supply Co."
+                  rows={2}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  Reference Document/Photo
+                </label>
+                {formData.service_schedule_doc_url ? (
+                  <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <a 
+                      href={formData.service_schedule_doc_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex-1 text-sm text-blue-600 dark:text-blue-400 hover:underline truncate"
+                    >
+                      📎 View attached document
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, service_schedule_doc_url: '' })}
+                      className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        
+                        setUploading(true);
+                        try {
+                          // Get signed URL
+                          const signedRes = await fetch('/api/upload/signed-url', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              fileName: file.name,
+                              fileType: file.type,
+                              folder: 'service-planning',
+                            }),
+                          });
+                          
+                          if (!signedRes.ok) throw new Error('Failed to get upload URL');
+                          const { signedUrl, publicUrl } = await signedRes.json();
+                          
+                          // Upload file
+                          await fetch(signedUrl, {
+                            method: 'PUT',
+                            body: file,
+                            headers: { 'Content-Type': file.type },
+                          });
+                          
+                          setFormData({ ...formData, service_schedule_doc_url: publicUrl });
+                        } catch (err) {
+                          console.error('Upload error:', err);
+                          alert('Failed to upload file');
+                        } finally {
+                          setUploading(false);
+                        }
+                      }}
+                      className="hidden"
+                      id="schedule-doc-upload"
+                    />
+                    <label 
+                      htmlFor="schedule-doc-upload"
+                      className="flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm text-gray-500">Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            Upload photo or PDF
+                          </span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
 
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={onClose} className="flex-1">

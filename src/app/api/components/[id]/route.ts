@@ -212,7 +212,9 @@ export async function PATCH(
       // Thruster battery fields
       'thruster_battery_count', 'thruster_battery_brand', 'thruster_battery_model', 'thruster_battery_install_date',
       // Per-engine battery data (JSONB)
-      'engine_batteries'
+      'engine_batteries',
+      // Service schedule planning
+      'service_schedule_notes', 'service_schedule_doc_url'
     ];
     
     for (const field of allowedFields) {
