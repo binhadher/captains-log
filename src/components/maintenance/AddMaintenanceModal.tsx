@@ -44,15 +44,44 @@ export function AddMaintenanceModal({
     hours_at_service: currentHours?.toString() || '',
     notes: '',
   });
+  
+  // Battery update fields (shown when logging replacement on battery components)
+  const [updateBatteryDetails, setUpdateBatteryDetails] = useState(false);
+  const [batteryDetails, setBatteryDetails] = useState({
+    battery_count: '',
+    battery_type: '',
+    battery_voltage: '',
+    battery_capacity: '',
+    battery_brand: '',
+    battery_model: '',
+  });
 
   const maintenanceItems = getMaintenanceItems(componentType);
   const showHours = ['engine', 'generator'].includes(componentType);
+  
+  // Check if this is a battery component
+  const isBatteryComponent = ['house_battery', 'engine_battery', 'generator_battery', 'thruster_battery'].includes(componentType);
+  
+  // Check if this is a thruster (for thruster battery update)
+  const isThrusterComponent = ['bow_thruster', 'stern_thruster'].includes(componentType);
+  
+  // Show battery update option when logging replacement
+  const showBatteryUpdateOption = (isBatteryComponent || isThrusterComponent) && formData.maintenance_item === 'replacement';
 
   const resetAndClose = () => {
     setStep('form');
     setSavedLogId(null);
     setVoiceNote(null);
     setReceiptImage(null);
+    setUpdateBatteryDetails(false);
+    setBatteryDetails({
+      battery_count: '',
+      battery_type: '',
+      battery_voltage: '',
+      battery_capacity: '',
+      battery_brand: '',
+      battery_model: '',
+    });
     setFormData({
       maintenance_item: '',
       date: new Date().toISOString().split('T')[0],
@@ -128,6 +157,36 @@ export function AddMaintenanceModal({
       }
 
       const { log } = await response.json();
+      
+      // Update battery details if checkbox was checked
+      if (updateBatteryDetails && showBatteryUpdateOption) {
+        const batteryUpdate: Record<string, unknown> = {};
+        
+        if (isBatteryComponent) {
+          // Update battery component fields
+          if (batteryDetails.battery_count) batteryUpdate.battery_count = parseInt(batteryDetails.battery_count);
+          if (batteryDetails.battery_type) batteryUpdate.battery_type = batteryDetails.battery_type;
+          if (batteryDetails.battery_voltage) batteryUpdate.battery_voltage = batteryDetails.battery_voltage;
+          if (batteryDetails.battery_capacity) batteryUpdate.battery_capacity = batteryDetails.battery_capacity;
+          if (batteryDetails.battery_brand) batteryUpdate.brand = batteryDetails.battery_brand;
+          if (batteryDetails.battery_model) batteryUpdate.model = batteryDetails.battery_model;
+          batteryUpdate.install_date = formData.date; // Set install date to service date
+        } else if (isThrusterComponent) {
+          // Update thruster battery fields
+          if (batteryDetails.battery_count) batteryUpdate.thruster_battery_count = parseInt(batteryDetails.battery_count);
+          if (batteryDetails.battery_brand) batteryUpdate.thruster_battery_brand = batteryDetails.battery_brand;
+          if (batteryDetails.battery_model) batteryUpdate.thruster_battery_model = batteryDetails.battery_model;
+          batteryUpdate.thruster_battery_install_date = formData.date;
+        }
+        
+        if (Object.keys(batteryUpdate).length > 0) {
+          await fetch(`/api/components/${componentId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(batteryUpdate),
+          });
+        }
+      }
       setSavedLogId(log.id);
       setStep('upload');
     } catch (err) {
@@ -284,6 +343,117 @@ export function AddMaintenanceModal({
                 rows={2}
               />
             </div>
+
+            {/* Battery Update Option (shown when logging replacement on battery/thruster) */}
+            {showBatteryUpdateOption && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={updateBatteryDetails}
+                    onChange={(e) => setUpdateBatteryDetails(e.target.checked)}
+                    className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                  />
+                  <span className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                    Update battery details (new brand, install date, etc.)
+                  </span>
+                </label>
+                
+                {updateBatteryDetails && (
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Number of Batteries
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={batteryDetails.battery_count}
+                        onChange={(e) => setBatteryDetails({ ...batteryDetails, battery_count: e.target.value })}
+                        placeholder="e.g., 4"
+                        className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Battery Type
+                      </label>
+                      <select
+                        value={batteryDetails.battery_type}
+                        onChange={(e) => setBatteryDetails({ ...batteryDetails, battery_type: e.target.value })}
+                        className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        <option value="">Select...</option>
+                        <option value="AGM">AGM</option>
+                        <option value="Lithium">Lithium (LiFePO4)</option>
+                        <option value="Lead Acid">Lead Acid</option>
+                        <option value="Gel">Gel</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Brand
+                      </label>
+                      <input
+                        type="text"
+                        value={batteryDetails.battery_brand}
+                        onChange={(e) => setBatteryDetails({ ...batteryDetails, battery_brand: e.target.value })}
+                        placeholder="e.g., Optima"
+                        className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Model
+                      </label>
+                      <input
+                        type="text"
+                        value={batteryDetails.battery_model}
+                        onChange={(e) => setBatteryDetails({ ...batteryDetails, battery_model: e.target.value })}
+                        placeholder="e.g., D31M"
+                        className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    {isBatteryComponent && (
+                      <>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Voltage
+                          </label>
+                          <select
+                            value={batteryDetails.battery_voltage}
+                            onChange={(e) => setBatteryDetails({ ...batteryDetails, battery_voltage: e.target.value })}
+                            className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          >
+                            <option value="">Select...</option>
+                            <option value="12V">12V</option>
+                            <option value="24V">24V</option>
+                            <option value="48V">48V</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Capacity
+                          </label>
+                          <input
+                            type="text"
+                            value={batteryDetails.battery_capacity}
+                            onChange={(e) => setBatteryDetails({ ...batteryDetails, battery_capacity: e.target.value })}
+                            placeholder="e.g., 100Ah"
+                            className="w-full px-2 py-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div className="col-span-2">
+                      <p className="text-xs text-amber-700 dark:text-amber-400">
+                        Install date will be set to the service date ({formData.date})
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Voice Note */}
             <div>
