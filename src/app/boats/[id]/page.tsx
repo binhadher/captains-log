@@ -715,27 +715,32 @@ export default function BoatDetailPage() {
             <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <Activity className="w-4 h-4" />
               Boat Health
+              {healthChecks.length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({healthChecks.length})</span>
+              )}
             </h2>
             <Button size="sm" onClick={() => setShowAddHealthCheck(true)}>
               <Plus className="w-4 h-4 mr-1" />
               Quick Check
             </Button>
           </div>
-          <HealthCheckList 
-            checks={healthChecks}
-            onView={(check) => setViewingHealthCheck(check)}
-            onEdit={(check) => setEditingHealthCheck(check)}
-            onDelete={async (check) => {
-              try {
-                const response = await fetch(`/api/health-checks/${check.id}`, { method: 'DELETE' });
-                if (response.ok) {
-                  fetchHealthChecks(boat.id);
+          <div className="max-h-80 overflow-y-auto">
+            <HealthCheckList 
+              checks={healthChecks}
+              onView={(check) => setViewingHealthCheck(check)}
+              onEdit={(check) => setEditingHealthCheck(check)}
+              onDelete={async (check) => {
+                try {
+                  const response = await fetch(`/api/health-checks/${check.id}`, { method: 'DELETE' });
+                  if (response.ok) {
+                    fetchHealthChecks(boat.id);
+                  }
+                } catch (err) {
+                  console.error('Error deleting health check:', err);
                 }
-              } catch (err) {
-                console.error('Error deleting health check:', err);
-              }
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
 
         {/* Parts Catalog */}
@@ -744,27 +749,32 @@ export default function BoatDetailPage() {
             <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <Package className="w-4 h-4" />
               Parts Catalog
+              {parts.length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({parts.length})</span>
+              )}
             </h2>
             <Button size="sm" onClick={() => setShowAddPart(true)}>
               <Plus className="w-4 h-4 mr-1" />
               Add Part
             </Button>
           </div>
-          <PartsList 
-            parts={parts}
-            onView={(part) => setViewingPart(part)}
-            onEdit={(part) => setEditingPart(part)}
-            onDelete={async (part) => {
-              try {
-                const response = await fetch(`/api/parts/${part.id}`, { method: 'DELETE' });
-                if (response.ok) {
-                  fetchParts(boat.id);
+          <div className="max-h-80 overflow-y-auto">
+            <PartsList 
+              parts={parts}
+              onView={(part) => setViewingPart(part)}
+              onEdit={(part) => setEditingPart(part)}
+              onDelete={async (part) => {
+                try {
+                  const response = await fetch(`/api/parts/${part.id}`, { method: 'DELETE' });
+                  if (response.ok) {
+                    fetchParts(boat.id);
+                  }
+                } catch (err) {
+                  console.error('Error deleting part:', err);
                 }
-              } catch (err) {
-                console.error('Error deleting part:', err);
-              }
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
 
         {/* Boat-level Documents (registration, insurance, etc.) */}
@@ -782,12 +792,14 @@ export default function BoatDetailPage() {
               Upload
             </Button>
           </div>
-          <DocumentsList 
-            documents={documents}
-            onView={(doc) => setViewingDocument(doc)}
-            onEdit={(doc) => setEditingDocument(doc)}
-            onDelete={handleDeleteDocument}
-          />
+          <div className="max-h-80 overflow-y-auto">
+            <DocumentsList 
+              documents={documents}
+              onView={(doc) => setViewingDocument(doc)}
+              onEdit={(doc) => setEditingDocument(doc)}
+              onDelete={handleDeleteDocument}
+            />
+          </div>
         </div>
 
         {/* Crew Section */}
@@ -805,12 +817,14 @@ export default function BoatDetailPage() {
               Add Crew
             </Button>
           </div>
-          <CrewList 
-            crew={crew}
-            onView={(member) => setViewingCrew(member)}
-            onEdit={(member) => { setEditingCrew(member); setShowAddCrew(true); }}
-            onDelete={handleDeleteCrew}
-          />
+          <div className="max-h-80 overflow-y-auto">
+            <CrewList 
+              crew={crew}
+              onView={(member) => setViewingCrew(member)}
+              onEdit={(member) => { setEditingCrew(member); setShowAddCrew(true); }}
+              onDelete={handleDeleteCrew}
+            />
+          </div>
         </div>
       </main>
 
