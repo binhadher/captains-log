@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Upload, Loader2, FileText } from 'lucide-react';
+import { X, Upload, Loader2, FileText, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
+import { CameraCapture } from '@/components/ui/CameraCapture';
 import { DocumentCategory } from '@/types/database';
 
 interface AddDocumentModalProps {
@@ -23,6 +25,7 @@ const CATEGORIES: { value: DocumentCategory; label: string }[] = [
 ];
 
 export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocumentModalProps) {
+  const [step, setStep] = useState<'form' | 'upload'>('form');
   const [name, setName] = useState('');
   const [category, setCategory] = useState<DocumentCategory>('other');
   const [expiryDate, setExpiryDate] = useState('');
@@ -32,8 +35,11 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [voiceNote, setVoiceNote] = useState<{ blob: Blob; duration: number } | null>(null);
 
   const resetForm = () => {
+    setStep('form');
     setName('');
     setCategory('other');
     setExpiryDate('');
@@ -41,6 +47,8 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
     setNotes('');
     setFile(null);
     setError(null);
+    setShowCamera(false);
+    setVoiceNote(null);
   };
 
   const handleClose = () => {
@@ -80,6 +88,14 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
     }
   };
 
+  const handleCameraCapture = (capturedFile: File) => {
+    setFile(capturedFile);
+    setShowCamera(false);
+    if (!name) {
+      setName(`Photo ${new Date().toLocaleDateString()}`);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
@@ -93,7 +109,7 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
     e.preventDefault();
     
     if (!file) {
-      setError('Please select a file');
+      setError('Please select a file or take a photo');
       return;
     }
     
@@ -140,6 +156,16 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
 
   if (!isOpen) return null;
 
+  // Show camera capture overlay
+  if (showCamera) {
+    return (
+      <CameraCapture
+        onCapture={handleCameraCapture}
+        onClose={() => setShowCamera(false)}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -157,7 +183,7 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
             </div>
           )}
 
-          {/* File Drop Zone */}
+          {/* File Drop Zone with Camera Option */}
           <div
             className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
               dragActive 
@@ -202,7 +228,17 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
                     />
                   </label>
                 </p>
-                <p className="text-xs text-gray-400">PDF, Word, or images (max 10MB)</p>
+                <p className="text-xs text-gray-400 mb-3">PDF, Word, or images (max 10MB)</p>
+                
+                {/* Camera Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowCamera(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 rounded-lg hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-colors"
+                >
+                  <Camera className="w-4 h-4" />
+                  Take Photo
+                </button>
               </>
             )}
           </div>
@@ -281,12 +317,23 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Notes <span className="font-normal text-gray-400">(optional)</span>
             </label>
-            <input
-              type="text"
+            <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., Policy number, contact info..."
+              rows={2}
+            />
+          </div>
+
+          {/* Voice Note */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Voice Note
+            </label>
+            <VoiceRecorder
+              onRecordingComplete={(blob, duration) => setVoiceNote({ blob, duration })}
+              onRecordingDelete={() => setVoiceNote(null)}
             />
           </div>
 
