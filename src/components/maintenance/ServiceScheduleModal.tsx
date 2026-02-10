@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Calendar, Clock, FileText, Upload, Trash2, Loader2 } from 'lucide-react';
+import { X, Calendar, Clock, FileText, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { FileUpload } from '@/components/ui/FileUpload';
+import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
 
 interface ServiceScheduleModalProps {
   isOpen: boolean;
@@ -23,7 +25,7 @@ interface ServiceScheduleModalProps {
   onSuccess: () => void;
 }
 
-// Common service types per component type - must match labels in maintenance-items.ts
+// Common service types per component type
 const SERVICE_SUGGESTIONS: Record<string, string[]> = {
   engine: ['Oil Change', 'Fuel Filters', 'Oil Filters', 'Air Filters', 'Water Separators', 'Water Impeller', 'Belts', 'Zincs/Anodes', 'Annual Service'],
   inboard_engine: ['Oil Change', 'Fuel Filters', 'Oil Filters', 'Air Filters', 'Water Separators', 'Water Impeller', 'Belts', 'Zincs/Anodes', 'Annual Service'],
@@ -60,6 +62,7 @@ export function ServiceScheduleModal({
   currentSchedule,
   onSuccess,
 }: ServiceScheduleModalProps) {
+  const [step, setStep] = useState<'form' | 'upload'>('form');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const showHours = ['engine', 'inboard_engine', 'outboard_engine', 'generator'].includes(componentType);
@@ -72,15 +75,21 @@ export function ServiceScheduleModal({
     next_service_date: currentSchedule?.next_service_date || '',
     next_service_hours: currentSchedule?.next_service_hours?.toString() || '',
     service_schedule_notes: currentSchedule?.service_schedule_notes || '',
-    service_schedule_doc_url: currentSchedule?.service_schedule_doc_url || '',
   });
-  const [uploading, setUploading] = useState(false);
+  
+  const [voiceNote, setVoiceNote] = useState<{ blob: Blob; duration: number } | null>(null);
   
   // Check if current value is a custom one (not in suggestions)
   const isCustomService = formData.scheduled_service_name && !suggestions.includes(formData.scheduled_service_name);
   const [showCustomInput, setShowCustomInput] = useState(isCustomService);
 
   if (!isOpen) return null;
+
+  const resetAndClose = () => {
+    setStep('form');
+    setVoiceNote(null);
+    onClose();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +107,6 @@ export function ServiceScheduleModal({
           next_service_date: formData.next_service_date || null,
           next_service_hours: formData.next_service_hours ? parseInt(formData.next_service_hours) : null,
           service_schedule_notes: formData.service_schedule_notes || null,
-          service_schedule_doc_url: formData.service_schedule_doc_url || null,
         }),
       });
 
@@ -107,8 +115,8 @@ export function ServiceScheduleModal({
         throw new Error(data.error || 'Failed to update schedule');
       }
 
-      onSuccess();
-      onClose();
+      // Move to upload step
+      setStep('upload');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update');
     } finally {
@@ -116,271 +124,233 @@ export function ServiceScheduleModal({
     }
   };
 
+  const handleVoiceRecording = (blob: Blob, duration: number) => {
+    setVoiceNote({ blob, duration });
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+        <div className="fixed inset-0 bg-black/50" onClick={resetAndClose} />
         
-        <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Service Schedule</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">{componentName}</p>
             </div>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <button onClick={resetAndClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+              <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Service Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Service Type *
-              </label>
-              {showCustomInput ? (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={formData.scheduled_service_name}
-                    onChange={(e) => setFormData({ ...formData, scheduled_service_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter custom service type..."
-                    required
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCustomInput(false);
-                      setFormData({ ...formData, scheduled_service_name: '' });
-                    }}
-                    className="text-xs text-teal-600 dark:text-teal-400 hover:underline"
-                  >
-                    ← Back to list
-                  </button>
+          {step === 'form' ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                  {error}
                 </div>
-              ) : (
-                <select
-                  value={suggestions.includes(formData.scheduled_service_name) ? formData.scheduled_service_name : ''}
-                  onChange={(e) => {
-                    if (e.target.value === '__custom__') {
-                      setShowCustomInput(true);
-                      setFormData({ ...formData, scheduled_service_name: '' });
-                    } else {
-                      setFormData({ ...formData, scheduled_service_name: e.target.value });
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Select service type...</option>
-                  {suggestions.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                  <option value="__custom__">Other (custom)...</option>
-                </select>
               )}
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                What service is being scheduled?
-              </p>
-            </div>
 
-            {/* Date-based scheduling */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Date-based Service
-              </h3>
-              
+              {/* Service Type */}
               <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Service every (days)
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Service Type
                 </label>
-                <input
-                  type="number"
-                  value={formData.service_interval_days}
-                  onChange={(e) => setFormData({ ...formData, service_interval_days: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., 365 for yearly"
-                />
+                {showCustomInput ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={formData.scheduled_service_name}
+                      onChange={(e) => setFormData({ ...formData, scheduled_service_name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter service name..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomInput(false);
+                        setFormData({ ...formData, scheduled_service_name: '' });
+                      }}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      ← Choose from list
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={formData.scheduled_service_name}
+                    onChange={(e) => {
+                      if (e.target.value === '__custom__') {
+                        setShowCustomInput(true);
+                        setFormData({ ...formData, scheduled_service_name: '' });
+                      } else {
+                        setFormData({ ...formData, scheduled_service_name: e.target.value });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="">Select service type...</option>
+                    {suggestions.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                    <option value="__custom__">Other (custom)...</option>
+                  </select>
+                )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  What service is being scheduled?
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Next service date
-                </label>
-                <input
-                  type="date"
-                  value={formData.next_service_date}
-                  onChange={(e) => setFormData({ ...formData, next_service_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Hours-based scheduling (for engines/generators) */}
-            {showHours && (
-              <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              {/* Date-based scheduling */}
+              <div className="space-y-4">
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Hours-based Service
-                  {currentHours !== undefined && (
-                    <span className="text-gray-400 font-normal">(Current: {currentHours} hrs)</span>
-                  )}
+                  <Calendar className="w-4 h-4" />
+                  Date-based Service
                 </h3>
                 
                 <div>
                   <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    Service every (hours)
+                    Service every (days)
                   </label>
                   <input
                     type="number"
-                    value={formData.service_interval_hours}
-                    onChange={(e) => setFormData({ ...formData, service_interval_hours: e.target.value })}
+                    value={formData.service_interval_days}
+                    onChange={(e) => setFormData({ ...formData, service_interval_days: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g., 250"
+                    placeholder="e.g., 365 for yearly"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    Next service at (hours)
+                    Next service date
                   </label>
                   <input
-                    type="number"
-                    value={formData.next_service_hours}
-                    onChange={(e) => setFormData({ ...formData, next_service_hours: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder={currentHours ? `e.g., ${currentHours + 250}` : 'e.g., 500'}
+                    type="date"
+                    value={formData.next_service_date}
+                    onChange={(e) => setFormData({ ...formData, next_service_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
-            )}
 
-            {/* Planning Notes & Document */}
-            <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Planning Notes
-              </h3>
-              
-              <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Notes for next service
-                </label>
-                <textarea
-                  value={formData.service_schedule_notes}
-                  onChange={(e) => setFormData({ ...formData, service_schedule_notes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Use Optima D31M batteries, order from Marine Supply Co."
-                  rows={2}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Reference Document/Photo
-                </label>
-                {formData.service_schedule_doc_url ? (
-                  <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <a 
-                      href={formData.service_schedule_doc_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex-1 text-sm text-blue-600 dark:text-blue-400 hover:underline truncate"
-                    >
-                      📎 View attached document
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, service_schedule_doc_url: '' })}
-                      className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        
-                        setUploading(true);
-                        try {
-                          // Get signed URL
-                          const signedRes = await fetch('/api/upload/signed-url', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              fileName: file.name,
-                              fileType: file.type,
-                              folder: 'service-planning',
-                            }),
-                          });
-                          
-                          if (!signedRes.ok) throw new Error('Failed to get upload URL');
-                          const { signedUrl, publicUrl } = await signedRes.json();
-                          
-                          // Upload file
-                          await fetch(signedUrl, {
-                            method: 'PUT',
-                            body: file,
-                            headers: { 'Content-Type': file.type },
-                          });
-                          
-                          setFormData({ ...formData, service_schedule_doc_url: publicUrl });
-                        } catch (err) {
-                          console.error('Upload error:', err);
-                          alert('Failed to upload file');
-                        } finally {
-                          setUploading(false);
-                        }
-                      }}
-                      className="hidden"
-                      id="schedule-doc-upload"
-                    />
-                    <label 
-                      htmlFor="schedule-doc-upload"
-                      className="flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
-                    >
-                      {uploading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span className="text-sm text-gray-500">Uploading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            Upload photo or PDF
-                          </span>
-                        </>
-                      )}
+              {/* Hours-based scheduling (for engines/generators) */}
+              {showHours && (
+                <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Hours-based Service
+                    {currentHours !== undefined && (
+                      <span className="text-gray-400 font-normal">(Current: {currentHours} hrs)</span>
+                    )}
+                  </h3>
+                  
+                  <div>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Service every (hours)
                     </label>
+                    <input
+                      type="number"
+                      value={formData.service_interval_hours}
+                      onChange={(e) => setFormData({ ...formData, service_interval_hours: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., 250"
+                    />
                   </div>
-                )}
+
+                  <div>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Next service at (hours)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.next_service_hours}
+                      onChange={(e) => setFormData({ ...formData, next_service_hours: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder={currentHours ? `e.g., ${currentHours + 250}` : 'e.g., 500'}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Planning Notes */}
+              <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Planning Notes
+                </h3>
+                
+                <div>
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    Notes for next service
+                  </label>
+                  <textarea
+                    value={formData.service_schedule_notes}
+                    onChange={(e) => setFormData({ ...formData, service_schedule_notes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g., Use Optima D31M batteries, order from Marine Supply Co."
+                    rows={2}
+                  />
+                </div>
+
+                {/* Voice Note */}
+                <div>
+                  <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Voice Note
+                  </label>
+                  <VoiceRecorder
+                    onRecordingComplete={handleVoiceRecording}
+                    onRecordingDelete={() => setVoiceNote(null)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={resetAndClose} className="flex-1">
+                  Cancel
+                </Button>
+                <Button type="submit" loading={loading} className="flex-1">
+                  Save & Add Photo
+                </Button>
+              </div>
+            </form>
+          ) : (
+            /* Upload Step */
+            <div className="space-y-4">
+              <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
+                ✓ Schedule saved! Now add any reference photos or documents.
+              </div>
+
+              <FileUpload 
+                componentId={componentId}
+                showCamera={true}
+              />
+
+              <div className="flex gap-3 pt-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    onSuccess();
+                    resetAndClose();
+                  }} 
+                  className="flex-1"
+                >
+                  Skip
+                </Button>
+                <Button 
+                  onClick={() => {
+                    onSuccess();
+                    resetAndClose();
+                  }}
+                  className="flex-1"
+                >
+                  Done
+                </Button>
               </div>
             </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-                Cancel
-              </Button>
-              <Button type="submit" loading={loading} className="flex-1">
-                Save Schedule
-              </Button>
-            </div>
-          </form>
+          )}
         </div>
       </div>
     </div>
