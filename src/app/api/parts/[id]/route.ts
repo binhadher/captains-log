@@ -40,19 +40,23 @@ export async function PATCH(
 
     const body = await request.json();
 
+    // Build update object - only include fields that are explicitly provided
+    const updateData: Record<string, unknown> = {};
+    
+    if (body.name !== undefined) updateData.name = body.name?.trim() || part.name;
+    if (body.brand !== undefined) updateData.brand = body.brand?.trim() || null;
+    if (body.part_number !== undefined) updateData.part_number = body.part_number?.trim() || null;
+    if (body.size_specs !== undefined) updateData.size_specs = body.size_specs?.trim() || null;
+    if (body.supplier !== undefined) updateData.supplier = body.supplier?.trim() || null;
+    if (body.install_date !== undefined) updateData.install_date = body.install_date || null;
+    if (body.notes !== undefined) updateData.notes = body.notes?.trim() || null;
+    if (body.photo_url !== undefined) updateData.photo_url = body.photo_url || null;
+    if (body.component_id !== undefined) updateData.component_id = body.component_id || null;
+
     // Update the part
     const { data: updatedPart, error } = await supabase
       .from('parts')
-      .update({
-        name: body.name?.trim() || part.name,
-        brand: body.brand?.trim() || null,
-        part_number: body.part_number?.trim() || null,
-        size_specs: body.size_specs?.trim() || null,
-        supplier: body.supplier?.trim() || null,
-        install_date: body.install_date || null,
-        notes: body.notes?.trim() || null,
-        photo_url: body.photo_url || null,
-      })
+      .update(updateData)
       .eq('id', partId)
       .select()
       .single();

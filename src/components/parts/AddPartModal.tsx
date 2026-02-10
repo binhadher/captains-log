@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { X, Copy } from 'lucide-react';
+import { useState, useMemo, useRef } from 'react';
+import { X, Copy, Camera, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { FileUpload } from '@/components/ui/FileUpload';
 import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
+import { CameraCapture } from '@/components/ui/CameraCapture';
 import { BoatComponent } from '@/types/database';
 
 // Engine component types that can be "mirrored"
@@ -29,10 +29,14 @@ export function AddPartModal({
 }: AddPartModalProps) {
   const [step, setStep] = useState<'form' | 'upload'>('form');
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedPartId, setSavedPartId] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [applyToAllEngines, setApplyToAllEngines] = useState(false);
   const [voiceNote, setVoiceNote] = useState<{ blob: Blob; duration: number } | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     component_id: preselectedComponentId || '',
@@ -63,8 +67,10 @@ export function AddPartModal({
   const resetAndClose = () => {
     setStep('form');
     setSavedPartId(null);
+    setPhotoUrl(null);
     setVoiceNote(null);
     setApplyToAllEngines(false);
+    setShowCamera(false);
     setFormData({
       name: '',
       component_id: preselectedComponentId || '',
@@ -123,12 +129,83 @@ export function AddPartModal({
     }
   };
 
+  // Upload photo and update part
+  const uploadPhoto = async (file: File) => {
+    if (!savedPartId) return;
+    
+    setUploading(true);
+    setError(null);
+
+    try {
+      // First upload the file
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('boat_id', boatId);
+      uploadFormData.append('category', 'other');
+      uploadFormData.append('name', file.name);
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload photo');
+      }
+
+      const { document } = await uploadResponse.json();
+      const url = document.file_url;
+
+      // Now update the part with the photo URL
+      const updateResponse = await fetch(`/api/parts/${savedPartId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo_url: url }),
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to attach photo to part');
+      }
+
+      setPhotoUrl(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload photo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCameraCapture = (file: File) => {
+    setShowCamera(false);
+    uploadPhoto(file);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadPhoto(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   // Group components by category for the dropdown
   const groupedComponents = components.reduce((acc, comp) => {
     if (!acc[comp.category]) acc[comp.category] = [];
     acc[comp.category].push(comp);
     return acc;
   }, {} as Record<string, BoatComponent[]>);
+
+  // Show camera capture overlay
+  if (showCamera) {
+    return (
+      <CameraCapture
+        onCapture={handleCameraCapture}
+        onClose={() => setShowCamera(false)}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -321,13 +398,84 @@ export function AddPartModal({
             /* Upload Step */
             <div className="space-y-4">
               <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
-                ✓ Part saved! Now add any photos.
+                ✓ Part saved! Now add a photo.
               </div>
 
-              <FileUpload 
-                boatId={boatId}
-                showCamera={true}
-              />
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Show uploaded photo or upload options */}
+              {photoUrl ? (
+                <div className="relative">
+                  <img 
+                    src={photoUrl} 
+                    alt="Part photo" 
+                    className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPhotoUrl(null)}
+                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  
+                  <div className="flex gap-3">
+                    {/* Take Photo */}
+                    <button
+                      type="button"
+                      onClick={() => setShowCamera(true)}
+                      disabled={uploading}
+                      className="flex-1 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg p-6 text-center cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50"
+                    >
+                      {uploading ? (
+                        <div className="flex flex-col items-center">
+                          <Loader2 className="w-8 h-8 text-teal-500 animate-spin mb-2" />
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <Camera className="w-8 h-8 text-teal-500 mb-2" />
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Take Photo</p>
+                        </div>
+                      )}
+                    </button>
+
+                    {/* Upload from gallery */}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all disabled:opacity-50"
+                    >
+                      {uploading ? (
+                        <div className="flex flex-col items-center">
+                          <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                          <p className="text-sm text-gray-600 dark:text-gray-400">From Gallery</p>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                </>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <Button 
@@ -338,17 +486,19 @@ export function AddPartModal({
                   }} 
                   className="flex-1"
                 >
-                  Skip
+                  {photoUrl ? 'Done' : 'Skip'}
                 </Button>
-                <Button 
-                  onClick={() => {
-                    onSuccess();
-                    resetAndClose();
-                  }}
-                  className="flex-1"
-                >
-                  Done
-                </Button>
+                {photoUrl && (
+                  <Button 
+                    onClick={() => {
+                      onSuccess();
+                      resetAndClose();
+                    }}
+                    className="flex-1"
+                  >
+                    Done
+                  </Button>
+                )}
               </div>
             </div>
           )}
