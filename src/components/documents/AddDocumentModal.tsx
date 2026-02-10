@@ -324,18 +324,30 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
 
             {/* Show selected file or upload options */}
             {file ? (
-              <div className="flex items-center justify-center gap-3 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
-                <FileText className="w-8 h-8 text-green-600 dark:text-green-400" />
-                <div className="text-left flex-1">
-                  <p className="font-medium text-gray-900 dark:text-white">{file.name}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {(file.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
+              <div className="relative">
+                {/* Show image preview for image files */}
+                {file.type.startsWith('image/') ? (
+                  <img 
+                    src={URL.createObjectURL(file)} 
+                    alt="Preview" 
+                    className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center gap-3 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
+                    <FileText className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    <div className="text-left flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white">{file.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {(file.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {/* Remove button */}
                 <button
                   type="button"
                   onClick={() => setFile(null)}
-                  className="text-gray-400 hover:text-red-500"
+                  className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg"
                 >
                   <X className="w-5 h-5" />
                 </button>
