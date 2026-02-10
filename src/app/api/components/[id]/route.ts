@@ -206,7 +206,11 @@ export async function PATCH(
       'install_date', 'current_hours', 'notes',
       'scheduled_service_name', 'service_interval_days', 'service_interval_hours',
       'next_service_date', 'next_service_hours',
-      'last_service_date', 'last_service_hours'
+      'last_service_date', 'last_service_hours',
+      // Battery fields
+      'battery_count', 'battery_type', 'battery_voltage', 'battery_capacity',
+      // Thruster battery fields
+      'thruster_battery_count', 'thruster_battery_brand', 'thruster_battery_model', 'thruster_battery_install_date'
     ];
     
     for (const field of allowedFields) {

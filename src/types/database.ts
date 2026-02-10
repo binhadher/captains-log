@@ -91,6 +91,16 @@ export interface BoatComponent {
   last_service_hours?: number;
   next_service_date?: string;
   next_service_hours?: number;
+  // Battery fields (for battery components: house_battery, engine_battery, generator_battery, thruster_battery)
+  battery_count?: number;
+  battery_type?: string; // e.g., "AGM", "Lithium", "Lead Acid", "Gel"
+  battery_voltage?: string; // e.g., "12V", "24V"
+  battery_capacity?: string; // e.g., "100Ah", "200Ah"
+  // Thruster battery info (for bow_thruster, stern_thruster)
+  thruster_battery_count?: number;
+  thruster_battery_brand?: string;
+  thruster_battery_model?: string;
+  thruster_battery_install_date?: string;
   // Timestamps
   created_at: string;
   updated_at: string;

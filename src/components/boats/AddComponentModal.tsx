@@ -40,6 +40,16 @@ export function AddComponentModal({ isOpen, onClose, boatId, onSuccess }: AddCom
   const [serialNumber, setSerialNumber] = useState('');
   const [currentHours, setCurrentHours] = useState('');
   const [notes, setNotes] = useState('');
+  // Battery fields (for battery components)
+  const [batteryCount, setBatteryCount] = useState('');
+  const [batteryType, setBatteryType] = useState('');
+  const [batteryVoltage, setBatteryVoltage] = useState('');
+  const [batteryCapacity, setBatteryCapacity] = useState('');
+  // Thruster battery fields (for bow/stern thruster)
+  const [thrusterBatteryCount, setThrusterBatteryCount] = useState('');
+  const [thrusterBatteryBrand, setThrusterBatteryBrand] = useState('');
+  const [thrusterBatteryModel, setThrusterBatteryModel] = useState('');
+  const [thrusterBatteryInstallDate, setThrusterBatteryInstallDate] = useState('');
 
   const resetForm = () => {
     setStep('category');
@@ -52,8 +62,22 @@ export function AddComponentModal({ isOpen, onClose, boatId, onSuccess }: AddCom
     setSerialNumber('');
     setCurrentHours('');
     setNotes('');
+    setBatteryCount('');
+    setBatteryType('');
+    setBatteryVoltage('');
+    setBatteryCapacity('');
+    setThrusterBatteryCount('');
+    setThrusterBatteryBrand('');
+    setThrusterBatteryModel('');
+    setThrusterBatteryInstallDate('');
     setError(null);
   };
+  
+  // Check if this is a battery component type
+  const isBatteryComponent = selectedType && ['house_battery', 'engine_battery', 'generator_battery', 'thruster_battery'].includes(selectedType);
+  
+  // Check if this is a thruster component
+  const isThrusterComponent = selectedType && ['bow_thruster', 'stern_thruster'].includes(selectedType);
 
   const handleClose = () => {
     resetForm();
@@ -101,20 +125,38 @@ export function AddComponentModal({ isOpen, onClose, boatId, onSuccess }: AddCom
     setError(null);
 
     try {
+      const payload: Record<string, any> = {
+        category: selectedCategory || 'systems',
+        type: selectedType || 'custom',
+        name: name.trim(),
+        position: position.trim() || null,
+        brand: brand.trim() || null,
+        model: model.trim() || null,
+        serial_number: serialNumber.trim() || null,
+        current_hours: currentHours ? parseInt(currentHours) : 0,
+        notes: notes.trim() || null,
+      };
+      
+      // Add battery fields for battery components
+      if (isBatteryComponent) {
+        payload.battery_count = batteryCount ? parseInt(batteryCount) : null;
+        payload.battery_type = batteryType.trim() || null;
+        payload.battery_voltage = batteryVoltage.trim() || null;
+        payload.battery_capacity = batteryCapacity.trim() || null;
+      }
+      
+      // Add thruster battery fields for thrusters
+      if (isThrusterComponent) {
+        payload.thruster_battery_count = thrusterBatteryCount ? parseInt(thrusterBatteryCount) : null;
+        payload.thruster_battery_brand = thrusterBatteryBrand.trim() || null;
+        payload.thruster_battery_model = thrusterBatteryModel.trim() || null;
+        payload.thruster_battery_install_date = thrusterBatteryInstallDate || null;
+      }
+
       const response = await fetch(`/api/boats/${boatId}/components`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category: selectedCategory || 'systems',
-          type: selectedType || 'custom',
-          name: name.trim(),
-          position: position.trim() || null,
-          brand: brand.trim() || null,
-          model: model.trim() || null,
-          serial_number: serialNumber.trim() || null,
-          current_hours: currentHours ? parseInt(currentHours) : 0,
-          notes: notes.trim() || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -330,6 +372,129 @@ export function AddComponentModal({ isOpen, onClose, boatId, onSuccess }: AddCom
                   />
                 </div>
               </div>
+
+              {/* Battery Fields (for battery components) */}
+              {isBatteryComponent && (
+                <div className="space-y-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <h4 className="text-sm font-medium text-amber-800 dark:text-amber-300">Battery Details</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Number of Batteries
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={batteryCount}
+                        onChange={(e) => setBatteryCount(e.target.value)}
+                        placeholder="e.g., 4"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Battery Type
+                      </label>
+                      <select
+                        value={batteryType}
+                        onChange={(e) => setBatteryType(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      >
+                        <option value="">Select type...</option>
+                        <option value="AGM">AGM</option>
+                        <option value="Lithium">Lithium (LiFePO4)</option>
+                        <option value="Lead Acid">Lead Acid</option>
+                        <option value="Gel">Gel</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Voltage
+                      </label>
+                      <select
+                        value={batteryVoltage}
+                        onChange={(e) => setBatteryVoltage(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      >
+                        <option value="">Select...</option>
+                        <option value="12V">12V</option>
+                        <option value="24V">24V</option>
+                        <option value="48V">48V</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Capacity (per battery)
+                      </label>
+                      <input
+                        type="text"
+                        value={batteryCapacity}
+                        onChange={(e) => setBatteryCapacity(e.target.value)}
+                        placeholder="e.g., 100Ah"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Thruster Battery Fields (for bow/stern thruster) */}
+              {isThrusterComponent && (
+                <div className="space-y-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300">Thruster Batteries</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Number of Batteries
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={thrusterBatteryCount}
+                        onChange={(e) => setThrusterBatteryCount(e.target.value)}
+                        placeholder="e.g., 2"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Install Date
+                      </label>
+                      <input
+                        type="date"
+                        value={thrusterBatteryInstallDate}
+                        onChange={(e) => setThrusterBatteryInstallDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Battery Brand
+                      </label>
+                      <input
+                        type="text"
+                        value={thrusterBatteryBrand}
+                        onChange={(e) => setThrusterBatteryBrand(e.target.value)}
+                        placeholder="e.g., Optima"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Battery Model
+                      </label>
+                      <input
+                        type="text"
+                        value={thrusterBatteryModel}
+                        onChange={(e) => setThrusterBatteryModel(e.target.value)}
+                        placeholder="e.g., D31M"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Notes */}
               <div>

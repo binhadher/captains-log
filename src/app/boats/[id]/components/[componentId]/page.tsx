@@ -547,6 +547,80 @@ export default function ComponentDetailPage() {
             )}
           </div>
 
+          {/* Battery Details (for battery components) */}
+          {['house_battery', 'engine_battery', 'generator_battery', 'thruster_battery'].includes(component.type) && (
+            (component.battery_count || component.battery_type || component.battery_voltage || component.battery_capacity) ? (
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                  <span>🔋</span> Battery Details
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {component.battery_count && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Count</p>
+                      <p className="text-gray-900 dark:text-white font-medium text-sm">{component.battery_count} batteries</p>
+                    </div>
+                  )}
+                  {component.battery_type && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Type</p>
+                      <p className="text-gray-900 dark:text-white font-medium text-sm">{component.battery_type}</p>
+                    </div>
+                  )}
+                  {component.battery_voltage && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Voltage</p>
+                      <p className="text-gray-900 dark:text-white font-medium text-sm">{component.battery_voltage}</p>
+                    </div>
+                  )}
+                  {component.battery_capacity && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Capacity</p>
+                      <p className="text-gray-900 dark:text-white font-medium text-sm">{component.battery_capacity}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null
+          )}
+
+          {/* Thruster Battery Details (for bow/stern thrusters) */}
+          {['bow_thruster', 'stern_thruster'].includes(component.type) && (
+            (component.thruster_battery_count || component.thruster_battery_brand || component.thruster_battery_model || component.thruster_battery_install_date) ? (
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                  <span>⚡</span> Thruster Batteries
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {component.thruster_battery_count && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Count</p>
+                      <p className="text-gray-900 dark:text-white font-medium text-sm">{component.thruster_battery_count} batteries</p>
+                    </div>
+                  )}
+                  {component.thruster_battery_brand && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Brand</p>
+                      <p className="text-gray-900 dark:text-white font-medium text-sm">{component.thruster_battery_brand}</p>
+                    </div>
+                  )}
+                  {component.thruster_battery_model && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Model</p>
+                      <p className="text-gray-900 dark:text-white font-medium text-sm">{component.thruster_battery_model}</p>
+                    </div>
+                  )}
+                  {component.thruster_battery_install_date && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Installed</p>
+                      <p className="text-gray-900 dark:text-white font-medium text-sm">{formatDate(component.thruster_battery_install_date)}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null
+          )}
+
           {component.notes && (
             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Notes</p>

@@ -167,7 +167,9 @@ export function ComponentCard({ component, boatId, onEdit }: ComponentCardProps)
           {/* Show install date / age for batteries */}
           {isBattery && (
             <div className="text-right">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Installed</p>
+              {component.battery_count && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{component.battery_count}× {component.battery_type || 'batteries'}</p>
+              )}
               {component.install_date ? (
                 <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
@@ -176,6 +178,16 @@ export function ComponentCard({ component, boatId, onEdit }: ComponentCardProps)
               ) : (
                 <p className="text-xs text-amber-500 italic">Not set</p>
               )}
+            </div>
+          )}
+          {/* Show thruster battery count for thrusters */}
+          {['bow_thruster', 'stern_thruster'].includes(component.type) && component.thruster_battery_count && (
+            <div className="text-right">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Batteries</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                <Battery className="w-3 h-3" />
+                {component.thruster_battery_count}×
+              </p>
             </div>
           )}
           {/* Edit button */}

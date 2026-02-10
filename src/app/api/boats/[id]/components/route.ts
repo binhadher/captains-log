@@ -134,6 +134,16 @@ export async function POST(
         current_hours: body.current_hours || 0,
         notes: body.notes || null,
         sort_order: sortOrder,
+        // Battery fields
+        battery_count: body.battery_count || null,
+        battery_type: body.battery_type || null,
+        battery_voltage: body.battery_voltage || null,
+        battery_capacity: body.battery_capacity || null,
+        // Thruster battery fields
+        thruster_battery_count: body.thruster_battery_count || null,
+        thruster_battery_brand: body.thruster_battery_brand || null,
+        thruster_battery_model: body.thruster_battery_model || null,
+        thruster_battery_install_date: body.thruster_battery_install_date || null,
       })
       .select()
       .single();
