@@ -61,6 +61,8 @@ export function SafetyEquipmentDetailModal({ isOpen, onClose, equipment, onEdit,
       equipment.next_service_date && `Service due: ${new Date(equipment.next_service_date).toLocaleDateString()}`,
       equipment.certification_number && `Cert #: ${equipment.certification_number}`,
       equipment.notes && `Notes: ${equipment.notes}`,
+      equipment.photo_url && `Photo/Certificate: ${equipment.photo_url}`,
+      equipment.voice_note_url && `Voice Note: ${equipment.voice_note_url}`,
     ].filter(Boolean).join('\n');
   };
 

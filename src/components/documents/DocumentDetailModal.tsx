@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, FileText, Download, Share2, Pencil, Trash2, Calendar, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
 import { Document, DocumentCategory } from '@/types/database';
 import { formatDueIn, calculateSeverity, SEVERITY_COLORS } from '@/lib/alerts';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
 interface DocumentDetailModalProps {
   isOpen: boolean;
@@ -217,6 +218,11 @@ export function DocumentDetailModal({ isOpen, onClose, document: doc, onEdit, on
             <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-sm text-gray-600 dark:text-gray-300">{doc.notes}</p>
             </div>
+          )}
+
+          {/* Voice Note */}
+          {doc.voice_note_url && (
+            <AudioPlayer src={doc.voice_note_url} />
           )}
 
           {/* Open in new tab link */}

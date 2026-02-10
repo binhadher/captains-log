@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
     const expiryDate = formData.get('expiry_date') as string | null;
     const reminderDays = formData.get('reminder_days') as string | null;
     const notes = formData.get('notes') as string | null;
+    const voiceNoteUrl = formData.get('voice_note_url') as string | null;
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -122,6 +123,7 @@ export async function POST(request: NextRequest) {
         expiry_date: expiryDate || null,
         reminder_days: reminderDays ? parseInt(reminderDays) : 30,
         notes: notes || null,
+        voice_note_url: voiceNoteUrl || null,
         uploaded_by: dbUser.id,
       })
       .select()

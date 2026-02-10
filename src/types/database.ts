@@ -228,6 +228,7 @@ export interface Document {
   uploaded_by: string;
   uploaded_at: string;
   notes?: string;
+  voice_note_url?: string;
 }
 
 export interface ServiceProvider {

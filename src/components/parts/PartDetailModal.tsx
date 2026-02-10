@@ -30,6 +30,8 @@ export function PartDetailModal({ isOpen, onClose, part, onEdit, onDelete }: Par
       part.supplier && `Supplier: ${part.supplier}`,
       part.install_date && `Installed: ${formatDate(part.install_date)}`,
       part.notes && `Notes: ${part.notes}`,
+      part.photo_url && `Photo: ${part.photo_url}`,
+      part.voice_note_url && `Voice Note: ${part.voice_note_url}`,
     ].filter(Boolean).join('\n');
   };
 

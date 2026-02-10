@@ -53,6 +53,8 @@ export function HealthCheckDetailModal({ isOpen, onClose, check, onEdit, onDelet
       check.component_name && `Component: ${check.component_name}`,
       check.quantity && `Quantity: ${check.quantity}`,
       check.notes && `Notes: ${check.notes}`,
+      check.photo_url && `Photo: ${check.photo_url}`,
+      check.voice_note_url && `Voice Note: ${check.voice_note_url}`,
     ].filter(Boolean).join('\n');
   };
 
