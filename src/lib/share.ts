@@ -12,6 +12,52 @@ export interface ShareOptions {
 }
 
 /**
+ * Get file extension from MIME type
+ */
+function getExtensionFromMimeType(mimeType: string): string {
+  const mimeToExt: Record<string, string> = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/gif': '.gif',
+    'image/webp': '.webp',
+    'image/heic': '.heic',
+    'application/pdf': '.pdf',
+    'video/mp4': '.mp4',
+    'video/webm': '.webm',
+    'video/quicktime': '.mov',
+    'audio/webm': '.webm',
+    'audio/mpeg': '.mp3',
+  };
+  return mimeToExt[mimeType] || '';
+}
+
+/**
+ * Ensure filename has proper extension based on file type
+ */
+function ensureFileExtension(fileName: string, fileType?: string): string {
+  if (!fileType) return fileName;
+  
+  const ext = getExtensionFromMimeType(fileType);
+  if (!ext) return fileName;
+  
+  // Check if fileName already has the correct extension
+  const lowerName = fileName.toLowerCase();
+  if (lowerName.endsWith(ext) || lowerName.endsWith(ext.replace('.', ''))) {
+    return fileName;
+  }
+  
+  // Check if it has any extension
+  const lastDot = fileName.lastIndexOf('.');
+  if (lastDot > 0) {
+    // Has an extension, might be wrong - replace it
+    return fileName.substring(0, lastDot) + ext;
+  }
+  
+  // No extension - add one
+  return fileName + ext;
+}
+
+/**
  * Share content with optional file attachment
  * Falls back to text-only or clipboard copy if file sharing isn't supported
  */
@@ -21,9 +67,30 @@ export async function shareContent(options: ShareOptions): Promise<{ success: bo
   // If we have a file URL, try to share the file
   if (fileUrl && fileName) {
     try {
-      const response = await fetch(fileUrl);
+      // Fetch the file - may fail due to CORS
+      const response = await fetch(fileUrl, { mode: 'cors' });
+      
+      if (!response.ok) {
+        console.warn('Failed to fetch file for sharing:', response.status, response.statusText);
+        throw new Error(`Fetch failed: ${response.status}`);
+      }
+      
       const blob = await response.blob();
-      const file = new File([blob], fileName, { type: fileType || blob.type || 'application/octet-stream' });
+      
+      if (blob.size === 0) {
+        console.warn('Fetched blob is empty');
+        throw new Error('Empty blob');
+      }
+      
+      // Determine actual file type from blob or passed type
+      const actualType = fileType || blob.type || 'application/octet-stream';
+      
+      // Ensure filename has proper extension for sharing to work
+      const properFileName = ensureFileExtension(fileName, actualType);
+      
+      console.log('Sharing file:', { properFileName, actualType, blobSize: blob.size });
+      
+      const file = new File([blob], properFileName, { type: actualType });
 
       // Check if we can share files
       if (navigator.share && navigator.canShare({ files: [file] })) {
@@ -33,6 +100,8 @@ export async function shareContent(options: ShareOptions): Promise<{ success: bo
           text,
         });
         return { success: true, method: 'share' };
+      } else {
+        console.warn('navigator.canShare returned false for file:', properFileName, actualType);
       }
     } catch (err) {
       // If file fetch fails or share is cancelled, fall through to text share
