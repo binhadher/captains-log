@@ -16,7 +16,31 @@ interface AddMaintenanceModalProps {
   componentType: string;
   componentName: string;
   currentHours?: number;
+  numberOfEngines?: number; // For engine_battery - determines how many position options
   onSuccess: () => void;
+}
+
+// Get engine position labels based on count
+function getEnginePositions(count: number): { label: string; position: string }[] {
+  const configs: Record<number, { label: string; position: string }[]> = {
+    1: [{ label: 'Engine', position: 'main' }],
+    2: [
+      { label: 'Port Engine', position: 'port' },
+      { label: 'Starboard Engine', position: 'starboard' },
+    ],
+    3: [
+      { label: 'Port Engine', position: 'port' },
+      { label: 'Center Engine', position: 'center' },
+      { label: 'Starboard Engine', position: 'starboard' },
+    ],
+    4: [
+      { label: 'Port Outer', position: 'port-outer' },
+      { label: 'Port Inner', position: 'port-inner' },
+      { label: 'Starboard Inner', position: 'starboard-inner' },
+      { label: 'Starboard Outer', position: 'starboard-outer' },
+    ],
+  };
+  return configs[count] || configs[2];
 }
 
 export function AddMaintenanceModal({
@@ -26,6 +50,7 @@ export function AddMaintenanceModal({
   componentType,
   componentName,
   currentHours,
+  numberOfEngines = 2,
   onSuccess,
 }: AddMaintenanceModalProps) {
   const { currency } = useCurrency();
@@ -56,17 +81,22 @@ export function AddMaintenanceModal({
     battery_model: '',
   });
 
+  // Engine position for engine_battery type
+  const [selectedEnginePosition, setSelectedEnginePosition] = useState<string>('');
+  const isEngineBattery = componentType === 'engine_battery';
+  const enginePositions = isEngineBattery ? getEnginePositions(numberOfEngines) : [];
+
   const maintenanceItems = getMaintenanceItems(componentType);
   const showHours = ['engine', 'generator'].includes(componentType);
   
-  // Check if this is a battery component
-  const isBatteryComponent = ['house_battery', 'engine_battery', 'generator_battery', 'thruster_battery'].includes(componentType);
+  // Check if this is a battery component (NOT engine_battery which has engine selector)
+  const isBatteryComponent = ['house_battery', 'generator_battery', 'thruster_battery'].includes(componentType);
   
   // Check if this is a thruster (for thruster battery update)
   const isThrusterComponent = ['bow_thruster', 'stern_thruster'].includes(componentType);
   
   // Show battery update option when logging replacement
-  const showBatteryUpdateOption = (isBatteryComponent || isThrusterComponent) && formData.maintenance_item === 'replacement';
+  const showBatteryUpdateOption = (isBatteryComponent || isThrusterComponent || isEngineBattery) && formData.maintenance_item === 'replacement';
 
   const resetAndClose = () => {
     setStep('form');
@@ -74,6 +104,7 @@ export function AddMaintenanceModal({
     setVoiceNote(null);
     setReceiptImage(null);
     setUpdateBatteryDetails(false);
+    setSelectedEnginePosition('');
     setBatteryDetails({
       battery_count: '',
       battery_type: '',
@@ -132,18 +163,31 @@ export function AddMaintenanceModal({
       setError('Please select a maintenance item');
       return;
     }
+    
+    // For engine battery, require engine selection
+    if (isEngineBattery && !selectedEnginePosition) {
+      setError('Please select which engine');
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
+      // Build description with engine position prefix for engine_battery
+      let description = formData.description;
+      if (isEngineBattery && selectedEnginePosition) {
+        const posLabel = enginePositions.find(p => p.position === selectedEnginePosition)?.label || selectedEnginePosition;
+        description = description ? `[${posLabel}] ${description}` : `[${posLabel}]`;
+      }
+
       const response = await fetch(`/api/components/${componentId}/logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           maintenance_item: formData.maintenance_item,
           date: formData.date,
-          description: formData.maintenance_item === 'other' ? formData.description : formData.description,
+          description: description,
           cost: formData.cost ? parseFloat(formData.cost) : null,
           currency: currency,
           hours_at_service: formData.hours_at_service ? parseInt(formData.hours_at_service) : null,
@@ -162,8 +206,37 @@ export function AddMaintenanceModal({
       if (updateBatteryDetails && showBatteryUpdateOption) {
         const batteryUpdate: Record<string, unknown> = {};
         
-        if (isBatteryComponent) {
-          // Update battery component fields
+        if (isEngineBattery && selectedEnginePosition) {
+          // For engine battery, update the engine_batteries JSONB for this specific position
+          // First fetch current data, then update
+          const currentResponse = await fetch(`/api/components/${componentId}`);
+          if (currentResponse.ok) {
+            const currentData = await currentResponse.json();
+            const currentBatteries = currentData.component.engine_batteries || [];
+            
+            // Find or create entry for this position
+            const existingIndex = currentBatteries.findIndex((b: any) => b.position === selectedEnginePosition);
+            const newEntry = {
+              position: selectedEnginePosition,
+              battery_count: batteryDetails.battery_count ? parseInt(batteryDetails.battery_count) : undefined,
+              battery_type: batteryDetails.battery_type || undefined,
+              battery_voltage: batteryDetails.battery_voltage || undefined,
+              battery_capacity: batteryDetails.battery_capacity || undefined,
+              battery_brand: batteryDetails.battery_brand || undefined,
+              battery_model: batteryDetails.battery_model || undefined,
+              install_date: formData.date,
+            };
+            
+            if (existingIndex >= 0) {
+              currentBatteries[existingIndex] = { ...currentBatteries[existingIndex], ...newEntry };
+            } else {
+              currentBatteries.push(newEntry);
+            }
+            
+            batteryUpdate.engine_batteries = currentBatteries;
+          }
+        } else if (isBatteryComponent) {
+          // Update battery component fields (house, generator, thruster batteries)
           if (batteryDetails.battery_count) batteryUpdate.battery_count = parseInt(batteryDetails.battery_count);
           if (batteryDetails.battery_type) batteryUpdate.battery_type = batteryDetails.battery_type;
           if (batteryDetails.battery_voltage) batteryUpdate.battery_voltage = batteryDetails.battery_voltage;
@@ -219,6 +292,31 @@ export function AddMaintenanceModal({
                 {error}
               </div>
             )}
+            {/* Engine Selector (for engine_battery) */}
+            {isEngineBattery && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Which Engine? *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {enginePositions.map(({ label, position }) => (
+                    <button
+                      key={position}
+                      type="button"
+                      onClick={() => setSelectedEnginePosition(position)}
+                      className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
+                        selectedEnginePosition === position
+                          ? 'bg-amber-100 dark:bg-amber-900/50 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300'
+                          : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-700'
+                      }`}
+                    >
+                      🔋 {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Maintenance Item */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

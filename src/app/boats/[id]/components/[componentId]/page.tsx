@@ -971,6 +971,7 @@ export default function ComponentDetailPage() {
         componentType={component.type}
         componentName={component.name}
         currentHours={component.current_hours}
+        numberOfEngines={numberOfEngines}
         onSuccess={handleLogAdded}
       />
 

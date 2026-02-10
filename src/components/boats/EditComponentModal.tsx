@@ -64,8 +64,11 @@ export function EditComponentModal({ isOpen, onClose, component, onSuccess }: Ed
   // Determine if this component should show hours (engines, generators)
   const showHours = ['engine', 'inboard_engine', 'outboard_engine', 'generator', 'drive_pod'].includes(component.type);
   
-  // Determine if this is a battery component
-  const isBatteryComponent = ['house_battery', 'engine_battery', 'generator_battery', 'thruster_battery'].includes(component.type);
+  // Determine if this is a battery component (but NOT engine_battery which uses tabs)
+  const isBatteryComponent = ['house_battery', 'generator_battery', 'thruster_battery'].includes(component.type);
+  
+  // Determine if this is engine_battery (uses tabbed per-engine view)
+  const isEngineBattery = component.type === 'engine_battery';
   
   // Determine if this is a thruster
   const isThrusterComponent = ['bow_thruster', 'stern_thruster'].includes(component.type);
@@ -220,7 +223,16 @@ export function EditComponentModal({ isOpen, onClose, component, onSuccess }: Ed
               )}
             </div>
 
-            {/* Battery Fields (for battery components) */}
+            {/* Engine Battery Note */}
+            {isEngineBattery && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  🔋 <strong>Battery details per engine</strong> (Port, Starboard, etc.) are managed via the tabs on the component detail page.
+                </p>
+              </div>
+            )}
+
+            {/* Battery Fields (for other battery components - NOT engine_battery) */}
             {isBatteryComponent && (
               <div className="space-y-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                 <h4 className="text-sm font-medium text-amber-800 dark:text-amber-300">Battery Details</h4>
