@@ -92,30 +92,35 @@ export async function PUT(
       return NextResponse.json({ error: 'Equipment not found' }, { status: 404 });
     }
 
+    // Build update object - only include fields that are explicitly provided
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    
+    if (body.type !== undefined) updateData.type = body.type;
+    if (body.type_other !== undefined) updateData.type_other = body.type_other;
+    if (body.quantity !== undefined) updateData.quantity = body.quantity || 1;
+    if (body.expiry_date !== undefined) updateData.expiry_date = body.expiry_date || null;
+    if (body.last_service_date !== undefined) updateData.last_service_date = body.last_service_date || null;
+    if (body.service_interval_months !== undefined) updateData.service_interval_months = body.service_interval_months || null;
+    if (body.certification_number !== undefined) updateData.certification_number = body.certification_number || null;
+    if (body.notes !== undefined) updateData.notes = body.notes || null;
+    if (body.photo_url !== undefined) updateData.photo_url = body.photo_url || null;
+    if (body.voice_note_url !== undefined) updateData.voice_note_url = body.voice_note_url || null;
+
     // Calculate next service date if last service and interval provided
-    let nextServiceDate = body.next_service_date;
-    if (body.last_service_date && body.service_interval_months && !nextServiceDate) {
+    if (body.last_service_date && body.service_interval_months) {
       const lastService = new Date(body.last_service_date);
       lastService.setMonth(lastService.getMonth() + body.service_interval_months);
-      nextServiceDate = lastService.toISOString().split('T')[0];
+      updateData.next_service_date = lastService.toISOString().split('T')[0];
+    } else if (body.next_service_date !== undefined) {
+      updateData.next_service_date = body.next_service_date || null;
     }
 
     // Update
     const { data: equipment, error } = await supabase
       .from('safety_equipment')
-      .update({
-        type: body.type,
-        type_other: body.type_other,
-        quantity: body.quantity || 1,
-        expiry_date: body.expiry_date || null,
-        last_service_date: body.last_service_date || null,
-        service_interval_months: body.service_interval_months || null,
-        next_service_date: nextServiceDate || null,
-        certification_number: body.certification_number || null,
-        notes: body.notes || null,
-        photo_url: body.photo_url || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();

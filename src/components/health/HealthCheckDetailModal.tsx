@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Activity, Copy, Check, Share2, Pencil, Trash2, Calendar, Loader2, Droplet, CircleDot, Eye, MoreHorizontal } from 'lucide-react';
+import { X, Activity, Copy, Check, Share2, Pencil, Trash2, Calendar, Loader2, Droplet, CircleDot, Eye, MoreHorizontal, ExternalLink } from 'lucide-react';
 import { HealthCheck, HealthCheckType } from '@/types/database';
 import { formatDate } from '@/lib/utils';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
 interface HealthCheckDetailModalProps {
   isOpen: boolean;
@@ -159,6 +160,17 @@ export function HealthCheckDetailModal({ isOpen, onClose, check, onEdit, onDelet
 
         {/* Content */}
         <div className="p-4 space-y-4">
+          {/* Photo */}
+          {check.photo_url && (
+            <a href={check.photo_url} target="_blank" rel="noopener noreferrer">
+              <img 
+                src={check.photo_url} 
+                alt={check.title}
+                className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+              />
+            </a>
+          )}
+
           {/* Type Badge */}
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${TYPE_COLORS[check.check_type]}`}>
@@ -198,6 +210,24 @@ export function HealthCheckDetailModal({ isOpen, onClose, check, onEdit, onDelet
             <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-sm text-gray-600 dark:text-gray-300">{check.notes}</p>
             </div>
+          )}
+
+          {/* Voice Note */}
+          {check.voice_note_url && (
+            <AudioPlayer src={check.voice_note_url} />
+          )}
+
+          {/* View Photo Link (if photo exists) */}
+          {check.photo_url && (
+            <a
+              href={check.photo_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg font-medium transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              View Full Photo
+            </a>
           )}
         </div>
       </div>

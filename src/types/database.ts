@@ -135,6 +135,7 @@ export interface Part {
   install_date?: string;
   notes?: string;
   photo_url?: string;
+  voice_note_url?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -151,6 +152,8 @@ export interface HealthCheck {
   title: string;
   quantity?: string;
   notes?: string;
+  photo_url?: string;
+  voice_note_url?: string;
   date: string;
   created_by: string;
   created_at: string;
@@ -279,6 +282,7 @@ export interface SafetyEquipment {
   certification_number?: string;
   notes?: string;
   photo_url?: string; // Certificate or photo
+  voice_note_url?: string;
   created_by: string;
   created_at: string;
   updated_at: string;

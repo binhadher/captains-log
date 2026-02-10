@@ -125,6 +125,8 @@ export async function POST(
         title: body.title.trim(),
         quantity: body.quantity || null,
         notes: body.notes || null,
+        photo_url: body.photo_url || null,
+        voice_note_url: body.voice_note_url || null,
         date: body.date || new Date().toISOString().split('T')[0],
         created_by: dbUser.id,
       })

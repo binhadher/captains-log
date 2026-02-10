@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Shield, Copy, Check, Share2, Pencil, Trash2, Calendar, Loader2, ExternalLink, AlertTriangle } from 'lucide-react';
 import { SafetyEquipment, SafetyEquipmentType } from '@/types/database';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
 interface SafetyEquipmentDetailModalProps {
   isOpen: boolean;
@@ -272,6 +273,11 @@ export function SafetyEquipmentDetailModal({ isOpen, onClose, equipment, onEdit,
             <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-sm text-gray-600 dark:text-gray-300">{equipment.notes}</p>
             </div>
+          )}
+
+          {/* Voice Note */}
+          {equipment.voice_note_url && (
+            <AudioPlayer src={equipment.voice_note_url} />
           )}
 
           {/* View Photo Link (if photo exists) */}

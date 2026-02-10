@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Package, Copy, Check, Share2, Pencil, Trash2, Calendar, Loader2, ExternalLink } from 'lucide-react';
 import { Part } from '@/types/database';
 import { formatDate } from '@/lib/utils';
+import { AudioPlayer } from '@/components/ui/AudioPlayer';
 
 interface PartDetailModalProps {
   isOpen: boolean;
@@ -197,6 +198,11 @@ export function PartDetailModal({ isOpen, onClose, part, onEdit, onDelete }: Par
             <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-sm text-gray-600 dark:text-gray-300 italic">{part.notes}</p>
             </div>
+          )}
+
+          {/* Voice Note */}
+          {part.voice_note_url && (
+            <AudioPlayer src={part.voice_note_url} />
           )}
 
           {/* View Photo Link (if photo exists) */}

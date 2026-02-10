@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Shield, Upload, Trash2, Camera } from 'lucide-react';
+import { X, Loader2, Shield, Upload, Camera, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
 import { CameraCapture } from '@/components/ui/CameraCapture';
@@ -29,7 +29,11 @@ const EQUIPMENT_TYPES: Array<{ value: SafetyEquipmentType; label: string; icon: 
 ];
 
 export function AddSafetyEquipmentModal({ isOpen, onClose, boatId, engineType, onSuccess }: AddSafetyEquipmentModalProps) {
+  const [step, setStep] = useState<'form' | 'upload'>('form');
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedEquipmentId, setSavedEquipmentId] = useState<string | null>(null);
   const [type, setType] = useState<SafetyEquipmentType>('fire_extinguisher');
   const [typeOther, setTypeOther] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -38,8 +42,7 @@ export function AddSafetyEquipmentModal({ isOpen, onClose, boatId, engineType, o
   const [serviceIntervalMonths, setServiceIntervalMonths] = useState<number | ''>('');
   const [certificationNumber, setCertificationNumber] = useState('');
   const [notes, setNotes] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [voiceNote, setVoiceNote] = useState<{ blob: Blob; duration: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -53,6 +56,8 @@ export function AddSafetyEquipmentModal({ isOpen, onClose, boatId, engineType, o
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      setStep('form');
+      setSavedEquipmentId(null);
       setType('fire_extinguisher');
       setTypeOther('');
       setQuantity(1);
@@ -61,17 +66,58 @@ export function AddSafetyEquipmentModal({ isOpen, onClose, boatId, engineType, o
       setServiceIntervalMonths('');
       setCertificationNumber('');
       setNotes('');
-      setPhotoUrl('');
+      setPhotoUrl(null);
       setVoiceNote(null);
       setShowCamera(false);
+      setError(null);
     }
   }, [isOpen]);
+
+  const resetAndClose = () => {
+    setStep('form');
+    setSavedEquipmentId(null);
+    setPhotoUrl(null);
+    setVoiceNote(null);
+    setShowCamera(false);
+    setError(null);
+    onClose();
+  };
+
+  // Upload voice note and return URL
+  const uploadVoiceNote = async (): Promise<string | null> => {
+    if (!voiceNote) return null;
+    
+    try {
+      const file = new File([voiceNote.blob], `voice_note_${Date.now()}.webm`, { type: 'audio/webm' });
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('boat_id', boatId);
+      uploadData.append('category', 'other');
+      uploadData.append('name', file.name);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadData,
+      });
+
+      if (!response.ok) throw new Error('Voice upload failed');
+      const { document } = await response.json();
+      return document.file_url;
+    } catch (err) {
+      console.error('Failed to upload voice note:', err);
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
+      // Upload voice note first if exists
+      const voiceNoteUrl = await uploadVoiceNote();
+
       const response = await fetch(`/api/boats/${boatId}/safety-equipment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,7 +130,7 @@ export function AddSafetyEquipmentModal({ isOpen, onClose, boatId, engineType, o
           service_interval_months: serviceIntervalMonths || null,
           certification_number: certificationNumber || null,
           notes: notes || null,
-          photo_url: photoUrl || null,
+          voice_note_url: voiceNoteUrl,
         }),
       });
 
@@ -92,18 +138,24 @@ export function AddSafetyEquipmentModal({ isOpen, onClose, boatId, engineType, o
         throw new Error('Failed to add safety equipment');
       }
 
-      onSuccess();
-      onClose();
+      const data = await response.json();
+      setSavedEquipmentId(data.equipment?.id || data.id || null);
+      setStep('upload');
     } catch (error) {
       console.error('Error adding safety equipment:', error);
-      alert('Failed to add safety equipment');
+      setError('Failed to add safety equipment');
     } finally {
       setLoading(false);
     }
   };
 
+  // Upload photo and update equipment
   const uploadPhoto = async (file: File) => {
-    setUploadingPhoto(true);
+    if (!savedEquipmentId) return;
+    
+    setUploading(true);
+    setError(null);
+
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -119,28 +171,39 @@ export function AddSafetyEquipmentModal({ isOpen, onClose, boatId, engineType, o
       if (!response.ok) throw new Error('Upload failed');
 
       const { document } = await response.json();
-      setPhotoUrl(document.file_url);
+      const url = document.file_url;
+
+      // Update the equipment with photo URL
+      const updateResponse = await fetch(`/api/safety-equipment/${savedEquipmentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo_url: url }),
+      });
+
+      if (!updateResponse.ok) throw new Error('Failed to attach photo');
+
+      setPhotoUrl(url);
     } catch (error) {
       console.error('Error uploading photo:', error);
-      alert('Failed to upload photo');
+      setError('Failed to upload photo');
     } finally {
-      setUploadingPhoto(false);
-    }
-  };
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      await uploadPhoto(file);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      setUploading(false);
     }
   };
 
   const handleCameraCapture = (file: File) => {
     setShowCamera(false);
     uploadPhoto(file);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadPhoto(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   if (!isOpen) return null;
@@ -157,7 +220,7 @@ export function AddSafetyEquipmentModal({ isOpen, onClose, boatId, engineType, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={resetAndClose} />
       <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -165,221 +228,273 @@ export function AddSafetyEquipmentModal({ isOpen, onClose, boatId, engineType, o
             Add Safety Equipment
           </h2>
           <button
-            onClick={onClose}
+            onClick={resetAndClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {/* Type Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Equipment Type *
-            </label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as SafetyEquipmentType)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
-              required
-            >
-              {availableTypes.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.icon} {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        {step === 'form' ? (
+          <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            {error && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                {error}
+              </div>
+            )}
 
-          {/* Custom Type Name (if Other) */}
-          {type === 'other' && (
+            {/* Type Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Equipment Name *
+                Equipment Type *
               </label>
-              <input
-                type="text"
-                value={typeOther}
-                onChange={(e) => setTypeOther(e.target.value)}
-                placeholder="Enter equipment name"
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value as SafetyEquipmentType)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
                 required
-              />
+              >
+                {availableTypes.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.icon} {t.label}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
 
-          {/* Quantity */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Quantity
-            </label>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-              min={1}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
-            />
-          </div>
+            {/* Custom Type Name (if Other) */}
+            {type === 'other' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Equipment Name *
+                </label>
+                <input
+                  type="text"
+                  value={typeOther}
+                  onChange={(e) => setTypeOther(e.target.value)}
+                  placeholder="Enter equipment name"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                  required
+                />
+              </div>
+            )}
 
-          {/* Expiry Date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Expiry Date
-            </label>
-            <input
-              type="date"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">For items that expire (flares, fire extinguisher charges, etc.)</p>
-          </div>
-
-          {/* Service Info */}
-          <div className="grid grid-cols-2 gap-3">
+            {/* Quantity */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Last Service
-              </label>
-              <input
-                type="date"
-                value={lastServiceDate}
-                onChange={(e) => setLastServiceDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Interval (months)
+                Quantity
               </label>
               <input
                 type="number"
-                value={serviceIntervalMonths}
-                onChange={(e) => setServiceIntervalMonths(e.target.value ? parseInt(e.target.value) : '')}
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                 min={1}
-                placeholder="e.g. 12"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
               />
             </div>
-          </div>
 
-          {/* Certification Number */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Certification / Serial Number
-            </label>
-            <input
-              type="text"
-              value={certificationNumber}
-              onChange={(e) => setCertificationNumber(e.target.value)}
-              placeholder="e.g. EPIRB registration number"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
-            />
-          </div>
+            {/* Expiry Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Expiry Date
+              </label>
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">For items that expire (flares, fire extinguisher charges, etc.)</p>
+            </div>
 
-          {/* Photo/Certificate Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Photo / Certificate
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              className="hidden"
-            />
+            {/* Service Info */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Last Service
+                </label>
+                <input
+                  type="date"
+                  value={lastServiceDate}
+                  onChange={(e) => setLastServiceDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Interval (months)
+                </label>
+                <input
+                  type="number"
+                  value={serviceIntervalMonths}
+                  onChange={(e) => setServiceIntervalMonths(e.target.value ? parseInt(e.target.value) : '')}
+                  min={1}
+                  placeholder="e.g. 12"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
+
+            {/* Certification Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Certification / Serial Number
+              </label>
+              <input
+                type="text"
+                value={certificationNumber}
+                onChange={(e) => setCertificationNumber(e.target.value)}
+                placeholder="e.g. EPIRB registration number"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Notes
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                placeholder="Any additional notes..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 resize-none"
+              />
+            </div>
+
+            {/* Voice Note */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Voice Note
+              </label>
+              <VoiceRecorder
+                onRecordingComplete={(blob, duration) => setVoiceNote({ blob, duration })}
+                onRecordingDelete={() => setVoiceNote(null)}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={resetAndClose} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading || (type === 'other' && !typeOther)} className="flex-1">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                <span>Save</span>
+                <Camera className="w-4 h-4 ml-2" />
+                <FileText className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </form>
+        ) : (
+          /* Upload Step */
+          <div className="p-4 space-y-4">
+            <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
+              ✓ Equipment saved! Now add a photo or certificate.
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Show uploaded photo or upload options */}
             {photoUrl ? (
               <div className="relative">
-                <img
-                  src={photoUrl}
-                  alt="Equipment"
-                  className="w-full h-32 object-cover rounded-lg"
+                <img 
+                  src={photoUrl} 
+                  alt="Equipment photo" 
+                  className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
                 />
                 <button
                   type="button"
-                  onClick={() => setPhotoUrl('')}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  onClick={() => setPhotoUrl(null)}
+                  className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
             ) : (
-              <div className="flex gap-3">
-                {/* Take Photo */}
-                <button
-                  type="button"
-                  onClick={() => setShowCamera(true)}
-                  disabled={uploadingPhoto}
-                  className="flex-1 flex items-center justify-center gap-2 p-4 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
-                >
-                  {uploadingPhoto ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Camera className="w-5 h-5 text-teal-500" />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Take Photo</span>
-                    </>
-                  )}
-                </button>
-                {/* Upload from gallery */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingPhoto}
-                  className="flex-1 flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-teal-500 transition-colors"
-                >
-                  {uploadingPhoto ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5 text-gray-400" />
-                      <span className="text-sm text-gray-500">Upload</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                
+                <div className="flex gap-3">
+                  {/* Take Photo */}
+                  <button
+                    type="button"
+                    onClick={() => setShowCamera(true)}
+                    disabled={uploading}
+                    className="flex-1 border-2 border-dashed border-teal-400 dark:border-teal-500 rounded-lg p-6 text-center cursor-pointer hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <div className="flex flex-col items-center">
+                        <Loader2 className="w-8 h-8 text-teal-500 animate-spin mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Camera className="w-8 h-8 text-teal-500 mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Take Photo</p>
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Upload from gallery */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <div className="flex flex-col items-center">
+                        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Uploading...</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center">
+                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Upload File</p>
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </>
             )}
-          </div>
 
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Notes
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              placeholder="Any additional notes..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 resize-none"
-            />
+            <div className="flex gap-3 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  onSuccess();
+                  resetAndClose();
+                }} 
+                className="flex-1"
+              >
+                {photoUrl ? 'Done' : 'Skip'}
+              </Button>
+              {photoUrl && (
+                <Button 
+                  onClick={() => {
+                    onSuccess();
+                    resetAndClose();
+                  }}
+                  className="flex-1"
+                >
+                  Done
+                </Button>
+              )}
+            </div>
           </div>
-
-          {/* Voice Note */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Voice Note
-            </label>
-            <VoiceRecorder
-              onRecordingComplete={(blob, duration) => setVoiceNote({ blob, duration })}
-              onRecordingDelete={() => setVoiceNote(null)}
-            />
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading || (type === 'other' && !typeOther)} className="flex-1">
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Add Equipment
-            </Button>
-          </div>
-        </form>
+        )}
       </div>
     </div>
   );

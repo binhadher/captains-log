@@ -124,6 +124,7 @@ export async function POST(
         certification_number: body.certification_number || null,
         notes: body.notes || null,
         photo_url: body.photo_url || null,
+        voice_note_url: body.voice_note_url || null,
         created_by: dbUser.id,
       })
       .select()

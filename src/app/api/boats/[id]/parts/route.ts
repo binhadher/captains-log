@@ -128,6 +128,7 @@ export async function POST(
       install_date: body.install_date || null,
       notes: body.notes || null,
       photo_url: body.photo_url || null,
+      voice_note_url: body.voice_note_url || null,
       created_by: dbUser.id,
     }));
 

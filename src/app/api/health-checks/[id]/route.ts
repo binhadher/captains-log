@@ -39,15 +39,20 @@ export async function PATCH(
 
     const body = await request.json();
 
+    // Build update object - only include fields that are explicitly provided
+    const updateData: Record<string, unknown> = {};
+    
+    if (body.check_type !== undefined) updateData.check_type = body.check_type || check.check_type;
+    if (body.title !== undefined) updateData.title = body.title?.trim() || check.title;
+    if (body.quantity !== undefined) updateData.quantity = body.quantity?.trim() || null;
+    if (body.notes !== undefined) updateData.notes = body.notes?.trim() || null;
+    if (body.date !== undefined) updateData.date = body.date || check.date;
+    if (body.photo_url !== undefined) updateData.photo_url = body.photo_url || null;
+    if (body.voice_note_url !== undefined) updateData.voice_note_url = body.voice_note_url || null;
+
     const { data: updated, error } = await supabase
       .from('health_checks')
-      .update({
-        check_type: body.check_type || check.check_type,
-        title: body.title?.trim() || check.title,
-        quantity: body.quantity?.trim() || null,
-        notes: body.notes?.trim() || null,
-        date: body.date || check.date,
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();

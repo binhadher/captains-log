@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
-import { X, Copy, Camera, Upload, Loader2 } from 'lucide-react';
+import { X, Copy, Camera, Upload, Loader2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
 import { CameraCapture } from '@/components/ui/CameraCapture';
@@ -85,6 +85,32 @@ export function AddPartModal({
     onClose();
   };
 
+  // Upload voice note and return URL
+  const uploadVoiceNote = async (): Promise<string | null> => {
+    if (!voiceNote) return null;
+    
+    try {
+      const file = new File([voiceNote.blob], `voice_note_${Date.now()}.webm`, { type: 'audio/webm' });
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('boat_id', boatId);
+      uploadData.append('category', 'other');
+      uploadData.append('name', file.name);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadData,
+      });
+
+      if (!response.ok) throw new Error('Voice upload failed');
+      const { document } = await response.json();
+      return document.file_url;
+    } catch (err) {
+      console.error('Failed to upload voice note:', err);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -97,10 +123,14 @@ export function AddPartModal({
     setError(null);
 
     try {
+      // Upload voice note first if exists
+      const voiceNoteUrl = await uploadVoiceNote();
+
       // Build the request body
       const requestBody: Record<string, unknown> = {
         ...formData,
         component_id: formData.component_id || null,
+        voice_note_url: voiceNoteUrl,
       };
 
       // If "apply to all engines" is checked, include all engine component IDs
@@ -390,7 +420,9 @@ export function AddPartModal({
                   Cancel
                 </Button>
                 <Button type="submit" loading={loading} className="flex-1">
-                  Save & Add Photo
+                  <span>Save</span>
+                  <Camera className="w-4 h-4 ml-2" />
+                  <FileText className="w-4 h-4 ml-1" />
                 </Button>
               </div>
             </form>
@@ -398,7 +430,7 @@ export function AddPartModal({
             /* Upload Step */
             <div className="space-y-4">
               <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
-                ✓ Part saved! Now add a photo.
+                ✓ Part saved! Now add a photo or document.
               </div>
 
               {error && (
@@ -428,7 +460,7 @@ export function AddPartModal({
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.pdf,.doc,.docx"
                     onChange={handleFileSelect}
                     className="hidden"
                   />
@@ -469,7 +501,7 @@ export function AddPartModal({
                       ) : (
                         <div className="flex flex-col items-center">
                           <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                          <p className="text-sm text-gray-600 dark:text-gray-400">From Gallery</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Upload File</p>
                         </div>
                       )}
                     </button>

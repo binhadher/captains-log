@@ -51,6 +51,7 @@ export async function PATCH(
     if (body.install_date !== undefined) updateData.install_date = body.install_date || null;
     if (body.notes !== undefined) updateData.notes = body.notes?.trim() || null;
     if (body.photo_url !== undefined) updateData.photo_url = body.photo_url || null;
+    if (body.voice_note_url !== undefined) updateData.voice_note_url = body.voice_note_url || null;
     if (body.component_id !== undefined) updateData.component_id = body.component_id || null;
 
     // Update the part
