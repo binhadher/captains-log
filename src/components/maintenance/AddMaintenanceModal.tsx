@@ -83,6 +83,7 @@ export function AddMaintenanceModal({
 
   // Engine position for engine_battery type
   const [selectedEnginePosition, setSelectedEnginePosition] = useState<string>('');
+  const [applyToAllEngines, setApplyToAllEngines] = useState(false);
   const isEngineBattery = componentType === 'engine_battery';
   const enginePositions = isEngineBattery ? getEnginePositions(numberOfEngines) : [];
 
@@ -105,6 +106,7 @@ export function AddMaintenanceModal({
     setReceiptImage(null);
     setUpdateBatteryDetails(false);
     setSelectedEnginePosition('');
+    setApplyToAllEngines(false);
     setBatteryDetails({
       battery_count: '',
       battery_type: '',
@@ -164,9 +166,9 @@ export function AddMaintenanceModal({
       return;
     }
     
-    // For engine battery, require engine selection
-    if (isEngineBattery && !selectedEnginePosition) {
-      setError('Please select which engine');
+    // For engine battery, require engine selection OR apply to all
+    if (isEngineBattery && !selectedEnginePosition && !applyToAllEngines) {
+      setError('Please select which engine or apply to all');
       return;
     }
 
@@ -174,63 +176,81 @@ export function AddMaintenanceModal({
     setError(null);
 
     try {
-      // Build description with engine position prefix for engine_battery
-      let description = formData.description;
-      if (isEngineBattery && selectedEnginePosition) {
-        const posLabel = enginePositions.find(p => p.position === selectedEnginePosition)?.label || selectedEnginePosition;
-        description = description ? `[${posLabel}] ${description}` : `[${posLabel}]`;
+      // Determine which positions to log for
+      const positionsToLog = isEngineBattery 
+        ? (applyToAllEngines ? enginePositions : [enginePositions.find(p => p.position === selectedEnginePosition)!])
+        : [null]; // null means no position prefix needed
+      
+      let lastLogId: string | null = null;
+      const costPerEngine = formData.cost && applyToAllEngines && positionsToLog.length > 1
+        ? (parseFloat(formData.cost) / positionsToLog.length) // Split cost across engines
+        : formData.cost ? parseFloat(formData.cost) : null;
+
+      // Create log entry for each position
+      for (const pos of positionsToLog) {
+        // Build description with engine position prefix for engine_battery
+        let description = formData.description;
+        if (pos) {
+          description = description ? `[${pos.label}] ${description}` : `[${pos.label}]`;
+        }
+
+        const response = await fetch(`/api/components/${componentId}/logs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            maintenance_item: formData.maintenance_item,
+            date: formData.date,
+            description: description,
+            cost: costPerEngine,
+            currency: currency,
+            hours_at_service: formData.hours_at_service ? parseInt(formData.hours_at_service) : null,
+            notes: formData.notes || null,
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to add log');
+        }
+
+        const { log } = await response.json();
+        lastLogId = log.id;
       }
-
-      const response = await fetch(`/api/components/${componentId}/logs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          maintenance_item: formData.maintenance_item,
-          date: formData.date,
-          description: description,
-          cost: formData.cost ? parseFloat(formData.cost) : null,
-          currency: currency,
-          hours_at_service: formData.hours_at_service ? parseInt(formData.hours_at_service) : null,
-          notes: formData.notes || null,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to add log');
-      }
-
-      const { log } = await response.json();
       
       // Update battery details if checkbox was checked
       if (updateBatteryDetails && showBatteryUpdateOption) {
         const batteryUpdate: Record<string, unknown> = {};
         
-        if (isEngineBattery && selectedEnginePosition) {
-          // For engine battery, update the engine_batteries JSONB for this specific position
-          // First fetch current data, then update
+        if (isEngineBattery && (selectedEnginePosition || applyToAllEngines)) {
+          // For engine battery, update the engine_batteries JSONB
           const currentResponse = await fetch(`/api/components/${componentId}`);
           if (currentResponse.ok) {
             const currentData = await currentResponse.json();
-            const currentBatteries = currentData.component.engine_batteries || [];
+            const currentBatteries = [...(currentData.component.engine_batteries || [])];
             
-            // Find or create entry for this position
-            const existingIndex = currentBatteries.findIndex((b: any) => b.position === selectedEnginePosition);
-            const newEntry = {
-              position: selectedEnginePosition,
-              battery_count: batteryDetails.battery_count ? parseInt(batteryDetails.battery_count) : undefined,
-              battery_type: batteryDetails.battery_type || undefined,
-              battery_voltage: batteryDetails.battery_voltage || undefined,
-              battery_capacity: batteryDetails.battery_capacity || undefined,
-              battery_brand: batteryDetails.battery_brand || undefined,
-              battery_model: batteryDetails.battery_model || undefined,
-              install_date: formData.date,
-            };
+            // Determine which positions to update
+            const positionsToUpdate = applyToAllEngines 
+              ? enginePositions.map(p => p.position) 
+              : [selectedEnginePosition];
             
-            if (existingIndex >= 0) {
-              currentBatteries[existingIndex] = { ...currentBatteries[existingIndex], ...newEntry };
-            } else {
-              currentBatteries.push(newEntry);
+            for (const position of positionsToUpdate) {
+              const existingIndex = currentBatteries.findIndex((b: any) => b.position === position);
+              const newEntry = {
+                position: position,
+                battery_count: batteryDetails.battery_count ? parseInt(batteryDetails.battery_count) : undefined,
+                battery_type: batteryDetails.battery_type || undefined,
+                battery_voltage: batteryDetails.battery_voltage || undefined,
+                battery_capacity: batteryDetails.battery_capacity || undefined,
+                battery_brand: batteryDetails.battery_brand || undefined,
+                battery_model: batteryDetails.battery_model || undefined,
+                install_date: formData.date,
+              };
+              
+              if (existingIndex >= 0) {
+                currentBatteries[existingIndex] = { ...currentBatteries[existingIndex], ...newEntry };
+              } else {
+                currentBatteries.push(newEntry);
+              }
             }
             
             batteryUpdate.engine_batteries = currentBatteries;
@@ -260,7 +280,7 @@ export function AddMaintenanceModal({
           });
         }
       }
-      setSavedLogId(log.id);
+      setSavedLogId(lastLogId);
       setStep('upload');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add log');
@@ -294,26 +314,57 @@ export function AddMaintenanceModal({
             )}
             {/* Engine Selector (for engine_battery) */}
             {isEngineBattery && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Which Engine? *
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {enginePositions.map(({ label, position }) => (
-                    <button
-                      key={position}
-                      type="button"
-                      onClick={() => setSelectedEnginePosition(position)}
-                      className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
-                        selectedEnginePosition === position
-                          ? 'bg-amber-100 dark:bg-amber-900/50 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300'
-                          : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-700'
-                      }`}
-                    >
-                      🔋 {label}
-                    </button>
-                  ))}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Which Engine? *
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {enginePositions.map(({ label, position }) => (
+                      <button
+                        key={position}
+                        type="button"
+                        onClick={() => {
+                          setSelectedEnginePosition(position);
+                          setApplyToAllEngines(false);
+                        }}
+                        disabled={applyToAllEngines}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
+                          selectedEnginePosition === position && !applyToAllEngines
+                            ? 'bg-amber-100 dark:bg-amber-900/50 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300'
+                            : applyToAllEngines
+                            ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400'
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-amber-300 dark:hover:border-amber-700'
+                        }`}
+                      >
+                        🔋 {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                
+                {/* Apply to all engines checkbox */}
+                {numberOfEngines > 1 && (
+                  <label className="flex items-center gap-2 cursor-pointer p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-700 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={applyToAllEngines}
+                      onChange={(e) => {
+                        setApplyToAllEngines(e.target.checked);
+                        if (e.target.checked) setSelectedEnginePosition('');
+                      }}
+                      className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      ⚡ Apply to all engines ({numberOfEngines})
+                    </span>
+                    {applyToAllEngines && formData.cost && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
+                        Cost will be split
+                      </span>
+                    )}
+                  </label>
+                )}
               </div>
             )}
 

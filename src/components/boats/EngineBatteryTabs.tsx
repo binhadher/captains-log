@@ -46,6 +46,7 @@ export function EngineBatteryTabs({
   const [activeTab, setActiveTab] = useState(positions[0]?.position || 'port');
   const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [applyToAll, setApplyToAll] = useState(false);
   
   // Initialize form data for each engine position
   const [formData, setFormData] = useState<Record<string, EngineBatteryInfo>>(() => {
@@ -82,10 +83,21 @@ export function EngineBatteryTabs({
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Convert formData object to array
-      const batteriesArray = Object.values(formData).filter(b => 
-        b.battery_count || b.battery_brand || b.battery_model || b.install_date
-      );
+      let batteriesArray: EngineBatteryInfo[];
+      
+      if (applyToAll) {
+        // Apply current tab's data to ALL positions
+        const currentTabData = formData[activeTab];
+        batteriesArray = positions.map(({ position }) => ({
+          ...currentTabData,
+          position: position,
+        }));
+      } else {
+        // Just save the data as-is
+        batteriesArray = Object.values(formData).filter(b => 
+          b.battery_count || b.battery_brand || b.battery_model || b.install_date
+        );
+      }
 
       const response = await fetch(`/api/components/${componentId}`, {
         method: 'PATCH',
@@ -97,6 +109,7 @@ export function EngineBatteryTabs({
 
       if (response.ok) {
         setEditMode(false);
+        setApplyToAll(false);
         onUpdate();
       }
     } catch (err) {
@@ -314,13 +327,28 @@ export function EngineBatteryTabs({
                 />
               </div>
             </div>
+            {/* Apply to all engines checkbox */}
+            {numberOfEngines > 1 && (
+              <label className="flex items-center gap-2 cursor-pointer mt-2">
+                <input
+                  type="checkbox"
+                  checked={applyToAll}
+                  onChange={(e) => setApplyToAll(e.target.checked)}
+                  className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  ⚡ Apply these details to all {numberOfEngines} engines
+                </span>
+              </label>
+            )}
+
             <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="outline" onClick={() => setEditMode(false)}>
+              <Button size="sm" variant="outline" onClick={() => { setEditMode(false); setApplyToAll(false); }}>
                 Cancel
               </Button>
               <Button size="sm" onClick={handleSave} disabled={saving}>
                 {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-                Save
+                {applyToAll ? 'Save All' : 'Save'}
               </Button>
             </div>
           </div>
