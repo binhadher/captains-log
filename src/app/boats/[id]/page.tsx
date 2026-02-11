@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
@@ -64,6 +64,7 @@ import { HealthCheckDetailModal } from '@/components/health/HealthCheckDetailMod
 export default function BoatDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { currency } = useCurrency();
   const [boat, setBoat] = useState<Boat | null>(null);
   const [totalCost, setTotalCost] = useState<number>(0);
@@ -151,6 +152,29 @@ export default function BoatDetailPage() {
       fetchSafetyEquipment(params.id as string);
     }
   }, [params.id]);
+
+  // Handle quick action from bottom nav
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action) {
+      switch (action) {
+        case 'health':
+          setShowAddHealthCheck(true);
+          break;
+        case 'part':
+          setShowAddPart(true);
+          break;
+        case 'document':
+          setShowAddDocument(true);
+          break;
+        case 'crew':
+          setShowAddCrew(true);
+          break;
+      }
+      // Clean up URL
+      router.replace(`/boats/${params.id}`, { scroll: false });
+    }
+  }, [searchParams, params.id, router]);
 
   const fetchCosts = async (boatId: string) => {
     try {

@@ -55,7 +55,7 @@ export default function RootLayout({
           <ThemeProvider>
             <CurrencyProvider>
               <TermsCheck>
-                <div className="pb-20 md:pb-0">
+                <div className="pb-16 md:pb-0">
                   {children}
                 </div>
                 <BottomNav />
