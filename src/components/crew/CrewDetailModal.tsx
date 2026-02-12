@@ -337,6 +337,22 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
               </div>
             )}
 
+            {/* Invite to App Button */}
+            {canInvite && (
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-700 transition shadow-lg shadow-green-500/25"
+                >
+                  <UserPlus className="w-5 h-5" />
+                  Invite to Captain&apos;s Log
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                  Send an invite so they can access the boat with their own account
+                </p>
+              </div>
+            )}
+
             {/* Documents */}
             {(member.passport_expiry || member.emirates_id_expiry || member.marine_license_expiry || 
               member.passport_url || member.emirates_id_url || member.marine_license_url) && (
