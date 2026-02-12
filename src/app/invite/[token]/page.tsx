@@ -315,9 +315,15 @@ export default function InvitePage() {
             </div>
           )}
 
+          {/* Important: Email notice */}
+          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-4">
+            <p className="text-amber-800 dark:text-amber-200 text-sm">
+              <strong>📧 Important:</strong> Sign up using <strong>{invitation.email}</strong> to accept this invitation.
+            </p>
+          </div>
+
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
-            You&apos;ve been invited to join the crew of <strong>{invitation.boat.name}</strong>. 
-            Create an account or sign in to accept this invitation and access the boat&apos;s 
+            Create your account to access <strong>{invitation.boat.name}</strong>&apos;s 
             maintenance logs, documents, and more.
           </p>
 
@@ -332,20 +338,19 @@ export default function InvitePage() {
               onClick={() => setShowAuth('signup')}
               className="w-full py-3 px-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold rounded-lg hover:from-teal-600 hover:to-cyan-700 transition shadow-lg shadow-teal-500/25"
             >
-              Create Account
+              Create My Account
             </button>
             
             <button
               onClick={() => setShowAuth('signin')}
               className="w-full py-3 px-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
             >
-              I already have an account
+              I already have an account with this email
             </button>
           </div>
 
           <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-6">
-            This invitation was sent to {invitation.email} and expires on{' '}
-            {new Date(invitation.expires_at).toLocaleDateString()}.
+            Invitation expires {new Date(invitation.expires_at).toLocaleDateString()}.
           </p>
         </div>
       </div>
