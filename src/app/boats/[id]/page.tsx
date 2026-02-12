@@ -62,12 +62,15 @@ import { SafetyEquipmentDetailModal } from '@/components/safety/SafetyEquipmentD
 import { DocumentPreviewModal } from '@/components/documents/DocumentPreviewModal';
 import { PartDetailModal } from '@/components/parts/PartDetailModal';
 import { HealthCheckDetailModal } from '@/components/health/HealthCheckDetailModal';
+import { useBoatAccess } from '@/hooks/useBoatAccess';
 
 export default function BoatDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { currency } = useCurrency();
+  const boatId = params.id as string;
+  const { role, canDelete, canInvite, canEdit, isOwner } = useBoatAccess(boatId);
   const [boat, setBoat] = useState<Boat | null>(null);
   const [totalCost, setTotalCost] = useState<number>(0);
   const [components, setComponents] = useState<BoatComponent[]>([]);
@@ -720,8 +723,8 @@ export default function BoatDetailPage() {
           <SafetyEquipmentList
             equipment={safetyEquipment}
             onView={(item) => setViewingSafetyEquipment(item)}
-            onEdit={(item) => setEditingSafetyEquipment(item)}
-            onDelete={async (item) => {
+            onEdit={canDelete ? (item) => setEditingSafetyEquipment(item) : undefined}
+            onDelete={canDelete ? async (item) => {
               try {
                 const response = await fetch(`/api/safety-equipment/${item.id}`, { method: 'DELETE' });
                 if (response.ok) {
@@ -731,7 +734,7 @@ export default function BoatDetailPage() {
               } catch (err) {
                 console.error('Error deleting safety equipment:', err);
               }
-            }}
+            } : undefined}
           />
         </div>
 
@@ -754,8 +757,8 @@ export default function BoatDetailPage() {
             <HealthCheckList 
               checks={healthChecks}
               onView={(check) => setViewingHealthCheck(check)}
-              onEdit={(check) => setEditingHealthCheck(check)}
-              onDelete={async (check) => {
+              onEdit={canDelete ? (check) => setEditingHealthCheck(check) : undefined}
+              onDelete={canDelete ? async (check) => {
                 try {
                   const response = await fetch(`/api/health-checks/${check.id}`, { method: 'DELETE' });
                   if (response.ok) {
@@ -764,7 +767,7 @@ export default function BoatDetailPage() {
                 } catch (err) {
                   console.error('Error deleting health check:', err);
                 }
-              }}
+              } : undefined}
             />
           </div>
         </div>
@@ -788,8 +791,8 @@ export default function BoatDetailPage() {
             <PartsList 
               parts={parts}
               onView={(part) => setViewingPart(part)}
-              onEdit={(part) => setEditingPart(part)}
-              onDelete={async (part) => {
+              onEdit={canDelete ? (part) => setEditingPart(part) : undefined}
+              onDelete={canDelete ? async (part) => {
                 try {
                   const response = await fetch(`/api/parts/${part.id}`, { method: 'DELETE' });
                   if (response.ok) {
@@ -798,7 +801,7 @@ export default function BoatDetailPage() {
                 } catch (err) {
                   console.error('Error deleting part:', err);
                 }
-              }}
+              } : undefined}
             />
           </div>
         </div>
@@ -822,8 +825,8 @@ export default function BoatDetailPage() {
             <DocumentsList 
               documents={documents}
               onView={(doc) => setViewingDocument(doc)}
-              onEdit={(doc) => setEditingDocument(doc)}
-              onDelete={handleDeleteDocument}
+              onEdit={canDelete ? (doc) => setEditingDocument(doc) : undefined}
+              onDelete={canDelete ? handleDeleteDocument : undefined}
             />
           </div>
         </div>
@@ -839,26 +842,30 @@ export default function BoatDetailPage() {
               )}
             </h2>
             <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
-                onClick={() => setShowInviteCrew(true)}
-                className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700"
-              >
-                <UserPlus className="w-4 h-4 mr-1" />
-                Invite
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowAddCrew(true)}>
-                <Plus className="w-4 h-4 mr-1" />
-                Add
-              </Button>
+              {canInvite && (
+                <Button 
+                  size="sm" 
+                  onClick={() => setShowInviteCrew(true)}
+                  className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700"
+                >
+                  <UserPlus className="w-4 h-4 mr-1" />
+                  Invite
+                </Button>
+              )}
+              {canDelete && (
+                <Button size="sm" variant="outline" onClick={() => setShowAddCrew(true)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              )}
             </div>
           </div>
           <div className="max-h-80 overflow-y-auto">
             <CrewList 
               crew={crew}
               onView={(member) => setViewingCrew(member)}
-              onEdit={(member) => { setEditingCrew(member); setShowAddCrew(true); }}
-              onDelete={handleDeleteCrew}
+              onEdit={canDelete ? (member) => { setEditingCrew(member); setShowAddCrew(true); } : undefined}
+              onDelete={canDelete ? handleDeleteCrew : undefined}
             />
           </div>
         </div>
