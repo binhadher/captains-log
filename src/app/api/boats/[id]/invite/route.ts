@@ -31,6 +31,19 @@ export async function POST(
 
     const supabase = createServerClient();
 
+    // Get the Supabase user ID from Clerk ID
+    const { data: currentUserData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('clerk_id', userId)
+      .single();
+
+    if (!currentUserData) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const supabaseUserId = currentUserData.id;
+
     // Verify user owns this boat
     const { data: boat, error: boatError } = await supabase
       .from('boats')
@@ -42,7 +55,7 @@ export async function POST(
       return NextResponse.json({ error: 'Boat not found' }, { status: 404 });
     }
 
-    if (boat.owner_id !== userId) {
+    if (boat.owner_id !== supabaseUserId) {
       // Check if user is a captain (captains can invite crew)
       const { data: userAccess } = await supabase
         .from('boat_users')
