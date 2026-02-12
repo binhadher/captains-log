@@ -13,10 +13,12 @@ import {
   Download,
   Pencil,
   Users,
-  Loader2
+  Loader2,
+  UserPlus
 } from 'lucide-react';
 import { CrewMember } from './CrewList';
 import { formatDate } from '@/lib/utils';
+import { InviteCrewModal } from './InviteCrewModal';
 
 // Image Viewer Component
 function ImageViewer({ 
@@ -79,6 +81,8 @@ interface CrewDetailModalProps {
   onClose: () => void;
   member: CrewMember | null;
   onEdit?: (member: CrewMember) => void;
+  boatId?: string;
+  boatName?: string;
 }
 
 const TITLE_LABELS: Record<string, string> = {
@@ -133,10 +137,14 @@ function getExpiryStatus(expiryDate?: string): { status: 'ok' | 'warning' | 'exp
   return { status, daysLeft, label };
 }
 
-export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailModalProps) {
+export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatName }: CrewDetailModalProps) {
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+
+  // Check if crew member can be invited (has email, not already linked to a user)
+  const canInvite = member && member.email && !member.user_id && boatId;
 
   if (!isOpen || !member) return null;
 
@@ -250,6 +258,15 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
               >
                 {sharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
               </button>
+              {canInvite && (
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+                  title="Invite to App"
+                >
+                  <UserPlus className="w-5 h-5" />
+                </button>
+              )}
               {onEdit && (
                 <button
                   onClick={handleEdit}
@@ -498,6 +515,20 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit }: CrewDetailM
           title={viewingDoc.title}
           onClose={() => setViewingDoc(null)}
           onShare={() => handleShareDoc(viewingDoc.title, viewingDoc.url)}
+        />
+      )}
+
+      {/* Invite Modal */}
+      {boatId && boatName && member && (
+        <InviteCrewModal
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          boatId={boatId}
+          boatName={boatName}
+          crewMember={member as import('@/types/database').CrewMember}
+          onInviteSent={() => {
+            // Could refresh crew list here
+          }}
         />
       )}
     </div>

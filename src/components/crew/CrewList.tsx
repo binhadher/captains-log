@@ -38,6 +38,9 @@ export interface CrewMember {
   notes?: string;
   status: 'active' | 'inactive';
   photo_url?: string;
+  // Multi-user fields
+  user_id?: string;  // Linked Clerk account
+  invitation_status?: 'not_invited' | 'pending' | 'accepted';
 }
 
 interface CrewListProps {

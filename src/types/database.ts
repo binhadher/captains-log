@@ -289,8 +289,100 @@ export interface SafetyEquipment {
   updated_at: string;
 }
 
+// =============================================================================
+// Multi-User & Crew Invitations
+// =============================================================================
+
+export type BoatUserRole = 'owner' | 'captain' | 'crew';
+export type InvitationStatus = 'not_invited' | 'pending' | 'accepted';
+
+// =============================================================================
+// Crew Members
+// =============================================================================
+
+export type CrewTitle = 'owner' | 'captain' | 'first_mate' | 'engineer' | 'mechanic' | 'deckhand' | 'chef' | 'steward' | 'stewardess' | 'bosun' | 'other';
+
+export interface CrewMember {
+  id: string;
+  boat_id: string;
+  name: string;
+  title: CrewTitle;
+  title_other?: string;
+  phone?: string;
+  email?: string;
+  passport_number?: string;
+  passport_expiry?: string;
+  passport_country?: string;
+  passport_url?: string;
+  emirates_id_number?: string;
+  emirates_id_expiry?: string;
+  emirates_id_url?: string;
+  marine_license_number?: string;
+  marine_license_expiry?: string;
+  marine_license_type?: string;
+  marine_license_url?: string;
+  notes?: string;
+  status: 'active' | 'inactive';
+  photo_url?: string;
+  user_id?: string;  // Linked Clerk account
+  invitation_status?: InvitationStatus;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BoatUser {
+  id: string;
+  boat_id: string;
+  user_id: string;  // Clerk user ID
+  crew_member_id?: string;  // Optional link to crew profile
+  role: BoatUserRole;
+  invited_by?: string;
+  invited_at?: string;
+  joined_at: string;
+  created_at: string;
+  updated_at: string;
+  // Joined fields
+  crew_member?: CrewMember;
+  user_email?: string;
+  user_name?: string;
+}
+
+export interface Invitation {
+  id: string;
+  boat_id: string;
+  crew_member_id?: string;
+  email: string;
+  role: BoatUserRole;
+  token: string;
+  invited_by: string;
+  expires_at: string;
+  accepted_at?: string;
+  created_at: string;
+  // Joined fields
+  boat_name?: string;
+  crew_member?: CrewMember;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  boat_id?: string;
+  user_id: string;
+  user_name?: string;
+  action: 'create' | 'update' | 'delete';
+  table_name: string;
+  record_id?: string;
+  changes?: Record<string, { old: unknown; new: unknown }>;
+  created_at: string;
+}
+
 // Form types for creating/editing
 export type BoatFormData = Omit<Boat, 'id' | 'owner_id' | 'created_at' | 'updated_at'>;
 export type LogEntryFormData = Omit<LogEntry, 'id' | 'created_by' | 'created_at' | 'updated_at' | 'log_type' | 'vendor'>;
 export type DocumentFormData = Omit<Document, 'id' | 'uploaded_by' | 'uploaded_at'>;
 export type ServiceProviderFormData = Omit<ServiceProvider, 'id' | 'created_by' | 'created_at' | 'updated_at'>;
+
+// Crew member with invitation status
+export interface CrewMemberWithStatus extends CrewMember {
+  user_id?: string;
+  invitation_status: InvitationStatus;
+}

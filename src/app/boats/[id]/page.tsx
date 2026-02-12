@@ -937,6 +937,8 @@ export default function BoatDetailPage() {
           setEditingCrew(member);
           setShowAddCrew(true);
         }}
+        boatId={boat.id}
+        boatName={boat.name}
       />
 
       {/* Edit Boat Details Modal */}
