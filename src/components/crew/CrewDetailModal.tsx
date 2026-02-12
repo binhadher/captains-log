@@ -13,12 +13,10 @@ import {
   Download,
   Pencil,
   Users,
-  Loader2,
-  UserPlus
+  Loader2
 } from 'lucide-react';
 import { CrewMember } from './CrewList';
 import { formatDate } from '@/lib/utils';
-import { InviteCrewModal } from './InviteCrewModal';
 
 // Image Viewer Component
 function ImageViewer({ 
@@ -141,10 +139,6 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [viewingDoc, setViewingDoc] = useState<{ url: string; title: string } | null>(null);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-
-  // Check if crew member can be invited (has email, not already linked to a user)
-  const canInvite = member && member.email && !member.user_id && boatId;
 
   if (!isOpen || !member) return null;
 
@@ -258,15 +252,6 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
               >
                 {sharing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
               </button>
-              {canInvite && (
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
-                  title="Invite to App"
-                >
-                  <UserPlus className="w-5 h-5" />
-                </button>
-              )}
               {onEdit && (
                 <button
                   onClick={handleEdit}
@@ -334,31 +319,6 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
                     <span className="text-gray-900 dark:text-white">{member.email}</span>
                   </a>
                 )}
-              </div>
-            )}
-
-            {/* Invite to App Button */}
-            {boatId && member.email && (
-              <div className="mb-6">
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-700 transition shadow-lg shadow-green-500/25"
-                >
-                  <UserPlus className="w-5 h-5" />
-                  Invite to Captain&apos;s Log
-                </button>
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                  {member.user_id 
-                    ? '✓ Already has app access' 
-                    : 'Send an invite so they can access the boat with their own account'}
-                </p>
-              </div>
-            )}
-            
-            {/* Debug: Show if no boatId */}
-            {!boatId && (
-              <div className="mb-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-yellow-800 dark:text-yellow-200 text-sm">
-                ⚠️ Debug: boatId not passed to modal
               </div>
             )}
 
@@ -543,19 +503,6 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
         />
       )}
 
-      {/* Invite Modal */}
-      {boatId && boatName && member && (
-        <InviteCrewModal
-          isOpen={showInviteModal}
-          onClose={() => setShowInviteModal(false)}
-          boatId={boatId}
-          boatName={boatName}
-          crewMember={member as import('@/types/database').CrewMember}
-          onInviteSent={() => {
-            // Could refresh crew list here
-          }}
-        />
-      )}
     </div>
   );
 }

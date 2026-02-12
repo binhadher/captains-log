@@ -178,6 +178,17 @@ export function CrewList({ crew, onView, onEdit, onDelete, compact = false }: Cr
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-medium text-gray-900 dark:text-white truncate">{member.name}</p>
+            {/* Invitation Status Badge */}
+            {member.invitation_status === 'pending' && (
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">
+                Invited
+              </span>
+            )}
+            {member.invitation_status === 'accepted' && (
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
+                Active
+              </span>
+            )}
             {hasWarning && (
               <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
             )}

@@ -43,6 +43,8 @@ import { AlertsList } from '@/components/alerts/AlertsList';
 import { CrewList, CrewMember } from '@/components/crew/CrewList';
 import { AddCrewModal } from '@/components/crew/AddCrewModal';
 import { CrewDetailModal } from '@/components/crew/CrewDetailModal';
+import { InviteCrewModal } from '@/components/crew/InviteCrewModal';
+import { UserPlus } from 'lucide-react';
 import { Alert } from '@/lib/alerts';
 import { Package, Activity, AlertTriangle, Users, Shield } from 'lucide-react';
 import { EditBoatModal } from '@/components/boats/EditBoatModal';
@@ -84,6 +86,7 @@ export default function BoatDetailPage() {
   const [showAddDocument, setShowAddDocument] = useState(false);
   const [crew, setCrew] = useState<CrewMember[]>([]);
   const [showAddCrew, setShowAddCrew] = useState(false);
+  const [showInviteCrew, setShowInviteCrew] = useState(false);
   const [editingCrew, setEditingCrew] = useState<CrewMember | null>(null);
   const [viewingCrew, setViewingCrew] = useState<CrewMember | null>(null);
   const [showEditBoat, setShowEditBoat] = useState(false);
@@ -836,10 +839,20 @@ export default function BoatDetailPage() {
                 <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({crew.filter(c => c.status === 'active').length} active)</span>
               )}
             </h2>
-            <Button size="sm" onClick={() => setShowAddCrew(true)}>
-              <Plus className="w-4 h-4 mr-1" />
-              Add Crew
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => setShowInviteCrew(true)}
+                className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700"
+              >
+                <UserPlus className="w-4 h-4 mr-1" />
+                Invite
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowAddCrew(true)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            </div>
           </div>
           <div className="max-h-80 overflow-y-auto">
             <CrewList 
@@ -923,6 +936,17 @@ export default function BoatDetailPage() {
         boatId={boat.id}
         editingMember={editingCrew}
         onSuccess={() => {
+          fetchCrew(boat.id);
+        }}
+      />
+
+      {/* Invite Crew Modal */}
+      <InviteCrewModal
+        isOpen={showInviteCrew}
+        onClose={() => setShowInviteCrew(false)}
+        boatId={boat.id}
+        boatName={boat.name}
+        onInviteSent={() => {
           fetchCrew(boat.id);
         }}
       />
