@@ -1,9 +1,6 @@
 // Email sending service using Resend
 // Set RESEND_API_KEY in environment variables
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'Captain\'s Log <notifications@captainslog.ae>';
-
 interface EmailOptions {
   to: string;
   subject: string;
@@ -12,6 +9,10 @@ interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
+  // Read env vars inside function for serverless compatibility
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const FROM_EMAIL = process.env.FROM_EMAIL || 'Captain\'s Log <notifications@captainslog.ae>';
+  
   if (!RESEND_API_KEY) {
     console.error('RESEND_API_KEY not configured');
     return { success: false, error: 'Email service not configured' };
