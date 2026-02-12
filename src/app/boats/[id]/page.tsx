@@ -276,8 +276,7 @@ export default function BoatDetailPage() {
   };
 
   const handleDeleteCrew = async (member: CrewMember) => {
-    if (!confirm(`Delete ${member.name}?`)) return;
-    
+    // Note: confirm dialog is shown in CrewList component
     try {
       const response = await fetch(`/api/crew/${member.id}`, { method: 'DELETE' });
       if (response.ok && boat) {
