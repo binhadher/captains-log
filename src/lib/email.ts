@@ -11,8 +11,9 @@ interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
   // Read env vars inside function for serverless compatibility
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  // Hardcoded for now to bypass any env var issues
-  const FROM_EMAIL = 'Captain\'s Log <notifications@captainslog.ae>';
+  // Use Resend test sender until domain is fully verified
+  // Change back to 'Captain\'s Log <notifications@captainslog.ae>' once SPF is verified
+  const FROM_EMAIL = 'Captain\'s Log <onboarding@resend.dev>';
   
   if (!RESEND_API_KEY) {
     console.error('RESEND_API_KEY not configured');
