@@ -338,7 +338,7 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
             )}
 
             {/* Invite to App Button */}
-            {canInvite && (
+            {boatId && member.email && (
               <div className="mb-6">
                 <button
                   onClick={() => setShowInviteModal(true)}
@@ -348,8 +348,17 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
                   Invite to Captain&apos;s Log
                 </button>
                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                  Send an invite so they can access the boat with their own account
+                  {member.user_id 
+                    ? '✓ Already has app access' 
+                    : 'Send an invite so they can access the boat with their own account'}
                 </p>
+              </div>
+            )}
+            
+            {/* Debug: Show if no boatId */}
+            {!boatId && (
+              <div className="mb-6 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-yellow-800 dark:text-yellow-200 text-sm">
+                ⚠️ Debug: boatId not passed to modal
               </div>
             )}
 
