@@ -59,6 +59,19 @@ const nextConfig: NextConfig = {
   // Use webpack for builds (needed for next-pwa)
   // Turbopack doesn't support custom webpack configs yet
   turbopack: {},
+  
+  // Skip static export to avoid build-time env var issues
+  output: 'standalone',
+  
+  // Allow images from Supabase
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      },
+    ],
+  },
 };
 
 export default withPWA(nextConfig);

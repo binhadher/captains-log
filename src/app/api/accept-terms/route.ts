@@ -1,11 +1,8 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { createServerClient } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +11,8 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabase = createServerClient();
 
     // Try to update existing user first
     const { data: updated, error: updateError } = await supabase
@@ -59,6 +58,8 @@ export async function GET() {
     if (!userId) {
       return NextResponse.json({ accepted: false });
     }
+
+    const supabase = createServerClient();
 
     const { data: user } = await supabase
       .from('users')

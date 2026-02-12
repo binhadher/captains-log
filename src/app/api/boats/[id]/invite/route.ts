@@ -1,10 +1,10 @@
+export const dynamic = 'force-dynamic';
+
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { Resend } from 'resend';
 import crypto from 'crypto';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 // POST /api/boats/[id]/invite - Send invitation to crew member
 export async function POST(
@@ -128,6 +128,7 @@ export async function POST(
     const roleLabel = role === 'captain' ? 'Captain' : 'Crew Member';
 
     try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
         from: 'Captain\'s Log <noreply@captainslog.ae>',
         to: email,

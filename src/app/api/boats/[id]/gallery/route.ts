@@ -1,11 +1,8 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { createServerClient } from '@/lib/supabase';
 
 // GET - Fetch all gallery items for a boat
 export async function GET(
@@ -18,6 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabase = createServerClient();
     const { id: boatId } = await params;
 
     // Verify user owns this boat
@@ -72,6 +70,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabase = createServerClient();
     const { id: boatId } = await params;
     const body = await req.json();
     const { file_url, file_type, mime_type, file_size, caption, taken_at } = body;
@@ -141,6 +140,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabase = createServerClient();
     const { searchParams } = new URL(req.url);
     const itemId = searchParams.get('itemId');
 

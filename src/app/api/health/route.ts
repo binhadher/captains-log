@@ -1,12 +1,11 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = createServerClient();
     
     // Test database connection
     const { data, error } = await supabase.from('users').select('id').limit(1);
@@ -18,10 +17,11 @@ export async function GET() {
       dbError: error?.message || null,
       userCount: data?.length || 0
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Unknown error';
     return NextResponse.json({ 
       status: 'error', 
-      error: e.message 
+      error: message
     });
   }
 }
