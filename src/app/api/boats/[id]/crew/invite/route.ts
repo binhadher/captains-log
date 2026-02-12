@@ -122,7 +122,8 @@ export async function POST(
     }
 
     // Send invitation email
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://captainslog.ae'}/invite/${token}`;
+    // Hardcoded for now to bypass env var issues
+    const inviteUrl = `https://captainslog.ae/invite/${token}`;
     const roleLabel = accessRole === 'captain' ? 'Captain' : 'Crew Member';
     
     const titleLabels: Record<string, string> = {
