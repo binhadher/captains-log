@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { UserButton, useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { LandingPage } from '@/components/landing/LandingPage';
@@ -90,6 +91,40 @@ export default function Dashboard() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const router = useRouter();
+
+  // Check for pending invitations after sign in
+  useEffect(() => {
+    async function checkPendingInvites() {
+      if (!isSignedIn) return;
+      
+      try {
+        const res = await fetch('/api/invitations/pending');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.invitation) {
+            // Auto-accept the pending invite
+            const acceptRes = await fetch(`/api/invitations/${data.invitation.token}`, {
+              method: 'POST'
+            });
+            if (acceptRes.ok) {
+              const acceptData = await acceptRes.json();
+              // Redirect to the boat
+              router.push(`/boats/${acceptData.boatId}`);
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error checking pending invites:', err);
+      }
+    }
+    
+    if (isSignedIn) {
+      checkPendingInvites();
+    }
+  }, [isSignedIn, router]);
 
   useEffect(() => {
     if (isSignedIn) {
