@@ -218,30 +218,19 @@ export default function InvitePage() {
     );
   }
 
-  // Show auth modal
+  // Redirect to auth pages with return URL
   if (showAuth) {
+    const returnUrl = encodeURIComponent(`/invite/${token}`);
+    if (showAuth === 'signin') {
+      window.location.href = `/sign-in?redirect_url=${returnUrl}`;
+    } else {
+      window.location.href = `/sign-up?redirect_url=${returnUrl}`;
+    }
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-sky-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {showAuth === 'signin' ? (
-            <SignIn 
-              routing="hash"
-              afterSignInUrl={`/invite/${token}`}
-            />
-          ) : (
-            <SignUp 
-              routing="hash"
-              afterSignUpUrl={`/invite/${token}`}
-            />
-          )}
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => setShowAuth(null)}
-              className="text-teal-600 hover:text-teal-700 text-sm"
-            >
-              ← Back to invitation
-            </button>
-          </div>
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-teal-600 animate-spin mx-auto" />
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Redirecting...</p>
         </div>
       </div>
     );
