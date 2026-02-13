@@ -54,7 +54,7 @@ import { AddMaintenanceModal } from '@/components/maintenance/AddMaintenanceModa
 import { PDFExport } from '@/components/export/PDFExport';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 import { BoatHero } from '@/components/boats/BoatHero';
-import { FAB } from '@/components/ui/FAB';
+// FAB removed - BottomNav handles mobile, section buttons handle desktop
 import { SafetyEquipmentList } from '@/components/safety/SafetyEquipmentList';
 import { AddSafetyEquipmentModal } from '@/components/safety/AddSafetyEquipmentModal';
 import { EditSafetyEquipmentModal } from '@/components/safety/EditSafetyEquipmentModal';
@@ -870,9 +870,6 @@ export default function BoatDetailPage() {
           </div>
         </div>
       </main>
-
-      {/* Floating Action Button */}
-      <FAB boatId={boat.id} />
 
       {/* Add Component Modal (single component) */}
       <AddComponentModal
