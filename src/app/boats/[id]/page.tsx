@@ -182,18 +182,29 @@ export default function BoatDetailPage() {
     }
   }, [searchParams, params.id, router]);
 
-  // Handle viewCrew param (from invite accept flow)
+  // Store viewCrew param to persist it while crew loads
+  const [pendingViewCrewId, setPendingViewCrewId] = useState<string | null>(null);
+  
+  // Capture viewCrew param on mount
   useEffect(() => {
     const viewCrewId = searchParams.get('viewCrew');
-    if (viewCrewId && crew.length > 0) {
-      const crewMember = crew.find(c => c.id === viewCrewId);
+    if (viewCrewId) {
+      setPendingViewCrewId(viewCrewId);
+      // Clean up URL immediately
+      router.replace(`/boats/${params.id}`, { scroll: false });
+    }
+  }, [searchParams, params.id, router]);
+
+  // Open crew modal when crew data loads and we have a pending viewCrew
+  useEffect(() => {
+    if (pendingViewCrewId && crew.length > 0) {
+      const crewMember = crew.find(c => c.id === pendingViewCrewId);
       if (crewMember) {
         setViewingCrew(crewMember);
-        // Clean up URL
-        router.replace(`/boats/${params.id}`, { scroll: false });
+        setPendingViewCrewId(null); // Clear it
       }
     }
-  }, [searchParams, crew, params.id, router]);
+  }, [pendingViewCrewId, crew]);
 
   const fetchCosts = async (boatId: string) => {
     try {
