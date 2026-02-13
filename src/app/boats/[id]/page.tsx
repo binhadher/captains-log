@@ -182,6 +182,19 @@ export default function BoatDetailPage() {
     }
   }, [searchParams, params.id, router]);
 
+  // Handle viewCrew param (from invite accept flow)
+  useEffect(() => {
+    const viewCrewId = searchParams.get('viewCrew');
+    if (viewCrewId && crew.length > 0) {
+      const crewMember = crew.find(c => c.id === viewCrewId);
+      if (crewMember) {
+        setViewingCrew(crewMember);
+        // Clean up URL
+        router.replace(`/boats/${params.id}`, { scroll: false });
+      }
+    }
+  }, [searchParams, crew, params.id, router]);
+
   const fetchCosts = async (boatId: string) => {
     try {
       const response = await fetch(`/api/boats/${boatId}/costs`);

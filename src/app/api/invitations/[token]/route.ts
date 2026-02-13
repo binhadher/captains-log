@@ -166,6 +166,7 @@ export async function POST(
     return NextResponse.json({ 
       success: true, 
       boatId: invitation.boat_id,
+      crewMemberId: invitation.crew_member_id,
       role: invitation.role,
       message: `Welcome aboard! You now have ${invitation.role} access.`
     });

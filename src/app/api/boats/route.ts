@@ -22,16 +22,34 @@ export async function GET() {
     }
 
     // Fetch boats owned by this user
-    const { data: boats, error } = await supabase
+    const { data: ownedBoats, error: ownedError } = await supabase
       .from('boats')
       .select('*')
       .eq('owner_id', dbUser.id)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching boats:', error);
+    if (ownedError) {
+      console.error('Error fetching owned boats:', ownedError);
       return NextResponse.json({ error: 'Failed to fetch boats' }, { status: 500 });
     }
+
+    // Also fetch boats user has crew access to (via boat_users table)
+    const { data: accessBoats, error: accessError } = await supabase
+      .from('boat_users')
+      .select('boat_id, role, boats(*)')
+      .eq('user_id', userId);  // Clerk userId
+
+    if (accessError) {
+      console.error('Error fetching crew boats:', accessError);
+    }
+
+    // Combine owned boats and crew-access boats (avoiding duplicates)
+    const ownedBoatIds = new Set((ownedBoats || []).map(b => b.id));
+    const crewBoats = (accessBoats || [])
+      .filter(a => a.boats && !ownedBoatIds.has(a.boats.id))
+      .map(a => ({ ...a.boats, userRole: a.role }));
+
+    const boats = [...(ownedBoats || []), ...crewBoats];
 
     return NextResponse.json({ boats });
   } catch (error) {

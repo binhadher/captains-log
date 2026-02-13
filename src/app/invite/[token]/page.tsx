@@ -97,8 +97,12 @@ export default function InvitePage() {
         return;
       }
 
-      // Success! Redirect to the boat
-      router.push(`/boats/${data.boatId}`);
+      // Success! Redirect to the boat with crew profile open
+      if (data.crewMemberId) {
+        router.push(`/boats/${data.boatId}?viewCrew=${data.crewMemberId}`);
+      } else {
+        router.push(`/boats/${data.boatId}`);
+      }
     } catch (err) {
       console.error('Error accepting invitation:', err);
       setAcceptError('Something went wrong. Please try again.');
