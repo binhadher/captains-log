@@ -100,6 +100,16 @@ export default function Dashboard() {
       if (!isSignedIn) return;
       
       try {
+        // FIRST: Check localStorage for invite token (survives Clerk verification redirect)
+        const storedToken = localStorage.getItem('pendingInviteToken');
+        if (storedToken) {
+          localStorage.removeItem('pendingInviteToken'); // Clear it
+          // Redirect to invite page to complete acceptance
+          router.push(`/invite/${storedToken}`);
+          return;
+        }
+
+        // SECOND: Check API for pending invites by email
         const res = await fetch('/api/invitations/pending');
         if (res.ok) {
           const data = await res.json();
@@ -110,8 +120,12 @@ export default function Dashboard() {
             });
             if (acceptRes.ok) {
               const acceptData = await acceptRes.json();
-              // Redirect to the boat
-              router.push(`/boats/${acceptData.boatId}`);
+              // Redirect to the boat with crew profile open
+              if (acceptData.crewMemberId) {
+                router.push(`/boats/${acceptData.boatId}?viewCrew=${acceptData.crewMemberId}`);
+              } else {
+                router.push(`/boats/${acceptData.boatId}`);
+              }
               return;
             }
           }

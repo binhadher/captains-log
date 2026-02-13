@@ -34,20 +34,38 @@ export async function GET() {
     }
 
     // Also fetch boats user has crew access to (via boat_users table)
-    const { data: accessBoats, error: accessError } = await supabase
+    const { data: boatAccess, error: accessError } = await supabase
       .from('boat_users')
-      .select('boat_id, role, boats(*)')
+      .select('boat_id, role')
       .eq('user_id', userId);  // Clerk userId
 
     if (accessError) {
-      console.error('Error fetching crew boats:', accessError);
+      console.error('Error fetching crew boat access:', accessError);
     }
 
-    // Combine owned boats and crew-access boats (avoiding duplicates)
-    const ownedBoatIds = new Set((ownedBoats || []).map(b => b.id));
-    const crewBoats = (accessBoats || [])
-      .filter(a => a.boats && !ownedBoatIds.has(a.boats.id))
-      .map(a => ({ ...a.boats, userRole: a.role }));
+    // Get the actual boat data for crew-access boats
+    let crewBoats: any[] = [];
+    if (boatAccess && boatAccess.length > 0) {
+      const ownedBoatIds = new Set((ownedBoats || []).map(b => b.id));
+      const crewBoatIds = boatAccess
+        .filter(a => !ownedBoatIds.has(a.boat_id))
+        .map(a => a.boat_id);
+      
+      if (crewBoatIds.length > 0) {
+        const { data: crewBoatData, error: crewBoatError } = await supabase
+          .from('boats')
+          .select('*')
+          .in('id', crewBoatIds);
+        
+        if (crewBoatError) {
+          console.error('Error fetching crew boats:', crewBoatError);
+        } else if (crewBoatData) {
+          // Add the user's role to each crew boat
+          const roleMap = new Map(boatAccess.map(a => [a.boat_id, a.role]));
+          crewBoats = crewBoatData.map(b => ({ ...b, userRole: roleMap.get(b.id) }));
+        }
+      }
+    }
 
     const boats = [...(ownedBoats || []), ...crewBoats];
 

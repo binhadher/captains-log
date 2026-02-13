@@ -222,8 +222,11 @@ export default function InvitePage() {
     );
   }
 
-  // Redirect to auth pages with return URL
+  // Redirect to auth pages - store token in localStorage for after verification
   if (showAuth) {
+    // Store the invite token so we can retrieve it after signup/verification
+    localStorage.setItem('pendingInviteToken', token);
+    
     const returnUrl = encodeURIComponent(`/invite/${token}`);
     if (showAuth === 'signin') {
       window.location.href = `/sign-in?redirect_url=${returnUrl}`;
