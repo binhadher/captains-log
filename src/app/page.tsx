@@ -104,9 +104,9 @@ export default function Dashboard() {
 
   const router = useRouter();
 
-  // Check for pending invitations after sign in
+  // Check for pending invitations OR incomplete crew profiles after sign in
   useEffect(() => {
-    async function checkPendingInvites() {
+    async function checkPendingInvitesAndCrewProfile() {
       if (!isSignedIn) {
         setCheckingInvites(false);
         return;
@@ -143,6 +143,17 @@ export default function Dashboard() {
             }
           }
         }
+
+        // THIRD: Check if user has incomplete crew profile (already accepted invite)
+        const profileRes = await fetch('/api/my-incomplete-crew-profile');
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          if (profileData.crewMemberId) {
+            // User has incomplete crew profile - redirect to complete it
+            router.push(`/crew/profile/${profileData.crewMemberId}`);
+            return; // Don't set checkingInvites false - we're redirecting
+          }
+        }
       } catch (err) {
         console.error('Error checking pending invites:', err);
       }
@@ -152,7 +163,7 @@ export default function Dashboard() {
     }
     
     if (isSignedIn) {
-      checkPendingInvites();
+      checkPendingInvitesAndCrewProfile();
     } else if (isLoaded) {
       setCheckingInvites(false);
     }
