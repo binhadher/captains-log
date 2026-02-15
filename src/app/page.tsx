@@ -158,39 +158,7 @@ export default function Dashboard() {
     }
   }, [isSignedIn, isLoaded, router]);
 
-  useEffect(() => {
-    if (isSignedIn) {
-      fetchBoats();
-      fetchAlerts();
-      fetchActivity();
-      fetchCosts();
-    }
-  }, [isSignedIn]);
-
-  // Show loading while checking auth
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // Show landing page for unauthenticated visitors
-  if (!isSignedIn) {
-    return <LandingPage />;
-  }
-
-  // Show loading while checking for pending invites (crew members will be redirected)
-  if (checkingInvites) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex flex-col items-center justify-center">
-        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin mb-4" />
-        <p className="text-white/80 text-sm">Setting up your account...</p>
-      </div>
-    );
-  }
-
+  // Define fetch functions before any early returns
   const fetchBoats = async () => {
     try {
       setLoading(true);
@@ -251,6 +219,39 @@ export default function Dashboard() {
       setCostsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchBoats();
+      fetchAlerts();
+      fetchActivity();
+      fetchCosts();
+    }
+  }, [isSignedIn]);
+
+  // Show loading while checking auth
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Show landing page for unauthenticated visitors
+  if (!isSignedIn) {
+    return <LandingPage />;
+  }
+
+  // Show loading while checking for pending invites (crew members will be redirected)
+  if (checkingInvites) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex flex-col items-center justify-center">
+        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin mb-4" />
+        <p className="text-white/80 text-sm">Setting up your account...</p>
+      </div>
+    );
+  }
 
   const handleAddBoat = (boat: Boat) => {
     setBoats([...boats, boat]);
