@@ -46,6 +46,9 @@ export default function Dashboard() {
   const [showAddBoat, setShowAddBoat] = useState(false);
   const [setupWizardBoat, setSetupWizardBoat] = useState<Boat | null>(null);
   
+  // Check for pending invites before showing dashboard
+  const [checkingInvites, setCheckingInvites] = useState(true);
+  
   // PWA Install state
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(true); // Default true to avoid flash
@@ -104,7 +107,10 @@ export default function Dashboard() {
   // Check for pending invitations after sign in
   useEffect(() => {
     async function checkPendingInvites() {
-      if (!isSignedIn) return;
+      if (!isSignedIn) {
+        setCheckingInvites(false);
+        return;
+      }
       
       try {
         // FIRST: Check localStorage for invite token (survives Clerk verification redirect)
@@ -113,7 +119,7 @@ export default function Dashboard() {
           localStorage.removeItem('pendingInviteToken'); // Clear it
           // Redirect to invite page to complete acceptance
           router.push(`/invite/${storedToken}`);
-          return;
+          return; // Don't set checkingInvites false - we're redirecting
         }
 
         // SECOND: Check API for pending invites by email
@@ -133,19 +139,24 @@ export default function Dashboard() {
               } else {
                 router.push(`/boats/${acceptData.boatId}`);
               }
-              return;
+              return; // Don't set checkingInvites false - we're redirecting
             }
           }
         }
       } catch (err) {
         console.error('Error checking pending invites:', err);
       }
+      
+      // No invite found or redirect needed, show the dashboard
+      setCheckingInvites(false);
     }
     
     if (isSignedIn) {
       checkPendingInvites();
+    } else if (isLoaded) {
+      setCheckingInvites(false);
     }
-  }, [isSignedIn, router]);
+  }, [isSignedIn, isLoaded, router]);
 
   useEffect(() => {
     if (isSignedIn) {
@@ -156,7 +167,7 @@ export default function Dashboard() {
     }
   }, [isSignedIn]);
 
-  // Show landing page for unauthenticated visitors
+  // Show loading while checking auth
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex items-center justify-center">
@@ -165,8 +176,19 @@ export default function Dashboard() {
     );
   }
 
+  // Show landing page for unauthenticated visitors
   if (!isSignedIn) {
     return <LandingPage />;
+  }
+
+  // Show loading while checking for pending invites (crew members will be redirected)
+  if (checkingInvites) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex flex-col items-center justify-center">
+        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin mb-4" />
+        <p className="text-white/80 text-sm">Setting up your account...</p>
+      </div>
+    );
   }
 
   const fetchBoats = async () => {
