@@ -165,6 +165,31 @@ export default function BoatDetailPage() {
     }
   }, [params.id]);
 
+  // Check if crew member needs to complete their profile
+  useEffect(() => {
+    async function checkCrewProfile() {
+      if (!params.id || isOwner || role === null) return;
+      
+      // Only check for crew members (not owners)
+      if (role === 'crew' || role === 'captain') {
+        try {
+          const res = await fetch(`/api/boats/${params.id}/my-crew-profile`);
+          if (res.ok) {
+            const data = await res.json();
+            // If crew member exists but profile is incomplete (no phone), redirect
+            if (data.crewMember && !data.crewMember.phone) {
+              router.replace(`/crew/profile/${data.crewMember.id}`);
+            }
+          }
+        } catch (err) {
+          console.error('Error checking crew profile:', err);
+        }
+      }
+    }
+    
+    checkCrewProfile();
+  }, [params.id, role, isOwner, router]);
+
   // Handle quick action from bottom nav
   useEffect(() => {
     const action = searchParams.get('action');
