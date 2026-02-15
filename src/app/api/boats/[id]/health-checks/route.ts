@@ -30,16 +30,28 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Verify boat ownership
+    // Verify boat access (owner or crew)
     const { data: boat } = await supabase
       .from('boats')
-      .select('id')
+      .select('id, owner_id')
       .eq('id', boatId)
-      .eq('owner_id', dbUser.id)
       .single();
 
     if (!boat) {
       return NextResponse.json({ error: 'Boat not found' }, { status: 404 });
+    }
+
+    const isOwner = boat.owner_id === dbUser.id;
+    if (!isOwner) {
+      const { data: crewAccess } = await supabase
+        .from('boat_users')
+        .select('id')
+        .eq('boat_id', boatId)
+        .eq('user_id', userId)
+        .single();
+      if (!crewAccess) {
+        return NextResponse.json({ error: 'Boat not found' }, { status: 404 });
+      }
     }
 
     // Fetch health checks with component names
