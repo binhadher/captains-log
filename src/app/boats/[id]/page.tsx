@@ -24,7 +24,13 @@ import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { CurrencyToggle } from '@/components/ui/CurrencyToggle';
 import { useCurrency, AedSymbol } from '@/components/providers/CurrencyProvider';
-import { UserButton } from '@clerk/nextjs';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for Clerk components to prevent SSR issues
+const UserButton = dynamic(
+  () => import('@clerk/nextjs').then((mod) => mod.UserButton),
+  { ssr: false, loading: () => <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" /> }
+);
 import { Boat, BoatComponent, Part, HealthCheck, Document, SafetyEquipment } from '@/types/database';
 import { ComponentList } from '@/components/boats/ComponentList';
 import { ComponentSetupModal } from '@/components/boats/ComponentSetupModal';

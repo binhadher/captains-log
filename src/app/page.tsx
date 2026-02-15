@@ -2,8 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserButton, useAuth } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+
+// Dynamic import for Clerk components to prevent SSR issues
+const UserButton = dynamic(
+  () => import('@clerk/nextjs').then((mod) => mod.UserButton),
+  { ssr: false, loading: () => <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" /> }
+);
 import { LandingPage } from '@/components/landing/LandingPage';
 import { Plus, Ship, AlertTriangle, Clock, FileText, Wrench, ChevronRight, Anchor, Settings, Download, X, Smartphone, Search } from 'lucide-react';
 import { Skeleton, AlertsListSkeleton } from '@/components/ui/Skeleton';
@@ -120,9 +127,9 @@ export default function Dashboard() {
             });
             if (acceptRes.ok) {
               const acceptData = await acceptRes.json();
-              // Redirect to the boat with crew profile open
+              // Redirect to crew profile page to complete their info
               if (acceptData.crewMemberId) {
-                router.push(`/boats/${acceptData.boatId}?viewCrew=${acceptData.crewMemberId}`);
+                router.push(`/crew/profile/${acceptData.crewMemberId}`);
               } else {
                 router.push(`/boats/${acceptData.boatId}`);
               }

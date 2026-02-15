@@ -103,8 +103,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Crew member not found' }, { status: 404 });
     }
 
-    // Verify ownership
-    if ((existingCrew.boats as any).owner_id !== dbUser.id) {
+    // Check if user is the linked crew member OR the boat owner
+    const isOwnProfile = existingCrew.user_id === userId;
+    const isOwner = (existingCrew.boats as any).owner_id === dbUser.id;
+
+    if (!isOwnProfile && !isOwner) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

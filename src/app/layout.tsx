@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { ClerkProvider } from '@clerk/nextjs';
+import { ClerkClientProvider } from '@/components/providers/ClerkClientProvider';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { CurrencyProvider } from '@/components/providers/CurrencyProvider';
 import { TermsCheck } from '@/components/providers/TermsCheck';
@@ -44,14 +44,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <head>
-          <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-          <meta name="apple-mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        </head>
-        <body className="min-h-screen bg-gray-50 dark:bg-gray-900 antialiased transition-colors">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      </head>
+      <body className="min-h-screen bg-gray-50 dark:bg-gray-900 antialiased transition-colors">
+        <ClerkClientProvider>
           <ThemeProvider>
             <CurrencyProvider>
               <TermsCheck>
@@ -63,8 +63,8 @@ export default function RootLayout({
               </TermsCheck>
             </CurrencyProvider>
           </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkClientProvider>
+      </body>
+    </html>
   );
 }

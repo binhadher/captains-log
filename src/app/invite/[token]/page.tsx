@@ -97,9 +97,9 @@ export default function InvitePage() {
         return;
       }
 
-      // Success! Redirect to the boat with crew profile open
+      // Success! Redirect to crew profile page to complete their info
       if (data.crewMemberId) {
-        router.push(`/boats/${data.boatId}?viewCrew=${data.crewMemberId}`);
+        router.push(`/crew/profile/${data.crewMemberId}`);
       } else {
         router.push(`/boats/${data.boatId}`);
       }

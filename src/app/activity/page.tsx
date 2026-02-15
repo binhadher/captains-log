@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { UserButton } from '@clerk/nextjs';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for Clerk components to prevent SSR issues
+const UserButton = dynamic(
+  () => import('@clerk/nextjs').then((mod) => mod.UserButton),
+  { ssr: false, loading: () => <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" /> }
+);
 import { 
   Activity as ActivityIcon, 
   Wrench, 
