@@ -40,6 +40,7 @@ import { Package, Settings, Pencil, Copy, Check, Share2, Trash2 as TrashIcon, Fi
 import { Confetti } from '@/components/ui/Confetti';
 import { useConfetti } from '@/hooks/useConfetti';
 import { EngineBatteryTabs } from '@/components/boats/EngineBatteryTabs';
+import { useBoatAccess } from '@/hooks/useBoatAccess';
 
 interface ComponentDocument {
   id: string;
@@ -154,6 +155,8 @@ export default function ComponentDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { currency } = useCurrency();
+  const boatId = params.id as string;
+  const { canDelete, canEdit } = useBoatAccess(boatId);
   const [component, setComponent] = useState<BoatComponent | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -765,13 +768,15 @@ export default function ComponentDetailPage() {
                       </div>
                       {!selectMode && (
                         <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setEditingLog(log)}
-                            className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
-                            title="Edit"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
+                          {canDelete && (
+                            <button
+                              onClick={() => setEditingLog(log)}
+                              className="p-1.5 text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-all"
+                              title="Edit"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <button
                             onClick={async () => {
                               const text = [
@@ -805,23 +810,25 @@ export default function ComponentDetailPage() {
                               <Share2 className="w-3.5 h-3.5" />
                             )}
                           </button>
-                          <button
-                            onClick={async () => {
-                              if (!confirm('Delete this maintenance log?')) return;
-                              try {
-                                const response = await fetch(`/api/maintenance-logs/${log.id}`, { method: 'DELETE' });
-                                if (response.ok) {
-                                  fetchComponent(params.componentId as string);
+                          {canDelete && (
+                            <button
+                              onClick={async () => {
+                                if (!confirm('Delete this maintenance log?')) return;
+                                try {
+                                  const response = await fetch(`/api/maintenance-logs/${log.id}`, { method: 'DELETE' });
+                                  if (response.ok) {
+                                    fetchComponent(params.componentId as string);
+                                  }
+                                } catch (err) {
+                                  console.error('Error deleting log:', err);
                                 }
-                              } catch (err) {
-                                console.error('Error deleting log:', err);
-                              }
-                            }}
-                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-all"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -902,8 +909,8 @@ export default function ComponentDetailPage() {
           <PartsList 
             parts={parts} 
             showComponent={false}
-            onEdit={(part) => setEditingPart(part)}
-            onDelete={async (part) => {
+            onEdit={canDelete ? (part) => setEditingPart(part) : undefined}
+            onDelete={canDelete ? async (part) => {
               try {
                 const response = await fetch(`/api/parts/${part.id}`, { method: 'DELETE' });
                 if (response.ok && component) {
@@ -912,7 +919,7 @@ export default function ComponentDetailPage() {
               } catch (err) {
                 console.error('Error deleting part:', err);
               }
-            }}
+            } : undefined}
           />
         </div>
 
@@ -955,13 +962,15 @@ export default function ComponentDetailPage() {
                       </div>
                     )}
                   </a>
-                  <button
-                    onClick={() => handleDeleteDoc(doc.id)}
-                    className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Delete"
-                  >
-                    <TrashIcon className="w-3 h-3" />
-                  </button>
+                  {canDelete && (
+                    <button
+                      onClick={() => handleDeleteDoc(doc.id)}
+                      className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Delete"
+                    >
+                      <TrashIcon className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

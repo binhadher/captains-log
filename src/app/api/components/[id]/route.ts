@@ -44,9 +44,18 @@ export async function GET(
       return NextResponse.json({ error: 'Component not found' }, { status: 404 });
     }
 
-    // Check ownership
-    if (component.boats.owner_id !== dbUser.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    // Check ownership OR crew access
+    const isOwner = component.boats.owner_id === dbUser.id;
+    if (!isOwner) {
+      const { data: crewAccess } = await supabase
+        .from('boat_users')
+        .select('id')
+        .eq('boat_id', component.boat_id)
+        .eq('user_id', userId)
+        .single();
+      if (!crewAccess) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      }
     }
 
     // Fetch maintenance logs for this component
