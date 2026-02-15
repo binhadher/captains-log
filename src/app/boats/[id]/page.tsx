@@ -494,13 +494,15 @@ export default function BoatDetailPage() {
               <Ship className="w-4 h-4" />
               Boat Details
             </h2>
-            <button
-              onClick={() => setShowEditBoat(true)}
-              className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
-              title="Edit boat details"
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => setShowEditBoat(true)}
+                className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
+                title="Edit boat details"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
           </div>
           
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -584,13 +586,15 @@ export default function BoatDetailPage() {
                 <Settings className="w-4 h-4" />
                 Engines
               </h2>
-              <button
-                onClick={() => setShowEditEngines(true)}
-                className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
-                title="Edit engines & generator"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
+              {canEdit && (
+                <button
+                  onClick={() => setShowEditEngines(true)}
+                  className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition-colors"
+                  title="Edit engines & generator"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -756,7 +760,7 @@ export default function BoatDetailPage() {
             boatId={boat.id}
             onSetupClick={() => setShowWizard(true)}
             onAddClick={() => setShowAddComponent(true)}
-            onEditComponent={(comp) => setEditingComponent(comp)}
+            onEditComponent={canEdit ? (comp) => setEditingComponent(comp) : undefined}
           />
         </div>
 
@@ -1014,11 +1018,11 @@ export default function BoatDetailPage() {
         isOpen={!!viewingCrew}
         onClose={() => setViewingCrew(null)}
         member={viewingCrew}
-        onEdit={(member) => {
+        onEdit={canDelete ? (member) => {
           setViewingCrew(null);
           setEditingCrew(member);
           setShowAddCrew(true);
-        }}
+        } : undefined}
         boatId={boat.id}
         boatName={boat.name}
       />
