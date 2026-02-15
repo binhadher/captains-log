@@ -30,19 +30,38 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Fetch the boat (only if owned by user)
+    // Fetch the boat
     const { data: boat, error } = await supabase
       .from('boats')
       .select('*')
       .eq('id', id)
-      .eq('owner_id', dbUser.id)
       .single();
 
     if (error || !boat) {
       return NextResponse.json({ error: 'Boat not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ boat });
+    // Check access: user must be owner OR have crew access via boat_users
+    const isOwner = boat.owner_id === dbUser.id;
+    
+    if (!isOwner) {
+      // Check for crew access
+      const { data: crewAccess } = await supabase
+        .from('boat_users')
+        .select('role')
+        .eq('boat_id', id)
+        .eq('user_id', userId)
+        .single();
+      
+      if (!crewAccess) {
+        return NextResponse.json({ error: 'Boat not found' }, { status: 404 });
+      }
+      
+      // Add user's role to the response
+      return NextResponse.json({ boat, userRole: crewAccess.role });
+    }
+
+    return NextResponse.json({ boat, userRole: 'owner' });
   } catch (error) {
     console.error('GET /api/boats/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

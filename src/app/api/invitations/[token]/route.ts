@@ -124,7 +124,8 @@ export async function POST(
       return NextResponse.json({ 
         success: true, 
         message: 'You already have access to this boat',
-        boatId: invitation.boat_id 
+        boatId: invitation.boat_id,
+        crewMemberId: invitation.crew_member_id  // Include this so redirect goes to crew profile!
       });
     }
 
