@@ -54,7 +54,22 @@ export default function AcceptTermsPage() {
         throw new Error(data.error || 'Failed to record acceptance');
       }
 
-      // Redirect to dashboard
+      // Check if user has a crew profile to complete
+      try {
+        const crewRes = await fetch('/api/my-incomplete-crew-profile');
+        if (crewRes.ok) {
+          const crewData = await crewRes.json();
+          if (crewData.crewMemberId) {
+            // Go directly to crew profile - no dashboard
+            router.push(`/crew/profile/${crewData.crewMemberId}`);
+            return;
+          }
+        }
+      } catch (e) {
+        // If check fails, just go to dashboard
+      }
+
+      // No crew profile, go to dashboard
       router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to accept terms');

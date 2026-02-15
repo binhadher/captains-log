@@ -17,13 +17,15 @@ export async function GET() {
     const supabase = createServerClient();
 
     // Find any crew member linked to this user that has no phone (incomplete profile)
-    const { data: crewMember, error } = await supabase
+    // Check for both null and empty string
+    const { data: crewMembers, error } = await supabase
       .from('crew_members')
       .select('id, boat_id, phone')
       .eq('user_id', userId)
-      .is('phone', null)
-      .limit(1)
-      .single();
+      .limit(10);
+
+    // Find first one with missing phone
+    const crewMember = crewMembers?.find(c => !c.phone || c.phone.trim() === '');
 
     if (error || !crewMember) {
       // No incomplete profiles found
