@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, X, FileText, Loader2, Camera } from 'lucide-react';
+import { Upload, X, FileText, Loader2, Camera, Pencil } from 'lucide-react';
 import { CameraCapture } from './CameraCapture';
 
 interface UploadedFile {
@@ -12,6 +12,12 @@ interface UploadedFile {
   file_size: number;
 }
 
+interface PendingFile {
+  file: File;
+  suggestedName: string;
+  previewUrl?: string;
+}
+
 interface FileUploadProps {
   componentId?: string;
   logEntryId?: string;
@@ -20,6 +26,34 @@ interface FileUploadProps {
   maxFiles?: number;
   compact?: boolean;
   showCamera?: boolean;
+}
+
+// Detect generic camera/phone filenames that should be renamed
+function isGenericFilename(filename: string): boolean {
+  const genericPatterns = [
+    /^IMG[_-]?\d+/i,           // IMG_20251023_162114, IMG-20251023
+    /^DSC[_-]?\d+/i,           // DSC_0001, DSC-0001
+    /^PXL[_-]?\d+/i,           // PXL_20251023 (Google Pixel)
+    /^Screenshot[_-]?\d*/i,    // Screenshot_20251023
+    /^Photo[_-]?\d*/i,         // Photo_001
+    /^Image[_-]?\d*/i,         // Image_001
+    /^DCIM[_-]?\d*/i,          // DCIM folders
+    /^Camera[_-]?\d*/i,        // Camera_001
+    /^\d{8}[_-]\d{6}/,         // 20251023_162114
+    /^P\d{7,}/i,               // P1234567 (some cameras)
+    /^DSCN?\d+/i,              // DSCN0001
+    /^SAM[_-]?\d+/i,           // SAM_0001 (Samsung)
+    /^[A-Z]{2,4}\d{4,}/i,      // Generic: 2-4 letters + 4+ digits
+  ];
+  
+  const nameWithoutExt = filename.replace(/\.[^.]+$/, '');
+  return genericPatterns.some(pattern => pattern.test(nameWithoutExt));
+}
+
+// Get file extension
+function getExtension(filename: string): string {
+  const match = filename.match(/\.[^.]+$/);
+  return match ? match[0] : '';
 }
 
 export function FileUpload({ 
@@ -35,13 +69,16 @@ export function FileUpload({
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [showCameraCapture, setShowCameraCapture] = useState(false);
+  const [pendingFile, setPendingFile] = useState<PendingFile | null>(null);
+  const [renameValue, setRenameValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File, customName?: string) => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('name', file.name);
+      formData.append('name', customName || file.name);
       formData.append('category', file.type.startsWith('image/') ? 'other' : 'invoice');
       
       if (componentId) formData.append('component_id', componentId);
@@ -66,6 +103,63 @@ export function FileUpload({
     }
   };
 
+  // Check if file needs renaming, if so show dialog, otherwise upload directly
+  const processFile = async (file: File) => {
+    if (isGenericFilename(file.name)) {
+      // Show rename dialog
+      const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined;
+      setPendingFile({ file, suggestedName: '', previewUrl });
+      setRenameValue('');
+      // Focus the input after render
+      setTimeout(() => renameInputRef.current?.focus(), 100);
+    } else {
+      // Upload directly with original name
+      await uploadFile(file);
+    }
+  };
+
+  const handleRenameSubmit = async () => {
+    if (!pendingFile) return;
+    
+    const ext = getExtension(pendingFile.file.name);
+    const newName = renameValue.trim() 
+      ? renameValue.trim() + ext 
+      : pendingFile.file.name; // Keep original if blank
+    
+    setUploading(true);
+    await uploadFile(pendingFile.file, newName);
+    setUploading(false);
+    
+    // Clean up
+    if (pendingFile.previewUrl) {
+      URL.revokeObjectURL(pendingFile.previewUrl);
+    }
+    setPendingFile(null);
+    setRenameValue('');
+  };
+
+  const handleRenameSkip = async () => {
+    if (!pendingFile) return;
+    
+    setUploading(true);
+    await uploadFile(pendingFile.file); // Upload with original name
+    setUploading(false);
+    
+    if (pendingFile.previewUrl) {
+      URL.revokeObjectURL(pendingFile.previewUrl);
+    }
+    setPendingFile(null);
+    setRenameValue('');
+  };
+
+  const handleRenameCancel = () => {
+    if (pendingFile?.previewUrl) {
+      URL.revokeObjectURL(pendingFile.previewUrl);
+    }
+    setPendingFile(null);
+    setRenameValue('');
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (!selectedFiles || selectedFiles.length === 0) return;
@@ -75,14 +169,21 @@ export function FileUpload({
       return;
     }
 
-    setUploading(true);
     setError(null);
 
+    // Process files one at a time (rename dialog handles one file)
     for (const file of Array.from(selectedFiles)) {
-      await uploadFile(file);
+      if (isGenericFilename(file.name)) {
+        // Show rename dialog for this file (will wait for user input)
+        await processFile(file);
+        break; // Only handle one at a time when renaming is needed
+      } else {
+        setUploading(true);
+        await uploadFile(file);
+        setUploading(false);
+      }
     }
 
-    setUploading(false);
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -92,10 +193,9 @@ export function FileUpload({
       return;
     }
 
-    setUploading(true);
     setError(null);
-    await uploadFile(file);
-    setUploading(false);
+    // Camera captures always have generic names, so always offer rename
+    await processFile(file);
   };
 
   const removeFile = (id: string) => {
@@ -104,9 +204,107 @@ export function FileUpload({
 
   const isImage = (type: string) => type.startsWith('image/');
 
+  // Rename Dialog Component (inline)
+  const RenameDialog = () => {
+    if (!pendingFile) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl max-w-sm w-full shadow-xl">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-blue-500" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Name this file
+              </h3>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Give it a descriptive name so you can find it later
+            </p>
+          </div>
+          
+          <div className="p-4 space-y-4">
+            {/* Preview */}
+            {pendingFile.previewUrl ? (
+              <img 
+                src={pendingFile.previewUrl} 
+                alt="Preview" 
+                className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+              />
+            ) : (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <FileText className="w-8 h-8 text-gray-400" />
+                <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                  {pendingFile.file.name}
+                </span>
+              </div>
+            )}
+            
+            {/* Name input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                File name
+              </label>
+              <div className="flex items-center gap-1">
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleRenameSubmit();
+                    if (e.key === 'Escape') handleRenameCancel();
+                  }}
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., engine-oil-check"
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {getExtension(pendingFile.file.name)}
+                </span>
+              </div>
+            </div>
+            
+            {/* Buttons */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleRenameCancel}
+                className="flex-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRenameSkip}
+                className="flex-1 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                Keep Original
+              </button>
+              <button
+                type="button"
+                onClick={handleRenameSubmit}
+                disabled={uploading}
+                className="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {uploading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Save'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (compact) {
     return (
       <div>
+        {/* Rename Dialog */}
+        <RenameDialog />
+        
         {/* Camera Capture Overlay */}
         {showCameraCapture && (
           <CameraCapture
@@ -189,6 +387,9 @@ export function FileUpload({
 
   return (
     <div>
+      {/* Rename Dialog */}
+      <RenameDialog />
+      
       {/* Camera Capture Overlay */}
       {showCameraCapture && (
         <CameraCapture
