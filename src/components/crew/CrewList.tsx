@@ -13,7 +13,8 @@ import {
   Users,
   Copy,
   Check,
-  Share2
+  Share2,
+  Send
 } from 'lucide-react';
 
 export interface CrewMember {
@@ -45,9 +46,11 @@ export interface CrewMember {
 
 interface CrewListProps {
   crew: CrewMember[];
+  boatId?: string;
   onView?: (member: CrewMember) => void;
   onEdit?: (member: CrewMember) => void;
   onDelete?: (member: CrewMember) => void;
+  onInviteSent?: (member: CrewMember) => void;
   compact?: boolean;
 }
 
@@ -93,8 +96,30 @@ function getExpiryWarning(expiryDate?: string): { warning: boolean; daysLeft: nu
   };
 }
 
-export function CrewList({ crew, onView, onEdit, onDelete, compact = false }: CrewListProps) {
+export function CrewList({ crew, boatId, onView, onEdit, onDelete, onInviteSent, compact = false }: CrewListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [invitingId, setInvitingId] = useState<string | null>(null);
+  const [inviteResult, setInviteResult] = useState<{ id: string; success: boolean; message: string } | null>(null);
+
+  const sendInvite = async (member: CrewMember) => {
+    if (!boatId || !member.email) return;
+    setInvitingId(member.id);
+    setInviteResult(null);
+    try {
+      const res = await fetch(`/api/boats/${boatId}/crew/${member.id}/invite`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setInviteResult({ id: member.id, success: true, message: data.warning || `Invite sent to ${member.email}` });
+        onInviteSent?.(member);
+      } else {
+        setInviteResult({ id: member.id, success: false, message: data.error || 'Failed to send invite' });
+      }
+    } catch {
+      setInviteResult({ id: member.id, success: false, message: 'Failed to send invite' });
+    }
+    setInvitingId(null);
+    setTimeout(() => setInviteResult(null), 4000);
+  };
 
   const getMemberText = (member: CrewMember) => {
     return [
@@ -200,6 +225,37 @@ export function CrewList({ crew, onView, onEdit, onDelete, compact = false }: Cr
 
         {/* Action Icons - matching Parts style */}
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          {/* Invite button for crew with email but not yet invited */}
+          {boatId && member.email && member.invitation_status !== 'accepted' && (
+            <button
+              onClick={() => sendInvite(member)}
+              disabled={invitingId === member.id}
+              className={`p-2 rounded-lg transition-all ${
+                inviteResult?.id === member.id
+                  ? inviteResult.success
+                    ? 'text-green-500 bg-green-50 dark:bg-green-900/30'
+                    : 'text-red-500 bg-red-50 dark:bg-red-900/30'
+                  : member.invitation_status === 'pending'
+                    ? 'text-amber-500 hover:text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30'
+                    : 'text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/30'
+              }`}
+              title={
+                inviteResult?.id === member.id
+                  ? inviteResult.message
+                  : member.invitation_status === 'pending'
+                    ? 'Resend invitation'
+                    : 'Send invitation'
+              }
+            >
+              {invitingId === member.id ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : inviteResult?.id === member.id ? (
+                inviteResult.success ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </button>
+          )}
           {onEdit && (
             <button
               onClick={() => onEdit(member)}

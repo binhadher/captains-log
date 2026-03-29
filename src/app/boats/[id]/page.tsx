@@ -922,9 +922,11 @@ export default function BoatDetailPage() {
           <div className="max-h-80 overflow-y-auto">
             <CrewList 
               crew={crew}
+              boatId={boatId}
               onView={(member) => setViewingCrew(member)}
               onEdit={canDelete ? (member) => { setEditingCrew(member); setShowAddCrew(true); } : undefined}
               onDelete={canDelete ? handleDeleteCrew : undefined}
+              onInviteSent={() => fetchCrew(boatId)}
             />
           </div>
         </div>
