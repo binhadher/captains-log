@@ -331,7 +331,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-dubai">
       {/* Header */}
       <header className="glass-header sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-4xl lg:max-w-6xl mx-auto px-4 lg:px-6">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-teal-100 dark:bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
@@ -377,7 +377,7 @@ export default function Dashboard() {
       {/* Install App Banner */}
       {showInstallBanner && !isInstalled && (
         <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
-          <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="max-w-4xl lg:max-w-6xl mx-auto px-4 lg:px-6 py-3">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -417,10 +417,10 @@ export default function Dashboard() {
       )}
 
       {/* Main Content - Centered */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl lg:max-w-6xl mx-auto px-4 lg:px-6 py-6">
         
         {/* Section Headers */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-3">
           <h2 className="lg:col-span-2 text-sm font-medium text-white/80 flex items-center gap-2">
             <Ship className="w-4 h-4" />
             My Boats
@@ -432,7 +432,7 @@ export default function Dashboard() {
         
         {/* Top Row: Boats + Weather side by side, same height */}
         <section className="mb-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             
             {/* Boats - takes 2 columns */}
             <div className="lg:col-span-2">
