@@ -3,19 +3,25 @@ export const dynamic = 'force-dynamic';
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
+import { saveFile } from '@/lib/local-storage';
 
-// POST /api/upload/signed-url - Get a signed URL for direct upload to Supabase
+// POST /api/upload/signed-url - Get a signed URL for direct upload (large files)
+// For files > 4MB on VPS, we handle locally
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
-    
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { fileType, fileSize, name, componentId, logEntryId, boatId, category, notes } = await request.json();
+
+    if (!fileType || !name) {
+      return NextResponse.json({ error: 'File type and name are required' }, { status: 400 });
+    }
+
     const supabase = createServerClient();
-    
-    // Get user's database ID
+
     const { data: dbUser } = await supabase
       .from('users')
       .select('id')
@@ -26,58 +32,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const body = await request.json();
-    const { fileName, fileType, fileSize, boatId, componentId, logEntryId } = body;
-
-    if (!fileName || !fileType) {
-      return NextResponse.json({ error: 'fileName and fileType required' }, { status: 400 });
-    }
-
-    // Validate file size (50MB for videos, 10MB for others)
-    const isVideo = fileType.startsWith('video/');
-    const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-    if (fileSize && fileSize > maxSize) {
-      return NextResponse.json({ error: `File too large (max ${isVideo ? '50MB' : '10MB'})` }, { status: 400 });
-    }
-
-    // Generate unique filename
-    const ext = fileName.split('.').pop() || 'bin';
+    // For VPS local storage, we generate a direct upload URL that the client can use
+    const ext = name.split('.').pop() || 'bin';
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2, 8);
-    const uniqueFileName = `${timestamp}-${randomId}.${ext}`;
-    
-    // Determine storage path
-    let storagePath = `users/${dbUser.id}`;
-    if (boatId) storagePath += `/boats/${boatId}`;
-    if (componentId) storagePath += `/components/${componentId}`;
-    if (logEntryId) storagePath += `/logs/${logEntryId}`;
-    storagePath += `/${uniqueFileName}`;
+    const filename = `${timestamp}-${randomId}.${ext}`;
 
-    // Create signed upload URL (valid for 5 minutes)
-    const { data: signedData, error: signedError } = await supabase.storage
-      .from('documents')
-      .createSignedUploadUrl(storagePath);
-
-    if (signedError || !signedData) {
-      console.error('Signed URL error:', signedError);
-      return NextResponse.json({ error: 'Failed to create upload URL' }, { status: 500 });
-    }
-
-    // Get the public URL for after upload
-    const { data: urlData } = supabase.storage
-      .from('documents')
-      .getPublicUrl(storagePath);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://captainslog.ae';
+    const publicUrl = `${appUrl}/api/upload/direct?file=${filename}&userId=${dbUser.id}&boatId=${boatId || ''}&componentId=${componentId || ''}&logEntryId=${logEntryId || ''}&category=${category || 'other'}&name=${encodeURIComponent(name)}`;
 
     return NextResponse.json({
-      signedUrl: signedData.signedUrl,
-      token: signedData.token,
-      path: storagePath,
-      publicUrl: urlData.publicUrl,
-      dbUserId: dbUser.id,
+      url: publicUrl,
+      filePath: `users/${dbUser.id}/boats/${boatId || 'unknown'}/${filename}`,
+      publicUrl: publicUrl,
     });
-
   } catch (error) {
-    console.error('POST /api/upload/signed-url error:', error);
+    console.error('Signed URL error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

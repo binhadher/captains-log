@@ -1,0 +1,61 @@
+{
+  "version": "1",
+  "timezone": "Asia/Dubai",
+  "tasks": [
+    {
+      "id": "captainslog-db-backup",
+      "name": "Captain's Log Database Backup",
+      "description": "Daily PostgreSQL dump, gzipped, kept for 30 days",
+      "schedule": "0 2 * * *",
+      "type": "script",
+      "command": "node scripts/backup-db.js",
+      "cwd": "/opt/captainslog",
+      "enabled": true,
+      "retention": {
+        "daily": 30,
+        "weekly": 12,
+        "monthly": 6
+      }
+    },
+    {
+      "id": "captainslog-upload-backup",
+      "name": "Captain's Log File Uploads Backup",
+      "description": "Weekly rsync of uploaded files to backup location",
+      "schedule": "0 3 * * 0",
+      "type": "script",
+      "command": "node scripts/backup-uploads.js",
+      "cwd": "/opt/captainslog",
+      "enabled": true
+    },
+    {
+      "id": "captainslog-config-backup",
+      "name": "Captain's Log Config Backup",
+      "description": "Backup nginx, env, PM2 configs to local archive",
+      "schedule": "0 4 1 * *",
+      "type": "script",
+      "command": "node scripts/backup-configs.js",
+      "cwd": "/opt/captainslog",
+      "enabled": true
+    },
+    {
+      "id": "captainslog-health",
+      "name": "Captain's Log Health Check",
+      "description": "Verify app is running and database is responsive",
+      "schedule": "*/10 * * * *",
+      "type": "script",
+      "command": "node scripts/health-check.js",
+      "cwd": "/opt/captainslog",
+      "enabled": true
+    },
+    {
+      "id": "prune-old-backups",
+      "name": "Prune Expired Backups",
+      "description": "Remove backups older than retention period",
+      "schedule": "0 5 * * 0",
+      "type": "script",
+      "command": "node scripts/prune-backups.js",
+      "cwd": "/opt/captainslog",
+      "enabled": true
+    }
+  ]
+}

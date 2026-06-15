@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
+import { deleteFileByUrl } from '@/lib/local-storage';
 
 // GET /api/boats/[id]/documents - Get documents for a boat
 export async function GET(
@@ -132,13 +133,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
 
-    // Delete from storage (extract path from URL)
+    // Delete from local storage
     if (doc.file_url) {
-      const url = new URL(doc.file_url);
-      const pathParts = url.pathname.split('/storage/v1/object/public/documents/');
-      if (pathParts.length > 1) {
-        await supabase.storage.from('documents').remove([pathParts[1]]);
-      }
+      await deleteFileByUrl(doc.file_url);
     }
 
     // Delete document record
