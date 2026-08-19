@@ -83,6 +83,9 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   generator_battery: <Battery className="w-5 h-5" />,
   house_battery: <Battery className="w-5 h-5" />,
   thruster_battery: <Battery className="w-5 h-5" />,
+  trim_system: <Cog className="w-5 h-5" />,
+  stabilizers: <Cog className="w-5 h-5" />,
+  windlass: <Anchor className="w-5 h-5" />,
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -102,6 +105,9 @@ const TYPE_COLORS: Record<string, string> = {
   generator_battery: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
   house_battery: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
   thruster_battery: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+  trim_system: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+  stabilizers: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+  windlass: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
 };
 
 // Check if component is a battery type

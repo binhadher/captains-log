@@ -63,6 +63,9 @@ const TYPE_OPTIONS: { category: ComponentCategory; type: ComponentType; label: s
   { category: 'propulsion', type: 'propeller', label: 'Propeller' },
   { category: 'systems', type: 'hydraulic', label: 'Hydraulic System' },
   { category: 'systems', type: 'bow_thruster', label: 'Bow Thruster' },
+  { category: 'systems', type: 'trim_system', label: 'Trim System' },
+  { category: 'systems', type: 'stabilizers', label: 'Stabilizers' },
+  { category: 'systems', type: 'windlass', label: 'Windlass' },
   { category: 'hvac', type: 'ac_chiller', label: 'AC Chiller' },
   { category: 'hvac', type: 'ac_air_handler', label: 'AC Air Handler' },
 ];

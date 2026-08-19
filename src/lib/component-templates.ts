@@ -7,7 +7,7 @@ export type BatteryVoltage = '12v' | '24v';
 export interface ComponentTemplate {
   id: string;
   type: string;
-  category: 'propulsion' | 'power' | 'maneuvering' | 'hydraulics' | 'hvac' | 'electrical' | 'tender';
+  category: 'propulsion' | 'power' | 'maneuvering' | 'hydraulics' | 'hvac' | 'electrical' | 'tender' | 'systems';
   name: string;
   icon: string;
   description?: string;
@@ -270,6 +270,40 @@ export const COMPONENT_TEMPLATES: ComponentTemplate[] = [
     defaultServiceIntervalDays: 365,
     defaultServiceIntervalHours: 50,
     allowMultiple: true,
+  },
+
+  // OTHER SYSTEMS
+  {
+    id: 'trim_system',
+    type: 'trim_system',
+    category: 'systems',
+    name: 'Trim System',
+    icon: '📐',
+    description: 'Trim tabs / interceptors',
+    defaultServiceIntervalDays: 365,
+    allowMultiple: true,
+    positionOptions: ['port', 'starboard'],
+  },
+  {
+    id: 'stabilizers',
+    type: 'stabilizers',
+    category: 'systems',
+    name: 'Stabilizers',
+    icon: '🛡️',
+    description: 'Fin or gyro stabilizers',
+    defaultServiceIntervalDays: 365,
+    allowMultiple: false,
+  },
+  {
+    id: 'windlass',
+    type: 'windlass',
+    category: 'systems',
+    name: 'Windlass',
+    icon: '⚓',
+    description: 'Anchor windlass / winch',
+    defaultServiceIntervalDays: 365,
+    allowMultiple: true,
+    positionOptions: ['bow', 'stern'],
   },
 ];
 

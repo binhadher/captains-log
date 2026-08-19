@@ -3,10 +3,28 @@ import withPWAInit from "next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  register: true,
-  skipWaiting: true,
+  register: false,          // we register manually so we can force-reload on updates
+  skipWaiting: false,       // page triggers SKIP_WAITING after showing "Updating" overlay
   disable: process.env.NODE_ENV === "development",
   runtimeCaching: [
+    {
+      // Cache all page navigation requests so the app works offline
+      urlPattern: /^https:\/\/[^/]+\/(?!api\/|_next\/|uploads\/|downloads\/|icons\/|manifest\.json).*/i,
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "pages",
+        networkTimeoutSeconds: 5,
+        plugins: [
+          {
+            cacheWillUpdate: async ({ response }: { response: Response }) => {
+              return response && response.type === "opaqueredirect"
+                ? new Response(response.body, { status: 200, statusText: "OK", headers: response.headers })
+                : response;
+            },
+          },
+        ],
+      },
+    },
     {
       urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
       handler: "NetworkFirst",

@@ -48,5 +48,11 @@ ALTER TABLE boat_components ADD CONSTRAINT boat_components_type_check
     'ac_air_handler',
     -- Tender
     'tender_outboard',
-    'tender_jet'
+    'tender_jet',
+    -- Custom / user-defined
+    'custom',
+    -- Other systems
+    'trim_system',
+    'stabilizers',
+    'windlass'
   ));

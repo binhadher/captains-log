@@ -50,7 +50,13 @@ export type ComponentType =
   | 'ac_air_handler'
   // Tender
   | 'tender_outboard'
-  | 'tender_jet';
+  | 'tender_jet'
+  // Custom / user-defined
+  | 'custom'
+  // Other systems
+  | 'trim_system'
+  | 'stabilizers'
+  | 'windlass';
 
 export interface User {
   id: string;

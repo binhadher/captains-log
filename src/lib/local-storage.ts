@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || '/opt/captainslog/uploads';
+export const UPLOAD_DIR = process.env.UPLOAD_DIR || '/opt/captainslog/uploads';
 
 // Ensure the upload directory exists
 export function ensureUploadDir(): void {

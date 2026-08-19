@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { CurrencyProvider } from '@/components/providers/CurrencyProvider';
 import { TermsCheck } from '@/components/providers/TermsCheck';
 import { PWAInstallPrompt } from '@/components/pwa/InstallPrompt';
+import { PWAUpdatePrompt } from '@/components/pwa/PWAUpdatePrompt';
 import { BottomNav } from '@/components/layout/BottomNav';
 import './globals.css';
 
@@ -60,6 +61,7 @@ export default function RootLayout({
                 </div>
                 <BottomNav />
                 <PWAInstallPrompt />
+                <PWAUpdatePrompt />
               </TermsCheck>
             </CurrencyProvider>
           </ThemeProvider>
