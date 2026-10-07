@@ -5,18 +5,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { canAccessAdmin } from '@/lib/admin';
 
-// GET /api/admin/users - Get all users with their boats
+// GET /api/admin/users - Get all users with enriched admin data
 export async function GET() {
   try {
     const { userId } = await auth();
-    
+
     if (!userId || !canAccessAdmin(userId)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const supabase = createServerClient();
 
-    // Get all users with their boat counts
+    // Get all users with their boats
     const { data: users, error } = await supabase
       .from('users')
       .select(`
@@ -26,12 +26,17 @@ export async function GET() {
         name,
         avatar_url,
         created_at,
+        last_seen_at,
         boats (
           id,
           name,
           make,
           model,
-          year
+          year,
+          registration_number,
+          hin,
+          engines,
+          created_at
         )
       `)
       .order('created_at', { ascending: false });
@@ -41,32 +46,47 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
     }
 
-    // Enrich with boat count and last activity
-    const enrichedUsers = await Promise.all(
-      (users || []).map(async (user) => {
-        // Get last maintenance log for this user's boats
-        const boatIds = user.boats?.map((b: { id: string }) => b.id) || [];
-        
-        let lastActivity = null;
-        if (boatIds.length > 0) {
-          const { data: lastLog } = await supabase
-            .from('maintenance_logs')
-            .select('created_at')
-            .in('boat_id', boatIds)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-          
-          lastActivity = lastLog?.created_at || null;
-        }
+    const userIds = (users || []).map((u: any) => u.id);
 
-        return {
-          ...user,
-          boatCount: user.boats?.length || 0,
-          lastActivity: lastActivity || user.created_at,
-        };
-      })
-    );
+    // Aggregate content/session counts per user via DB function
+    const { data: counts, error: countsError } = await supabase.rpc('admin_user_counts', {
+      user_ids: userIds,
+    });
+
+    if (countsError) {
+      console.error('admin_user_counts error:', countsError);
+    }
+
+    const countsMap: Record<string, any> = {};
+    (counts || []).forEach((row: any) => {
+      countsMap[row.user_id] = row;
+    });
+
+    const enrichedUsers = (users || []).map((user: any) => {
+      const c = countsMap[user.id] || {};
+      const documents = Number(c.documents || 0);
+      const gallery = Number(c.gallery || 0);
+      const parts = Number(c.parts || 0);
+      const safety = Number(c.safety || 0);
+      const crew = Number(c.crew || 0);
+      const photos = gallery + parts + safety + crew;
+      const sessions = Number(c.sessions || 0);
+      const totalSeconds = Number(c.total_seconds || 0);
+
+      return {
+        ...user,
+        boatCount: user.boats?.length || 0,
+        documents,
+        photos,
+        gallery,
+        parts,
+        safety,
+        crew,
+        sessions,
+        totalSeconds,
+        lastActivity: user.last_seen_at || user.created_at,
+      };
+    });
 
     return NextResponse.json({ users: enrichedUsers });
   } catch (error) {
@@ -79,7 +99,7 @@ export async function GET() {
 export async function DELETE(request: NextRequest) {
   try {
     const { userId } = await auth();
-    
+
     if (!userId || !canAccessAdmin(userId)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -103,23 +123,27 @@ export async function DELETE(request: NextRequest) {
     const { data: boats } = await supabase
       .from('boats')
       .select('id')
-      .eq('user_id', userIdToDelete);
+      .eq('owner_id', userIdToDelete);
 
-    const boatIds = boats?.map(b => b.id) || [];
+    const boatIds = boats?.map((b) => b.id) || [];
 
     if (boatIds.length > 0) {
       // Delete all boat-related data
       await supabase.from('maintenance_logs').delete().in('boat_id', boatIds);
-      await supabase.from('components').delete().in('boat_id', boatIds);
+      await supabase.from('boat_components').delete().in('boat_id', boatIds);
       await supabase.from('documents').delete().in('boat_id', boatIds);
-      await supabase.from('parts_catalog').delete().in('boat_id', boatIds);
+      await supabase.from('parts').delete().in('boat_id', boatIds);
       await supabase.from('health_checks').delete().in('boat_id', boatIds);
       await supabase.from('alerts').delete().in('boat_id', boatIds);
+      await supabase.from('boat_gallery').delete().in('boat_id', boatIds);
       await supabase.from('boats').delete().in('id', boatIds);
     }
 
     // Delete crew members owned by user
     await supabase.from('crew_members').delete().eq('user_id', userIdToDelete);
+
+    // Delete user sessions
+    await supabase.from('user_sessions').delete().eq('user_id', userIdToDelete);
 
     // Delete user from database
     const { error: deleteError } = await supabase
@@ -139,7 +163,6 @@ export async function DELETE(request: NextRequest) {
         await client.users.deleteUser(clerkIdToDelete);
       } catch (clerkError) {
         console.error('Error deleting user from Clerk:', clerkError);
-        // Continue even if Clerk deletion fails - DB data is already gone
       }
     }
 

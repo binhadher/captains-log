@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Anchor, Users, Ship, FileText, Wrench, UserPlus, ArrowLeft, Shield, Loader2 } from 'lucide-react';
+import { Anchor, Users, Ship, FileText, Wrench, UserPlus, ArrowLeft, Shield, Loader2, Clock, Camera, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -13,12 +13,26 @@ interface AdminStats {
   totalBoats: number;
   totalLogs: number;
   totalDocuments: number;
+  totalPhotos: number;
   recentSignups: number;
   monthlySignups: number;
+  activeThisMonth: number;
+  activeLastMonth: number;
+  activeLast7Days: number;
+  monthlySessions: number;
+  monthlySessionSeconds: number;
+}
+
+function formatDuration(totalSeconds: number): string {
+  if (!totalSeconds) return '0m';
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
 }
 
 export default function AdminPage() {
-  const { isSignedIn, isLoaded, userId } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,14 +42,19 @@ export default function AdminPage() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch('/api/admin/stats');
-        if (res.status === 401) {
+        const [statsRes, insightsRes] = await Promise.all([
+          fetch('/api/admin/stats'),
+          fetch('/api/admin/insights'),
+        ]);
+        if (statsRes.status === 401 || insightsRes.status === 401) {
           setUnauthorized(true);
           return;
         }
-        if (!res.ok) throw new Error('Failed to load admin stats');
-        const data = await res.json();
-        setStats(data.stats);
+        if (!statsRes.ok) throw new Error('Failed to load admin stats');
+        if (!insightsRes.ok) throw new Error('Failed to load insights');
+        const statsData = await statsRes.json();
+        const insightsData = await insightsRes.json();
+        setStats({ ...statsData.stats, ...insightsData.stats });
       } catch (err) {
         console.error('Admin stats error:', err);
         setError(err instanceof Error ? err.message : 'Failed to load stats');
@@ -79,7 +98,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-dubai">
-      {/* Header */}
       <header className="glass-header sticky top-0 z-10">
         <div className="max-w-4xl md:max-w-6xl mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between h-14">
@@ -108,7 +126,7 @@ export default function AdminPage() {
             <Shield className="w-6 h-6" />
             Admin Dashboard
           </h2>
-          <p className="text-white/80 text-sm mt-1">Overview of accounts, boats, and activity.</p>
+          <p className="text-white/80 text-sm mt-1">Overview of accounts, boats, content, and usage.</p>
         </div>
 
         {loading ? (
@@ -133,17 +151,28 @@ export default function AdminPage() {
               <StatCard icon={<Ship className="w-6 h-6" />} label="Total Boats" value={stats.totalBoats} color="bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300" />
               <StatCard icon={<Wrench className="w-6 h-6" />} label="Maintenance Logs" value={stats.totalLogs} color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" />
               <StatCard icon={<FileText className="w-6 h-6" />} label="Documents" value={stats.totalDocuments} color="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" />
-              <StatCard icon={<UserPlus className="w-6 h-6" />} label="New Users (7 days)" value={stats.recentSignups} color="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" />
+              <StatCard icon={<Camera className="w-6 h-6" />} label="Photos" value={stats.totalPhotos} color="bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300" />
               <StatCard icon={<UserPlus className="w-6 h-6" />} label="New Users (30 days)" value={stats.monthlySignups} color="bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300" />
             </div>
 
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              Usage &amp; Engagement
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <StatCard icon={<Clock className="w-5 h-5" />} label="Time on Site (This Month)" value={formatDuration(stats.monthlySessionSeconds)} color="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300" isText />
+              <StatCard icon={<Activity className="w-5 h-5" />} label="Sessions (This Month)" value={stats.monthlySessions} color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" />
+              <StatCard icon={<Users className="w-5 h-5" />} label="Active This Month" value={stats.activeThisMonth} color="bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300" />
+              <StatCard icon={<Users className="w-5 h-5" />} label="Active Last 7 Days" value={stats.activeLast7Days} color="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" />
+            </div>
+
             <div className="glass-card rounded-xl p-5">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">User Management</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">View all registered users and their boats.</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Account Holders</h3>
+              <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">View every user, their boats, uploaded content, and usage.</p>
               <Link href="/admin/users">
                 <Button className="bg-teal-600 hover:bg-teal-700 text-white">
                   <Users className="w-4 h-4 mr-2" />
-                  View Users
+                  View All Users
                 </Button>
               </Link>
             </div>
@@ -154,13 +183,13 @@ export default function AdminPage() {
   );
 }
 
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
+function StatCard({ icon, label, value, color, isText }: { icon: React.ReactNode; label: string; value: string | number; color: string; isText?: boolean }) {
   return (
     <div className="glass-card rounded-xl p-5">
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
         {icon}
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value.toLocaleString()}</p>
+      <p className={`font-bold text-gray-900 dark:text-white ${isText ? 'text-lg' : 'text-2xl'}`}>{value}</p>
       <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
     </div>
   );
