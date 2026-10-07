@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Camera, Ship, X, Loader2, ImageIcon } from 'lucide-react';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 interface BoatHeroProps {
   boatId: string;
@@ -114,10 +115,12 @@ export function BoatHero({ boatId, boatName, photoUrl, onPhotoChange }: BoatHero
     <div className="relative w-full h-48 sm:h-56 md:h-64 rounded-xl overflow-hidden mb-4">
       {/* Background */}
       {photoUrl ? (
-        <img
+        <SafeImage
           src={photoUrl}
           alt={boatName}
           className="absolute inset-0 w-full h-full object-cover"
+          fallbackText="Photo unavailable"
+          showIcon={false}
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500 via-teal-600 to-cyan-700">

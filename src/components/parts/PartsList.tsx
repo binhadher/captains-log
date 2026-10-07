@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { shareContent, buildPartShareText } from '@/lib/share';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 interface PartsListProps {
   parts: Part[];
@@ -169,10 +170,12 @@ export function PartsList({ parts, showComponent = true, onView, onEdit, onDelet
               {/* Photo */}
               {part.photo_url ? (
                 <a href={part.photo_url} target="_blank" rel="noopener noreferrer" onClick={(e) => selectMode && e.preventDefault()}>
-                  <img 
+                  <SafeImage 
                     src={part.photo_url} 
                     alt={part.name}
                     className="w-20 h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                    fallbackText=""
+                    showIcon={false}
                   />
                 </a>
               ) : (

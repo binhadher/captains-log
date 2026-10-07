@@ -38,6 +38,7 @@ import { EditPartModal } from '@/components/parts/EditPartModal';
 import { ComponentDocumentUpload } from '@/components/documents/ComponentDocumentUpload';
 import { Package, Settings, Pencil, Copy, Check, Share2, Trash2 as TrashIcon, FileText as FileIcon, Image as ImageIcon, CheckSquare, Square, X } from 'lucide-react';
 import { Confetti } from '@/components/ui/Confetti';
+import { SafeImage } from '@/components/ui/SafeImage';
 import { useConfetti } from '@/hooks/useConfetti';
 import { EngineBatteryTabs } from '@/components/boats/EngineBatteryTabs';
 import { useBoatAccess } from '@/hooks/useBoatAccess';
@@ -870,10 +871,12 @@ export default function ComponentDetailPage() {
                             className="block"
                           >
                             {doc.file_type.startsWith('image/') ? (
-                              <img 
+                              <SafeImage 
                                 src={doc.file_url} 
                                 alt={doc.name}
                                 className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-gray-700 hover:border-cyan-400 transition-all"
+                                fallbackText=""
+                                showIcon={false}
                               />
                             ) : (
                               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-cyan-400 transition-all flex flex-col items-center justify-center">
@@ -952,7 +955,7 @@ export default function ComponentDetailPage() {
                     className="block aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 hover:opacity-90 transition-opacity"
                   >
                     {doc.file_type.startsWith('image/') ? (
-                      <img src={doc.file_url} alt={doc.name} className="w-full h-full object-cover" />
+                      <SafeImage src={doc.file_url} alt={doc.name} className="w-full h-full object-cover" fallbackText="" showIcon={false} />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center p-2">
                         <FileIcon className="w-8 h-8 text-gray-400 mb-2" />

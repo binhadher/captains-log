@@ -6,6 +6,7 @@ import { Part } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
 import { shareContent, buildPartShareText } from '@/lib/share';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 interface PartDetailModalProps {
   isOpen: boolean;
@@ -135,10 +136,11 @@ export function PartDetailModal({ isOpen, onClose, part, onEdit, onDelete }: Par
           {/* Photo */}
           {part.photo_url && (
             <a href={part.photo_url} target="_blank" rel="noopener noreferrer">
-              <img 
+              <SafeImage 
                 src={part.photo_url} 
                 alt={part.name}
                 className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                fallbackText="Photo unavailable"
               />
             </a>
           )}

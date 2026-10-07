@@ -5,6 +5,7 @@ import { X, Activity, Copy, Check, Share2, Pencil, Trash2, Calendar, Loader2, Dr
 import { HealthCheck, HealthCheckType } from '@/types/database';
 import { formatDate } from '@/lib/utils';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
+import { SafeImage } from '@/components/ui/SafeImage';
 import { shareContent, buildHealthCheckShareText } from '@/lib/share';
 
 interface HealthCheckDetailModalProps {
@@ -159,10 +160,11 @@ export function HealthCheckDetailModal({ isOpen, onClose, check, onEdit, onDelet
           {/* Photo */}
           {check.photo_url && (
             <a href={check.photo_url} target="_blank" rel="noopener noreferrer">
-              <img 
+              <SafeImage 
                 src={check.photo_url} 
                 alt={check.title}
                 className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                fallbackText="Photo unavailable"
               />
             </a>
           )}

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { CrewMember } from './CrewList';
 import { formatDate } from '@/lib/utils';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 // Image Viewer Component
 function ImageViewer({ 
@@ -63,10 +64,11 @@ function ImageViewer({
       
       {/* Image */}
       <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
-        <img 
+        <SafeImage 
           src={src} 
           alt={title} 
           className="max-w-full max-h-full object-contain rounded-lg"
+          fallbackText={`${title} unavailable`}
           onClick={onClose}
         />
       </div>
@@ -281,7 +283,7 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
                   : 'bg-cyan-100 dark:bg-cyan-900/50'
               }`}>
                 {member.photo_url ? (
-                  <img src={member.photo_url} alt={member.name} className="w-full h-full rounded-full object-cover" />
+                  <SafeImage src={member.photo_url} alt={member.name} className="w-full h-full rounded-full object-cover" fallbackText="" showIcon={false} />
                 ) : (
                   TITLE_ICONS[member.title] || '👤'
                 )}
@@ -362,7 +364,7 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
                           className="flex-1 text-left group"
                         >
                           <div className="relative">
-                            <img src={member.passport_url} alt="Passport" className="h-20 w-auto rounded border object-cover group-hover:opacity-80 transition-opacity" />
+                            <SafeImage src={member.passport_url} alt="Passport" className="h-20 w-auto rounded border object-cover group-hover:opacity-80 transition-opacity" fallbackText="Passport unavailable" showIcon={false} />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                               <ZoomIn className="w-6 h-6 text-white drop-shadow-lg" />
                             </div>
@@ -414,7 +416,7 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
                           className="flex-1 text-left group"
                         >
                           <div className="relative">
-                            <img src={member.emirates_id_url} alt="Emirates ID" className="h-20 w-auto rounded border object-cover group-hover:opacity-80 transition-opacity" />
+                            <SafeImage src={member.emirates_id_url} alt="Emirates ID" className="h-20 w-auto rounded border object-cover group-hover:opacity-80 transition-opacity" fallbackText="Emirates ID unavailable" showIcon={false} />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                               <ZoomIn className="w-6 h-6 text-white drop-shadow-lg" />
                             </div>
@@ -470,7 +472,7 @@ export function CrewDetailModal({ isOpen, onClose, member, onEdit, boatId, boatN
                           className="flex-1 text-left group"
                         >
                           <div className="relative">
-                            <img src={member.marine_license_url} alt="Marine License" className="h-20 w-auto rounded border object-cover group-hover:opacity-80 transition-opacity" />
+                            <SafeImage src={member.marine_license_url} alt="Marine License" className="h-20 w-auto rounded border object-cover group-hover:opacity-80 transition-opacity" fallbackText="Marine License unavailable" showIcon={false} />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                               <ZoomIn className="w-6 h-6 text-white drop-shadow-lg" />
                             </div>

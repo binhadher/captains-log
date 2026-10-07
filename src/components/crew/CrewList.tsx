@@ -16,6 +16,7 @@ import {
   Share2,
   Send
 } from 'lucide-react';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 export interface CrewMember {
   id: string;
@@ -193,7 +194,7 @@ export function CrewList({ crew, boatId, onView, onEdit, onDelete, onInviteSent,
             : 'bg-cyan-100 dark:bg-cyan-900/50'
         }`}>
           {member.photo_url ? (
-            <img src={member.photo_url} alt={member.name} className="w-full h-full rounded-full object-cover" />
+            <SafeImage src={member.photo_url} alt={member.name} className="w-full h-full rounded-full object-cover" fallbackText="" showIcon={false} />
           ) : (
             TITLE_ICONS[member.title] || '👤'
           )}

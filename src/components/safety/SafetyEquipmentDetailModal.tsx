@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Shield, Copy, Check, Share2, Pencil, Trash2, Calendar, Loader2, ExternalLink, AlertTriangle } from 'lucide-react';
 import { SafetyEquipment, SafetyEquipmentType } from '@/types/database';
 import { AudioPlayer } from '@/components/ui/AudioPlayer';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 interface SafetyEquipmentDetailModalProps {
   isOpen: boolean;
@@ -173,10 +174,11 @@ export function SafetyEquipmentDetailModal({ isOpen, onClose, equipment, onEdit,
           {/* Photo */}
           {equipment.photo_url && (
             <a href={equipment.photo_url} target="_blank" rel="noopener noreferrer">
-              <img 
+              <SafeImage 
                 src={equipment.photo_url} 
                 alt={displayName || 'Safety equipment'}
                 className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                fallbackText="Photo unavailable"
               />
             </a>
           )}

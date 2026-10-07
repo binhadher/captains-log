@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Camera, Image as ImageIcon, Loader2, X, Eye, Trash2 } from 'lucide-react';
 import { CameraCapture } from '@/components/ui/CameraCapture';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 interface DataPlateUploadProps {
   label: string;
@@ -67,10 +68,12 @@ export function DataPlateUpload({ label, currentUrl, onUpload, onDelete }: DataP
               className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 hover:border-teal-500 transition-colors group"
               title="View data plate"
             >
-              <img 
+              <SafeImage 
                 src={currentUrl} 
                 alt={label}
                 className="w-full h-full object-cover"
+                fallbackText=""
+                showIcon={false}
               />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Eye className="w-4 h-4 text-white" />
@@ -142,10 +145,11 @@ export function DataPlateUpload({ label, currentUrl, onUpload, onDelete }: DataP
           >
             <X className="w-6 h-6 text-white" />
           </button>
-          <img 
+          <SafeImage 
             src={currentUrl} 
             alt={label}
             className="max-w-full max-h-full object-contain rounded-lg"
+            fallbackText={`${label} unavailable`}
             onClick={(e) => e.stopPropagation()}
           />
         </div>

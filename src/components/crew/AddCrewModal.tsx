@@ -5,6 +5,7 @@ import { X, Loader2, Image, Trash2, Share2, Camera, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/Button';
 import { VoiceRecorder } from '@/components/ui/VoiceRecorder';
 import { CameraCapture } from '@/components/ui/CameraCapture';
+import { SafeImage } from '@/components/ui/SafeImage';
 import { CrewMember } from './CrewList';
 
 interface AddCrewModalProps {
@@ -277,7 +278,7 @@ export function AddCrewModal({ isOpen, onClose, boatId, editingMember, onSuccess
       {docUrl ? (
         <div className="flex items-center gap-3">
           <a href={docUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
-            <img src={docUrl} alt={docName} className="h-16 w-auto rounded border object-cover" />
+            <SafeImage src={docUrl} alt={docName} className="h-16 w-auto rounded border object-cover" fallbackText="" showIcon={false} />
           </a>
           <button
             type="button"

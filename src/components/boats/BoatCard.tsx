@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ChevronRight, Anchor } from 'lucide-react';
+import { SafeImage } from '@/components/ui/SafeImage';
 import { Boat } from '@/types/database';
 
 interface BoatCardProps {
@@ -18,10 +19,12 @@ export function BoatCard({ boat, index = 0 }: BoatCardProps) {
       <div className={`glass-card glass-card-interactive rounded-xl p-4 hover:scale-[1.01] transition-all cursor-pointer group animate-slide-in-up animate-fill-both ${staggerClass}`}>
         <div className="flex items-center gap-3">
           {boat.photo_url ? (
-            <img 
+            <SafeImage 
               src={boat.photo_url} 
               alt={boat.name}
               className="w-12 h-12 rounded-lg object-cover shadow"
+              fallbackText=""
+              showIcon={false}
             />
           ) : (
             <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center shadow">

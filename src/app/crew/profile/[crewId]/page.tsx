@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { CameraCapture } from '@/components/ui/CameraCapture';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 interface CrewProfile {
   id: string;
@@ -356,7 +357,7 @@ export default function CrewProfilePage() {
       />
       {docUrl ? (
         <div className="flex items-center gap-3">
-          <img src={docUrl} alt={docName} className="h-16 w-auto rounded border object-cover" />
+          <SafeImage src={docUrl} alt={docName} className="h-16 w-auto rounded border object-cover" fallbackText="" showIcon={false} />
           <button
             type="button"
             onClick={() => setDocUrl(null)}
