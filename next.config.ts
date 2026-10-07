@@ -92,6 +92,16 @@ const nextConfig: NextConfig = {
   },
 
   // Security headers for all routes
+  async redirects() {
+    return [
+      {
+        source: '/admin',
+        destination: '/boats',
+        permanent: false,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
