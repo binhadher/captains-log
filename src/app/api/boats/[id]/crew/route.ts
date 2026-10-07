@@ -70,7 +70,37 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch crew' }, { status: 500 });
     }
 
-    return NextResponse.json({ crew: crew || [] });
+    let finalCrew = crew || [];
+
+    // Ensure the boat owner is always represented in the crew list.
+    // If the owner's crew_members row was deleted, we synthesize one from
+    // boats.owner_id + users so the owner box never disappears.
+    const ownerInCrew = finalCrew.find((m) => m.title === 'owner');
+
+    if (!ownerInCrew && boat.owner_id) {
+      const { data: ownerUser, error: ownerError } = await supabase
+        .from('users')
+        .select('id, name, email, avatar_url, clerk_id')
+        .eq('id', boat.owner_id)
+        .single();
+
+      if (!ownerError && ownerUser) {
+        const ownerMember = {
+          id: `owner-${boat.owner_id}`,
+          boat_id: boatId,
+          name: ownerUser.name || ownerUser.email || 'Owner',
+          title: 'owner',
+          status: 'active',
+          invitation_status: 'accepted',
+          user_id: ownerUser.clerk_id || null,
+          photo_url: ownerUser.avatar_url || null,
+          email: ownerUser.email || null,
+        };
+        finalCrew = [ownerMember, ...finalCrew];
+      }
+    }
+
+    return NextResponse.json({ crew: finalCrew });
   } catch (error) {
     console.error('GET /api/boats/[id]/crew error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
