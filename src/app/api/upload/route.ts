@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     ensureUploadDir();
-    const { publicUrl } = await saveFile(file, dbUser.id, boatId);
+    const { publicUrl, fileSize } = await saveFile(file, dbUser.id, boatId);
 
     const { data: document, error: dbError } = await supabase
       .from("documents")
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
         name,
         file_url: publicUrl,
         file_type: file.type || "application/octet-stream",
-        file_size: file.size || 0,
+        file_size: fileSize || file.size || 0,
         reminder_days: 30,
         uploaded_by: dbUser.id,
       })

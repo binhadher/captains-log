@@ -37,6 +37,8 @@ export function SafeImage({
       <img
         {...props}
         alt={alt}
+        loading="lazy"
+        decoding="async"
         className={`${className} ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
         onLoad={(e) => {
           setLoading(false);
