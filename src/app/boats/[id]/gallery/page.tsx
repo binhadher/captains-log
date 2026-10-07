@@ -28,6 +28,7 @@ const UserButton = dynamic(
   { ssr: false, loading: () => <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" /> }
 );
 import { CameraCapture } from '@/components/ui/CameraCapture';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 interface GalleryItem {
   id: string;
@@ -511,10 +512,11 @@ export default function GalleryPage() {
                     </div>
                   </div>
                 ) : (
-                  <img
+                  <SafeImage
                     src={item.file_url}
                     alt={item.caption || 'Gallery image'}
                     className="w-full h-full object-cover"
+                    fallbackText="Photo unavailable"
                   />
                 )}
                 

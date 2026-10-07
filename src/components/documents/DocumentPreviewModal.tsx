@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, Download, Share2, Pencil, Trash2, Loader2, FileText, AlertTriangle, Calendar } from 'lucide-react';
+import { SafeImage } from '@/components/ui/SafeImage';
 import { Document } from '@/types/database';
 import { formatDueIn, calculateSeverity } from '@/lib/alerts';
 import { shareContent, buildDocumentShareText } from '@/lib/share';
@@ -172,15 +173,11 @@ export function DocumentPreviewModal({ isOpen, onClose, document: doc, onEdit, o
         <div className="flex-1 bg-gray-800 rounded-b-xl overflow-hidden min-h-[300px] max-h-[calc(90vh-80px)]">
           {isImage && !imageError ? (
             <div className="relative w-full h-full flex items-center justify-center p-4">
-              {imageLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                  <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                </div>
-              )}
-              <img
+              <SafeImage
                 src={doc.file_url}
                 alt={doc.name}
                 className="max-w-full max-h-[calc(90vh-120px)] object-contain rounded"
+                fallbackText="Document image unavailable"
                 onLoad={() => setImageLoading(false)}
                 onError={() => {
                   setImageLoading(false);
