@@ -641,108 +641,101 @@ export default function BoatDetailPage() {
           
 
         </div>
-
-        {/* Registration */}
-        <div className="glass-card rounded-xl p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Registration
-              {documents.filter(d => d.category === 'registration').length > 0 && (
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({documents.filter(d => d.category === 'registration').length})</span>
+          {/* Registration */}
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Registration</span>
+              {canEdit && (
+                <button
+                  onClick={() => setShowAddRegistration(true)}
+                  className="p-1.5 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                  title="Add registration"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
               )}
-            </h2>
-            {canEdit && (
-              <Button size="sm" onClick={() => setShowAddRegistration(true)}>
-                <Plus className="w-4 h-4 mr-1" />
-                Add
-              </Button>
-            )}
-          </div>
-          <div className="max-h-80 overflow-y-auto">
-            <DocumentsList
-              documents={documents.filter(d => d.category === 'registration')}
-              onView={(doc) => setViewingDocument(doc)}
-              onEdit={canDelete ? (doc) => setEditingDocument(doc) : undefined}
-              onDelete={canDelete ? handleDeleteDocument : undefined}
-            />
-          </div>
-        </div>
-
-        {/* Boat Photo Gallery */}
-        <div className="glass-card rounded-xl p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <ImageIcon className="w-4 h-4" />
-              Boat Photo Gallery
-              {gallery.length > 0 && (
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({gallery.length})</span>
-              )}
-            </h2>
-            {canEdit && (
-              <>
-                <input
-                  ref={galleryInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  capture="environment"
-                  className="hidden"
-                  onChange={handleGalleryUpload}
-                  id="gallery-upload"
-                />
-                <Button size="sm" onClick={() => galleryInputRef.current?.click()} disabled={uploadingGallery}>
-                  {uploadingGallery ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
-                  Add Photo
-                </Button>
-              </>
-            )}
-          </div>
-          {gallery.length === 0 ? (
-            <div className="text-center py-8">
-              <ImageIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400">No gallery photos yet</p>
-              <p className="text-sm text-gray-400 mt-1">Upload as many boat photos as you need</p>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {gallery.map((item) => (
-                <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  <SafeImage
-                    src={item.file_url}
-                    alt={item.caption || 'Boat photo'}
-                    className="w-full h-full object-cover"
+            <div className="max-h-60 overflow-y-auto">
+              <DocumentsList
+                documents={documents.filter(d => d.category === 'registration')}
+                onView={(doc) => setViewingDocument(doc)}
+                onEdit={canDelete ? (doc) => setEditingDocument(doc) : undefined}
+                onDelete={canDelete ? handleDeleteDocument : undefined}
+                maxHeight="200px"
+              />
+            </div>
+          </div>
+
+          {/* Boat Photo Gallery */}
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Boat Photo Gallery</span>
+              {canEdit && (
+                <>
+                  <input
+                    ref={galleryInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleGalleryUpload}
+                    id="gallery-upload"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
-                    <button
-                      onClick={() => handleGalleryShare(item)}
-                      className="p-1.5 bg-white/90 dark:bg-gray-900/90 rounded-lg text-gray-700 dark:text-gray-200"
-                      title="Share"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                    </button>
-                    {item.file_type === 'image' && (
-                      <button
-                        onClick={() => handleSetCover(item)}
-                        className="p-1.5 bg-white/90 dark:bg-gray-900/90 rounded-lg text-amber-600 dark:text-amber-400"
-                        title="Set as cover"
-                      >
-                        <Star className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDeleteGalleryItem(item.id)}
-                      className="p-1.5 bg-white/90 dark:bg-gray-900/90 rounded-lg text-red-600 dark:text-red-400"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                  <button
+                    onClick={() => galleryInputRef.current?.click()}
+                    disabled={uploadingGallery}
+                    className="p-1.5 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors disabled:opacity-50"
+                    title="Add photo"
+                  >
+                    {uploadingGallery ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  </button>
+                </>
+              )}
             </div>
-          )}
-        </div>
+            {gallery.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">No gallery photos yet</p>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                {gallery.map((item) => (
+                  <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <SafeImage
+                      src={item.file_url}
+                      alt={item.caption || 'Boat photo'}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-between p-1.5 opacity-0 group-hover:opacity-100">
+                      <button
+                        onClick={() => handleGalleryShare(item)}
+                        className="p-1 bg-white/90 dark:bg-gray-900/90 rounded text-gray-700 dark:text-gray-200"
+                        title="Share"
+                      >
+                        <Upload className="w-3 h-3" />
+                      </button>
+                      {item.file_type === 'image' && (
+                        <button
+                          onClick={() => handleSetCover(item)}
+                          className="p-1 bg-white/90 dark:bg-gray-900/90 rounded text-amber-600 dark:text-amber-400"
+                          title="Set as cover"
+                        >
+                          <Star className="w-3 h-3" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteGalleryItem(item.id)}
+                        className="p-1 bg-white/90 dark:bg-gray-900/90 rounded text-red-600 dark:text-red-400"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+
 
         {/* Engines Card */}
         {boat.engines && boat.engines.length > 0 && (
