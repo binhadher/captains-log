@@ -121,6 +121,7 @@ export function BoatHero({ boatId, boatName, photoUrl, onPhotoChange }: BoatHero
           className="absolute inset-0 w-full h-full object-cover"
           fallbackText="Photo unavailable"
           showIcon={false}
+          loading="eager"
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-teal-500 via-teal-600 to-cyan-700">

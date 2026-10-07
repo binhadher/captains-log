@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -17,7 +17,11 @@ import {
   Cog,
   Coins,
   ChevronRight,
-  Camera
+  Camera,
+  ImageIcon,
+  Upload,
+  Loader2,
+  Star
 } from 'lucide-react';
 import { BoatDetailSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
@@ -60,6 +64,7 @@ import { AddMaintenanceModal } from '@/components/maintenance/AddMaintenanceModa
 import { PDFExport } from '@/components/export/PDFExport';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 import { BoatHero } from '@/components/boats/BoatHero';
+import { SafeImage } from '@/components/ui/SafeImage';
 // FAB removed - BottomNav handles mobile, section buttons handle desktop
 import { SafetyEquipmentList } from '@/components/safety/SafetyEquipmentList';
 import { AddSafetyEquipmentModal } from '@/components/safety/AddSafetyEquipmentModal';
@@ -94,6 +99,10 @@ export default function BoatDetailPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [showAddDocument, setShowAddDocument] = useState(false);
   const [showAddBoatDetails, setShowAddBoatDetails] = useState(false);
+  const [showAddRegistration, setShowAddRegistration] = useState(false);
+  const [gallery, setGallery] = useState<Array<{ id: string; file_url: string; file_type: 'image' | 'video'; mime_type: string; file_size: number; caption: string | null; created_at: string }>>([]);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [crew, setCrew] = useState<CrewMember[]>([]);
   const [showAddCrew, setShowAddCrew] = useState(false);
   const [showInviteCrew, setShowInviteCrew] = useState(false);
@@ -163,6 +172,7 @@ export default function BoatDetailPage() {
       fetchCosts(params.id as string);
       fetchMaintenanceLogs(params.id as string);
       fetchSafetyEquipment(params.id as string);
+      fetchGallery(params.id as string);
     }
   }, [params.id]);
 
@@ -322,6 +332,18 @@ export default function BoatDetailPage() {
     }
   };
 
+  const fetchGallery = async (boatId: string) => {
+    try {
+      const response = await fetch(`/api/boats/${boatId}/gallery`);
+      if (response.ok) {
+        const data = await response.json();
+        setGallery(data.gallery || []);
+      }
+    } catch (err) {
+      console.error('Error fetching gallery:', err);
+    }
+  };
+
   const fetchCrew = async (boatId: string) => {
     try {
       const response = await fetch(`/api/boats/${boatId}/crew`);
@@ -359,6 +381,79 @@ export default function BoatDetailPage() {
       }
     } catch (err) {
       console.error('Error deleting document:', err);
+    }
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !boat) return;
+    setUploadingGallery(true);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch(`/api/boats/${boat.id}/gallery`, { method: 'POST', body: formData });
+        if (!res.ok) throw new Error('Upload failed');
+      }
+      fetchGallery(boat.id);
+      fetchBoat(boat.id);
+    } catch (err) {
+      console.error('Gallery upload error:', err);
+      alert('Failed to upload photo');
+    } finally {
+      setUploadingGallery(false);
+      if (galleryInputRef.current) galleryInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteGalleryItem = async (id: string) => {
+    if (!confirm('Delete this photo?')) return;
+    try {
+      const res = await fetch(`/api/boats/${params.id}/gallery?itemId=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setGallery(prev => prev.filter(item => item.id !== id));
+      }
+    } catch (err) {
+      console.error('Gallery delete error:', err);
+    }
+  };
+
+  const handleGalleryShare = async (item: { id: string; file_url: string; file_type: string; mime_type: string; caption: string | null }) => {
+    try {
+      const response = await fetch(item.file_url);
+      const blob = await response.blob();
+      const filename = item.caption || `boat-photo-${item.id.slice(0, 8)}.jpg`;
+      const file = new File([blob], filename, { type: item.mime_type || 'image/jpeg' });
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename });
+      } else {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Share failed:', err);
+        alert('Failed to share photo');
+      }
+    }
+  };
+
+  const handleSetCover = async (item: { id: string; file_url: string; file_type: string }) => {
+    if (item.file_type !== 'image' || !boat) return;
+    try {
+      const res = await fetch(`/api/boats/${boat.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo_url: item.file_url }),
+      });
+      if (!res.ok) throw new Error('Failed to set cover');
+      fetchBoat(boat.id);
+    } catch (err) {
+      console.error('Set cover error:', err);
+      alert('Failed to set cover photo');
     }
   };
 
@@ -544,39 +639,109 @@ export default function BoatDetailPage() {
             )}
           </div>
           
-          {/* Boat Data Plate */}
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Boat Data Plate</span>
-              <DataPlateUpload
-                label="Boat Data Plate"
-                currentUrl={boat.boat_data_plate}
-                onUpload={async (file) => {
-                  const formData = new FormData();
-                  formData.append('file', file);
-                  formData.append('type', 'boat');
-                  
-                  const response = await fetch(`/api/boats/${boat.id}/data-plate`, {
-                    method: 'POST',
-                    body: formData,
-                  });
-                  
-                  if (!response.ok) throw new Error('Upload failed');
-                  const data = await response.json();
-                  setBoat(data.boat);
-                }}
-                onDelete={async () => {
-                  const response = await fetch(
-                    `/api/boats/${boat.id}/data-plate?type=boat`,
-                    { method: 'DELETE' }
-                  );
-                  if (!response.ok) throw new Error('Delete failed');
-                  const data = await response.json();
-                  setBoat(data.boat);
-                }}
-              />
-            </div>
+
+        </div>
+
+        {/* Registration */}
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Registration
+              {documents.filter(d => d.category === 'registration').length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({documents.filter(d => d.category === 'registration').length})</span>
+              )}
+            </h2>
+            {canEdit && (
+              <Button size="sm" onClick={() => setShowAddRegistration(true)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            )}
           </div>
+          <div className="max-h-80 overflow-y-auto">
+            <DocumentsList
+              documents={documents.filter(d => d.category === 'registration')}
+              onView={(doc) => setViewingDocument(doc)}
+              onEdit={canDelete ? (doc) => setEditingDocument(doc) : undefined}
+              onDelete={canDelete ? handleDeleteDocument : undefined}
+            />
+          </div>
+        </div>
+
+        {/* Boat Photo Gallery */}
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <ImageIcon className="w-4 h-4" />
+              Boat Photo Gallery
+              {gallery.length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({gallery.length})</span>
+              )}
+            </h2>
+            {canEdit && (
+              <>
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleGalleryUpload}
+                  id="gallery-upload"
+                />
+                <Button size="sm" onClick={() => galleryInputRef.current?.click()} disabled={uploadingGallery}>
+                  {uploadingGallery ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Upload className="w-4 h-4 mr-1" />}
+                  Add Photo
+                </Button>
+              </>
+            )}
+          </div>
+          {gallery.length === 0 ? (
+            <div className="text-center py-8">
+              <ImageIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-500 dark:text-gray-400">No gallery photos yet</p>
+              <p className="text-sm text-gray-400 mt-1">Upload as many boat photos as you need</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {gallery.map((item) => (
+                <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                  <SafeImage
+                    src={item.file_url}
+                    alt={item.caption || 'Boat photo'}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-between p-2 opacity-0 group-hover:opacity-100">
+                    <button
+                      onClick={() => handleGalleryShare(item)}
+                      className="p-1.5 bg-white/90 dark:bg-gray-900/90 rounded-lg text-gray-700 dark:text-gray-200"
+                      title="Share"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                    </button>
+                    {item.file_type === 'image' && (
+                      <button
+                        onClick={() => handleSetCover(item)}
+                        className="p-1.5 bg-white/90 dark:bg-gray-900/90 rounded-lg text-amber-600 dark:text-amber-400"
+                        title="Set as cover"
+                      >
+                        <Star className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteGalleryItem(item.id)}
+                      className="p-1.5 bg-white/90 dark:bg-gray-900/90 rounded-lg text-red-600 dark:text-red-400"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Engines Card */}
@@ -872,8 +1037,8 @@ export default function BoatDetailPage() {
             <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Boat Documents
-              {documents.filter(d => d.category !== 'boat_details').length > 0 && (
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({documents.filter(d => d.category !== 'boat_details').length})</span>
+              {documents.filter(d => d.category !== 'boat_details' && d.category !== 'registration').length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({documents.filter(d => d.category !== 'boat_details' && d.category !== 'registration').length})</span>
               )}
             </h2>
             <Button size="sm" onClick={() => setShowAddDocument(true)}>
@@ -883,7 +1048,7 @@ export default function BoatDetailPage() {
           </div>
           <div className="max-h-80 overflow-y-auto">
             <DocumentsList 
-              documents={documents.filter(d => d.category !== 'boat_details')}
+              documents={documents.filter(d => d.category !== 'boat_details' && d.category !== 'registration')}
               onView={(doc) => setViewingDocument(doc)}
               onEdit={canDelete ? (doc) => setEditingDocument(doc) : undefined}
               onDelete={canDelete ? handleDeleteDocument : undefined}
@@ -1027,6 +1192,18 @@ export default function BoatDetailPage() {
         onClose={() => setShowAddBoatDetails(false)}
         boatId={boat.id}
         defaultCategory="boat_details"
+        onSuccess={() => {
+          fetchDocuments(boat.id);
+          fetchAlerts(boat.id); // Refresh alerts for new expiry dates
+        }}
+      />
+
+{/* Add Registration Modal */}
+      <AddDocumentModal
+        isOpen={showAddRegistration}
+        onClose={() => setShowAddRegistration(false)}
+        boatId={boat.id}
+        defaultCategory="registration"
         onSuccess={() => {
           fetchDocuments(boat.id);
           fetchAlerts(boat.id); // Refresh alerts for new expiry dates

@@ -1,27 +1,10 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Anchor, Users, Ship, FileText, Wrench, UserPlus, ArrowLeft, Shield, Loader2, Clock, Camera, Activity } from 'lucide-react';
+import { Anchor, Users, Ship, FileText, Wrench, UserPlus, ArrowLeft, Shield, Clock, Camera, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Skeleton } from '@/components/ui/Skeleton';
-
-interface AdminStats {
-  totalUsers: number;
-  totalBoats: number;
-  totalLogs: number;
-  totalDocuments: number;
-  totalPhotos: number;
-  recentSignups: number;
-  monthlySignups: number;
-  activeThisMonth: number;
-  activeLastMonth: number;
-  activeLast7Days: number;
-  monthlySessions: number;
-  monthlySessionSeconds: number;
-}
+import { createServerClient } from '@/lib/supabase';
+import { canAccessAdmin } from '@/lib/admin';
 
 function formatDuration(totalSeconds: number): string {
   if (!totalSeconds) return '0m';
@@ -31,71 +14,75 @@ function formatDuration(totalSeconds: number): string {
   return `${mins}m`;
 }
 
-export default function AdminPage() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const router = useRouter();
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [unauthorized, setUnauthorized] = useState(false);
+export default async function AdminPage() {
+  const { userId } = await auth();
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const fetchOptions: RequestInit = { credentials: 'include', cache: 'no-store' };
-        const [statsRes, insightsRes] = await Promise.all([
-          fetch('/api/admin/stats', fetchOptions),
-          fetch('/api/admin/insights', fetchOptions),
-        ]);
-        if (statsRes.status === 401 || insightsRes.status === 401) {
-          setUnauthorized(true);
-          return;
-        }
-        if (!statsRes.ok) throw new Error('Failed to load admin stats');
-        if (!insightsRes.ok) throw new Error('Failed to load insights');
-        const statsData = await statsRes.json();
-        const insightsData = await insightsRes.json();
-        setStats({ ...statsData.stats, ...insightsData.stats });
-      } catch (err) {
-        console.error('Admin stats error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load stats');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (isLoaded && isSignedIn) {
-      fetchStats();
-    } else if (isLoaded && !isSignedIn) {
-      router.push('/sign-in');
-    }
-  }, [isLoaded, isSignedIn, router]);
-
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-white animate-spin" />
-      </div>
-    );
+  if (!userId || !canAccessAdmin(userId)) {
+    redirect('/sign-in');
   }
 
-  if (unauthorized) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700 flex items-center justify-center p-4">
-        <div className="glass-card rounded-2xl p-8 max-w-md w-full text-center">
-          <Shield className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Admin Access Required</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">You don&apos;t have permission to view this page.</p>
-          <Link href="/">
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
+  const supabase = createServerClient();
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [
+    totalUsers,
+    totalBoats,
+    totalLogs,
+    totalDocuments,
+    totalPhotos,
+    recentSignups,
+    monthlySignups,
+    activeThisMonth,
+    activeLastMonth,
+    activeLast7Days,
+    sessionStats,
+  ] = await Promise.all([
+    supabase.from('users').select('*', { count: 'exact', head: true }),
+    supabase.from('boats').select('*', { count: 'exact', head: true }),
+    supabase.from('maintenance_logs').select('*', { count: 'exact', head: true }),
+    supabase.from('documents').select('*', { count: 'exact', head: true }),
+    supabase.rpc('count_all_photos'),
+    supabase.from('users').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
+    supabase.from('users').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
+    supabase.from('users').select('*', { count: 'exact', head: true }).gte('last_seen_at', startOfMonth),
+    supabase.from('users').select('*', { count: 'exact', head: true }).gte('last_seen_at', startOfLastMonth).lt('last_seen_at', startOfMonth),
+    supabase.from('users').select('*', { count: 'exact', head: true }).gte('last_seen_at', thirtyDaysAgo),
+    supabase.rpc('admin_session_stats', { start_date: startOfMonth }),
+  ]);
+
+  let monthlySessionSeconds = 0;
+  let monthlySessions = 0;
+  if (sessionStats.error) {
+    const { data: fallback } = await supabase
+      .from('user_sessions')
+      .select('duration_seconds')
+      .gte('started_at', startOfMonth);
+    monthlySessions = fallback?.length || 0;
+    monthlySessionSeconds = fallback?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0;
+  } else {
+    monthlySessions = sessionStats.data?.sessions || 0;
+    monthlySessionSeconds = sessionStats.data?.seconds || 0;
   }
+
+  const stats = {
+    totalUsers: totalUsers.count || 0,
+    totalBoats: totalBoats.count || 0,
+    totalLogs: totalLogs.count || 0,
+    totalDocuments: totalDocuments.count || 0,
+    totalPhotos: totalPhotos.data || 0,
+    recentSignups: recentSignups.count || 0,
+    monthlySignups: monthlySignups.count || 0,
+    activeThisMonth: activeThisMonth.count || 0,
+    activeLastMonth: activeLastMonth.count || 0,
+    activeLast7Days: activeLast7Days.count || 0,
+    monthlySessions,
+    monthlySessionSeconds,
+  };
 
   return (
     <div className="min-h-screen bg-dubai">
@@ -130,55 +117,36 @@ export default function AdminPage() {
           <p className="text-white/80 text-sm mt-1">Overview of accounts, boats, content, and usage.</p>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="glass-card rounded-xl p-5">
-                <Skeleton variant="custom" className="w-10 h-10 rounded-lg mb-3" />
-                <Skeleton variant="heading" width={80} className="mb-1" />
-                <Skeleton variant="text" width="60%" height={12} />
-              </div>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="glass-card rounded-xl p-6 text-center">
-            <p className="text-red-600 dark:text-red-400 mb-3">{error}</p>
-            <Button onClick={() => window.location.reload()} size="sm">Retry</Button>
-          </div>
-        ) : stats ? (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              <StatCard icon={<Users className="w-6 h-6" />} label="Total Users" value={stats.totalUsers} color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" />
-              <StatCard icon={<Ship className="w-6 h-6" />} label="Total Boats" value={stats.totalBoats} color="bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300" />
-              <StatCard icon={<Wrench className="w-6 h-6" />} label="Maintenance Logs" value={stats.totalLogs} color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" />
-              <StatCard icon={<FileText className="w-6 h-6" />} label="Documents" value={stats.totalDocuments} color="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" />
-              <StatCard icon={<Camera className="w-6 h-6" />} label="Photos" value={stats.totalPhotos} color="bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300" />
-              <StatCard icon={<UserPlus className="w-6 h-6" />} label="New Users (30 days)" value={stats.monthlySignups} color="bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300" />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <StatCard icon={<Users className="w-6 h-6" />} label="Total Users" value={stats.totalUsers} color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" />
+          <StatCard icon={<Ship className="w-6 h-6" />} label="Total Boats" value={stats.totalBoats} color="bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300" />
+          <StatCard icon={<Wrench className="w-6 h-6" />} label="Maintenance Logs" value={stats.totalLogs} color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" />
+          <StatCard icon={<FileText className="w-6 h-6" />} label="Documents" value={stats.totalDocuments} color="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" />
+          <StatCard icon={<Camera className="w-6 h-6" />} label="Photos" value={stats.totalPhotos} color="bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300" />
+          <StatCard icon={<UserPlus className="w-6 h-6" />} label="New Users (30 days)" value={stats.monthlySignups} color="bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300" />
+        </div>
 
-            <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              Usage &amp; Engagement
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <StatCard icon={<Clock className="w-5 h-5" />} label="Time on Site (This Month)" value={formatDuration(stats.monthlySessionSeconds)} color="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300" isText />
-              <StatCard icon={<Activity className="w-5 h-5" />} label="Sessions (This Month)" value={stats.monthlySessions} color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" />
-              <StatCard icon={<Users className="w-5 h-5" />} label="Active This Month" value={stats.activeThisMonth} color="bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300" />
-              <StatCard icon={<Users className="w-5 h-5" />} label="Active Last 7 Days" value={stats.activeLast7Days} color="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" />
-            </div>
+        <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          <Activity className="w-5 h-5" />
+          Usage &amp; Engagement
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard icon={<Clock className="w-5 h-5" />} label="Time on Site (This Month)" value={formatDuration(stats.monthlySessionSeconds)} color="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300" isText />
+          <StatCard icon={<Activity className="w-5 h-5" />} label="Sessions (This Month)" value={stats.monthlySessions} color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" />
+          <StatCard icon={<Users className="w-5 h-5" />} label="Active This Month" value={stats.activeThisMonth} color="bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300" />
+          <StatCard icon={<Users className="w-5 h-5" />} label="Active Last 7 Days" value={stats.activeLast7Days} color="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" />
+        </div>
 
-            <div className="glass-card rounded-xl p-5">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Account Holders</h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">View every user, their boats, uploaded content, and usage.</p>
-              <Link href="/admin/users">
-                <Button className="bg-teal-600 hover:bg-teal-700 text-white">
-                  <Users className="w-4 h-4 mr-2" />
-                  View All Users
-                </Button>
-              </Link>
-            </div>
-          </>
-        ) : null}
+        <div className="glass-card rounded-xl p-5">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Account Holders</h3>
+          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">View every user, their boats, uploaded content, and usage.</p>
+          <Link href="/admin/users">
+            <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+              <Users className="w-4 h-4 mr-2" />
+              View All Users
+            </Button>
+          </Link>
+        </div>
       </main>
     </div>
   );

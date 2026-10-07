@@ -8,15 +8,16 @@ interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   showIcon?: boolean;
 }
 
-export function SafeImage({ 
-  fallbackText = 'Image unavailable', 
+export function SafeImage({
+  fallbackText = 'Image unavailable',
   showIcon = true,
   className = '',
   alt = '',
-  ...props 
+  loading = 'lazy',
+  ...props
 }: SafeImageProps) {
   const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   if (error) {
     return (
@@ -29,7 +30,7 @@ export function SafeImage({
 
   return (
     <div className={`relative ${className}`}>
-      {loading && (
+      {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
           <ImageIcon className="w-8 h-8 text-gray-300 dark:text-gray-600 animate-pulse" />
         </div>
@@ -37,15 +38,15 @@ export function SafeImage({
       <img
         {...props}
         alt={alt}
-        loading="lazy"
+        loading={loading}
         decoding="async"
-        className={`${className} ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+        className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
         onLoad={(e) => {
-          setLoading(false);
+          setIsLoading(false);
           props.onLoad?.(e);
         }}
         onError={(e) => {
-          setLoading(false);
+          setIsLoading(false);
           setError(true);
           props.onError?.(e);
         }}
