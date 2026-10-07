@@ -93,6 +93,7 @@ export default function BoatDetailPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [showAddDocument, setShowAddDocument] = useState(false);
+  const [showAddBoatDetails, setShowAddBoatDetails] = useState(false);
   const [crew, setCrew] = useState<CrewMember[]>([]);
   const [showAddCrew, setShowAddCrew] = useState(false);
   const [showInviteCrew, setShowInviteCrew] = useState(false);
@@ -871,8 +872,8 @@ export default function BoatDetailPage() {
             <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Boat Documents
-              {documents.length > 0 && (
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({documents.length})</span>
+              {documents.filter(d => d.category !== 'boat_details').length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({documents.filter(d => d.category !== 'boat_details').length})</span>
               )}
             </h2>
             <Button size="sm" onClick={() => setShowAddDocument(true)}>
@@ -882,7 +883,34 @@ export default function BoatDetailPage() {
           </div>
           <div className="max-h-80 overflow-y-auto">
             <DocumentsList 
-              documents={documents}
+              documents={documents.filter(d => d.category !== 'boat_details')}
+              onView={(doc) => setViewingDocument(doc)}
+              onEdit={canDelete ? (doc) => setEditingDocument(doc) : undefined}
+              onDelete={canDelete ? handleDeleteDocument : undefined}
+            />
+          </div>
+        </div>
+
+        {/* Boat Details Attachments */}
+        <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Camera className="w-4 h-4" />
+              Boat Details Attachments
+              {documents.filter(d => d.category === 'boat_details').length > 0 && (
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                  ({documents.filter(d => d.category === 'boat_details').length})
+                </span>
+              )}
+            </h2>
+            <Button size="sm" onClick={() => setShowAddBoatDetails(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Add
+            </Button>
+          </div>
+          <div className="max-h-80 overflow-y-auto">
+            <DocumentsList
+              documents={documents.filter(d => d.category === 'boat_details')}
               onView={(doc) => setViewingDocument(doc)}
               onEdit={canDelete ? (doc) => setEditingDocument(doc) : undefined}
               onDelete={canDelete ? handleDeleteDocument : undefined}
@@ -987,6 +1015,18 @@ export default function BoatDetailPage() {
         isOpen={showAddDocument}
         onClose={() => setShowAddDocument(false)}
         boatId={boat.id}
+        onSuccess={() => {
+          fetchDocuments(boat.id);
+          fetchAlerts(boat.id); // Refresh alerts for new expiry dates
+        }}
+      />
+
+      {/* Add Boat Details Attachment Modal */}
+      <AddDocumentModal
+        isOpen={showAddBoatDetails}
+        onClose={() => setShowAddBoatDetails(false)}
+        boatId={boat.id}
+        defaultCategory="boat_details"
         onSuccess={() => {
           fetchDocuments(boat.id);
           fetchAlerts(boat.id); // Refresh alerts for new expiry dates

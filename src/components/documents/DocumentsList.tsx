@@ -23,6 +23,7 @@ const CATEGORY_LABELS: Record<DocumentCategory, string> = {
   warranty: 'Warranty',
   invoice: 'Invoice',
   manual: 'Manual',
+  boat_details: 'Boat Details',
   other: 'Other',
 };
 
@@ -33,6 +34,7 @@ const CATEGORY_COLORS: Record<DocumentCategory, string> = {
   warranty: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
   invoice: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   manual: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
+  boat_details: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
   other: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 

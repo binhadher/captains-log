@@ -3,7 +3,7 @@
 export type UserRole = 'user' | 'admin';
 export type PermissionLevel = 'read' | 'edit' | 'admin';
 export type Currency = 'AED' | 'USD' | 'EUR';
-export type DocumentCategory = 'registration' | 'insurance' | 'berth' | 'warranty' | 'invoice' | 'manual' | 'other';
+export type DocumentCategory = 'registration' | 'insurance' | 'berth' | 'warranty' | 'invoice' | 'manual' | 'boat_details' | 'other';
 export type EngineType = 'inboard' | 'outboard' | 'sterndrive' | 'pod_drive';
 export type SafetyEquipmentType = 
   | 'fire_extinguisher'

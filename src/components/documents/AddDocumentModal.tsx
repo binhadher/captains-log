@@ -12,6 +12,7 @@ interface AddDocumentModalProps {
   onClose: () => void;
   boatId: string;
   onSuccess: () => void;
+  defaultCategory?: DocumentCategory;
 }
 
 const CATEGORIES: { value: DocumentCategory; label: string }[] = [
@@ -21,13 +22,14 @@ const CATEGORIES: { value: DocumentCategory; label: string }[] = [
   { value: 'warranty', label: 'Warranty' },
   { value: 'invoice', label: 'Invoice' },
   { value: 'manual', label: 'Manual' },
+  { value: 'boat_details', label: 'Boat Details' },
   { value: 'other', label: 'Other' },
 ];
 
-export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocumentModalProps) {
+export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess, defaultCategory }: AddDocumentModalProps) {
   const [step, setStep] = useState<'form' | 'upload'>('form');
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<DocumentCategory>('other');
+  const [category, setCategory] = useState<DocumentCategory>(defaultCategory || 'other');
   const [expiryDate, setExpiryDate] = useState('');
   const [reminderDays, setReminderDays] = useState('30');
   const [notes, setNotes] = useState('');
@@ -41,7 +43,7 @@ export function AddDocumentModal({ isOpen, onClose, boatId, onSuccess }: AddDocu
   const resetForm = () => {
     setStep('form');
     setName('');
-    setCategory('other');
+    setCategory(defaultCategory || 'other');
     setExpiryDate('');
     setReminderDays('30');
     setNotes('');

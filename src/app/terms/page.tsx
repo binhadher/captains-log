@@ -19,7 +19,7 @@ export default function TermsPage() {
         <p className="text-gray-500 dark:text-gray-400 mb-4 uppercase text-sm">
           BY USING / REGISTERING TO THE CAPTAIN'S LOG APP/WEBSITE AND ACCEPTING THESE TERMS AND CONDITIONS ("Terms and Conditions" or "Terms"), THE CUSTOMER ("END-USER") AGREES TO BE LEGALLY BOUND BY THESE TERMS AND CONDITIONS.
         </p>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">Last Updated: February 1, 2025</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-8">Last Updated: October 7, 2026</p>
 
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-6 text-gray-700 dark:text-gray-300">
           
@@ -229,7 +229,7 @@ export default function TermsPage() {
 
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Last updated: February 1, 2025
+            Last updated: October 7, 2026
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             <strong>Disclaimer:</strong> Captain's Log is a maintenance tracking platform only. All maintenance records and data are provided by users and are offered strictly "as is." Captain's Log is not responsible for any maintenance decisions or vessel conditions. See our <Link href="/privacy" className="text-blue-600 dark:text-blue-400 hover:underline">Privacy Policy</Link> for details.

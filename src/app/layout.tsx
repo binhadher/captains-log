@@ -3,6 +3,7 @@ import { ClerkClientProvider } from '@/components/providers/ClerkClientProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { CurrencyProvider } from '@/components/providers/CurrencyProvider';
 import { TermsCheck } from '@/components/providers/TermsCheck';
+import { DisclaimerBanner } from '@/components/layout/DisclaimerBanner';
 import { PWAInstallPrompt } from '@/components/pwa/InstallPrompt';
 import { PWAUpdatePrompt } from '@/components/pwa/PWAUpdatePrompt';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -56,6 +57,7 @@ export default function RootLayout({
           <ThemeProvider>
             <CurrencyProvider>
               <TermsCheck>
+                <DisclaimerBanner />
                 <div className="pb-16 md:pb-0">
                   {children}
                 </div>

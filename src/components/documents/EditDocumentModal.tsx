@@ -19,6 +19,7 @@ const CATEGORIES: { value: DocumentCategory; label: string }[] = [
   { value: 'warranty', label: 'Warranty' },
   { value: 'invoice', label: 'Invoice' },
   { value: 'manual', label: 'Manual' },
+  { value: 'boat_details', label: 'Boat Details' },
   { value: 'other', label: 'Other' },
 ];
 

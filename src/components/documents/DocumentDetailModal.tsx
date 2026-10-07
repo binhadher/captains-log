@@ -22,6 +22,7 @@ const CATEGORY_LABELS: Record<DocumentCategory, string> = {
   warranty: 'Warranty',
   invoice: 'Invoice',
   manual: 'Manual',
+  boat_details: 'Boat Details',
   other: 'Other',
 };
 
