@@ -34,7 +34,7 @@ export async function GET() {
           model,
           year,
           registration_number,
-          hin,
+          hull_id,
           engines,
           created_at
         )

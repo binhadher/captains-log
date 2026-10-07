@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const res = await fetch('/api/admin/users');
+        const res = await fetch('/api/admin/users', { credentials: 'include', cache: 'no-store' });
         if (res.status === 401) {
           setUnauthorized(true);
           return;

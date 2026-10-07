@@ -42,9 +42,10 @@ export default function AdminPage() {
   useEffect(() => {
     async function fetchStats() {
       try {
+        const fetchOptions: RequestInit = { credentials: 'include', cache: 'no-store' };
         const [statsRes, insightsRes] = await Promise.all([
-          fetch('/api/admin/stats'),
-          fetch('/api/admin/insights'),
+          fetch('/api/admin/stats', fetchOptions),
+          fetch('/api/admin/insights', fetchOptions),
         ]);
         if (statsRes.status === 401 || insightsRes.status === 401) {
           setUnauthorized(true);

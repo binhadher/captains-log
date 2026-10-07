@@ -18,6 +18,8 @@ const isPublicRoute = createRouteMatcher([
   '/icons/(.*)',
 ]);
 
+const isApiRoute = createRouteMatcher(['/api/(.*)']);
+
 // Lightweight session tracking for admin analytics.
 // Fires after auth succeeds and does not block the response.
 async function trackSession(auth: any, request: Request) {
@@ -82,11 +84,28 @@ async function trackSession(auth: any, request: Request) {
 }
 
 export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    const authResult = await auth.protect();
-    // Fire-and-forget analytics
-    trackSession(authResult, request);
+  if (isPublicRoute(request)) {
+    return;
   }
+
+  // For API routes, return JSON 401 instead of a Clerk redirect/rewrite
+  if (isApiRoute(request)) {
+    const authResult = await auth();
+    if (!authResult.userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    // Fire-and-forget analytics for authenticated API calls
+    trackSession(authResult, request);
+    return;
+  }
+
+  // Page routes: use Clerk protect (redirect to sign-in when unauthenticated)
+  const authResult = await auth.protect();
+  // Fire-and-forget analytics
+  trackSession(authResult, request);
 });
 
 export const config = {
