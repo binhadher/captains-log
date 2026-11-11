@@ -17,11 +17,15 @@ import {
   Cog,
   Coins,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Camera,
   ImageIcon,
   Upload,
   Loader2,
-  Star
+  Star,
+  X,
+  ChevronLeft,
 } from 'lucide-react';
 import { BoatDetailSkeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
@@ -64,9 +68,13 @@ import { AddMaintenanceModal } from '@/components/maintenance/AddMaintenanceModa
 import { PDFExport } from '@/components/export/PDFExport';
 import { DataPlateUpload } from '@/components/boats/DataPlateUpload';
 import { BoatHero } from '@/components/boats/BoatHero';
-import { SafeImage } from '@/components/ui/SafeImage';
+import { SafeImage } from "@/components/ui/SafeImage";
+import { FileUpload } from "@/components/ui/FileUpload";
+import { CameraCapture } from "@/components/ui/CameraCapture";
 // FAB removed - BottomNav handles mobile, section buttons handle desktop
 import { SafetyEquipmentList } from '@/components/safety/SafetyEquipmentList';
+
+const MAX_GALLERY_PHOTOS = 30;
 import { AddSafetyEquipmentModal } from '@/components/safety/AddSafetyEquipmentModal';
 import { EditSafetyEquipmentModal } from '@/components/safety/EditSafetyEquipmentModal';
 import { SafetyEquipmentDetailModal } from '@/components/safety/SafetyEquipmentDetailModal';
@@ -100,8 +108,12 @@ export default function BoatDetailPage() {
   const [showAddDocument, setShowAddDocument] = useState(false);
   const [showAddBoatDetails, setShowAddBoatDetails] = useState(false);
   const [showAddRegistration, setShowAddRegistration] = useState(false);
+  const [boatDetailsExpanded, setBoatDetailsExpanded] = useState(false);
   const [gallery, setGallery] = useState<Array<{ id: string; file_url: string; file_type: 'image' | 'video'; mime_type: string; file_size: number; caption: string | null; created_at: string }>>([]);
   const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [galleryNotice, setGalleryNotice] = useState<string>('');
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showGalleryCamera, setShowGalleryCamera] = useState(false);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [crew, setCrew] = useState<CrewMember[]>([]);
   const [showAddCrew, setShowAddCrew] = useState(false);
@@ -388,21 +400,63 @@ export default function BoatDetailPage() {
     const files = e.target.files;
     if (!files || files.length === 0 || !boat) return;
     setUploadingGallery(true);
+    setGalleryNotice('');
     try {
+      let addedCount = 0;
       for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch(`/api/boats/${boat.id}/gallery`, { method: 'POST', body: formData });
-        if (!res.ok) throw new Error('Upload failed');
+        if (gallery.length + addedCount >= MAX_GALLERY_PHOTOS) {
+          setGalleryNotice(`Photo limit reached (${MAX_GALLERY_PHOTOS} max).`);
+          break;
+        }
+        // 1) get a signed upload URL (proven flow used by BoatHero)
+        const ext = file.name.split('.').pop() || 'jpg';
+        const signedRes = await fetch('/api/upload/signed-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: `gallery-${Date.now()}.${ext}`, fileType: file.type, boatId: boat.id }),
+        });
+        const signed = await signedRes.json().catch(() => ({}));
+        if (!signedRes.ok) throw new Error(signed.error || 'Failed to sign upload');
+        // 2) PUT the file directly
+        const upRes = await fetch(signed.signedUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+        if (!upRes.ok) throw new Error('Failed to upload image');
+        // 3) insert gallery row with the returned publicUrl
+        const insRes = await fetch(`/api/boats/${boat.id}/gallery`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_url: signed.publicUrl, file_type: file.type.startsWith('video/') ? 'video' : 'image', mime_type: file.type, file_size: file.size }),
+        });
+        const ins = await insRes.json().catch(() => ({}));
+        if (!insRes.ok) throw new Error(ins.error || 'Failed to save gallery item');
+        addedCount++;
       }
       fetchGallery(boat.id);
       fetchBoat(boat.id);
     } catch (err) {
       console.error('Gallery upload error:', err);
-      alert('Failed to upload photo');
+      setGalleryNotice('Failed to upload photo.');
     } finally {
       setUploadingGallery(false);
       if (galleryInputRef.current) galleryInputRef.current.value = '';
+    }
+  };
+
+  const handleGalleryCameraCapture = async (file: File) => {
+    if (!boat) return;
+    setUploadingGallery(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`/api/boats/${boat.id}/gallery`, { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Upload failed');
+      fetchGallery(boat.id);
+      fetchBoat(boat.id);
+    } catch (err) {
+      console.error('Gallery camera upload error:', err);
+      alert('Failed to upload photo');
+    } finally {
+      setUploadingGallery(false);
+      setShowGalleryCamera(false);
     }
   };
 
@@ -600,142 +654,195 @@ export default function BoatDetailPage() {
               </button>
             )}
           </div>
-          
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {(boat.make || boat.model) && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Model:</span>
-                <span className="text-gray-900 dark:text-white font-medium text-sm">
-                  {[boat.make, boat.model].filter(Boolean).join(' ')}
-                </span>
+              <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">Model</p>
+                  <p className="text-gray-900 dark:text-white font-medium text-sm">
+                    {[boat.make, boat.model].filter(Boolean).join(' ')}
+                  </p>
+                </div>
               </div>
             )}
             {boat.year && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Year:</span>
-                <span className="text-gray-900 dark:text-white font-medium text-sm">{boat.year}</span>
+              <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">Year</p>
+                  <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.year}</p>
+                </div>
               </div>
             )}
             {boat.length && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Length:</span>
-                <span className="text-gray-900 dark:text-white font-medium text-sm">{boat.length} ft</span>
+              <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">Length</p>
+                  <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.length} ft</p>
+                </div>
               </div>
             )}
             {boat.hull_id && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Hull:</span>
-                <span className="text-gray-900 dark:text-white font-medium text-sm">{boat.hull_id}</span>
+              <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">Hull</p>
+                  <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.hull_id}</p>
+                </div>
               </div>
             )}
             {boat.home_port && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">Port:</span>
-                <span className="text-gray-900 dark:text-white font-medium text-sm flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {boat.home_port}
-                </span>
+              <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 dark:text-gray-200 uppercase tracking-wide mb-1">Port</p>
+                  <p className="text-gray-900 dark:text-white font-medium text-sm">{boat.home_port}</p>
+                </div>
               </div>
             )}
-          </div>
-          
 
-        </div>
-          {/* Registration */}
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Registration</span>
-              {canEdit && (
-                <button
-                  onClick={() => setShowAddRegistration(true)}
-                  className="p-1.5 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                  title="Add registration"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <div className="max-h-60 overflow-y-auto">
-              <DocumentsList
-                documents={documents.filter(d => d.category === 'registration')}
-                onView={(doc) => setViewingDocument(doc)}
-                onEdit={canDelete ? (doc) => setEditingDocument(doc) : undefined}
-                onDelete={canDelete ? handleDeleteDocument : undefined}
-                maxHeight="200px"
-              />
-            </div>
-          </div>
-
-          {/* Boat Photo Gallery */}
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Boat Photo Gallery</span>
-              {canEdit && (
-                <>
-                  <input
-                    ref={galleryInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    capture="environment"
-                    className="hidden"
-                    onChange={handleGalleryUpload}
-                    id="gallery-upload"
-                  />
-                  <button
-                    onClick={() => galleryInputRef.current?.click()}
-                    disabled={uploadingGallery}
-                    className="p-1.5 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors disabled:opacity-50"
-                    title="Add photo"
-                  >
-                    {uploadingGallery ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  </button>
-                </>
-              )}
-            </div>
-            {gallery.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No gallery photos yet</p>
-            ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                {gallery.map((item) => (
-                  <div key={item.id} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
-                    <SafeImage
-                      src={item.file_url}
-                      alt={item.caption || 'Boat photo'}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-between p-1.5 opacity-0 group-hover:opacity-100">
-                      <button
-                        onClick={() => handleGalleryShare(item)}
-                        className="p-1 bg-white/90 dark:bg-gray-900/90 rounded text-gray-700 dark:text-gray-200"
-                        title="Share"
-                      >
-                        <Upload className="w-3 h-3" />
-                      </button>
-                      {item.file_type === 'image' && (
-                        <button
-                          onClick={() => handleSetCover(item)}
-                          className="p-1 bg-white/90 dark:bg-gray-900/90 rounded text-amber-600 dark:text-amber-400"
-                          title="Set as cover"
-                        >
-                          <Star className="w-3 h-3" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteGalleryItem(item.id)}
-                        className="p-1 bg-white/90 dark:bg-gray-900/90 rounded text-red-600 dark:text-red-400"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
+            {/* Registration */}
+            <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Registration</span>
+                {canEdit && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setShowAddRegistration(true)}
+                      disabled={uploadingGallery}
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      title="Take photo"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setShowAddRegistration(true)}
+                      disabled={uploadingGallery}
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      title="Upload file"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
+              <div className="mt-2">
+                <DocumentsList
+                  documents={documents.filter(d => d.category === 'registration')}
+                  onView={(doc) => setViewingDocument(doc)}
+                  onEdit={canDelete ? (doc) => setEditingDocument(doc) : undefined}
+                  onDelete={canDelete ? handleDeleteDocument : undefined}
+                  maxHeight="160px"
+                />
+              </div>
+            </div>
+
+            {/* Boat Photo Gallery */}
+            <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Photo Gallery</span>
+                {canEdit && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setShowGalleryCamera(true)}
+                      disabled={uploadingGallery}
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      title="Take photo"
+                    >
+                      {uploadingGallery ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                    </button>
+                    <label className="p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer">
+                      <ImageIcon className="w-4 h-4" />
+                      <input
+                        ref={galleryInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleGalleryUpload}
+                        id="gallery-upload"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+              {gallery.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">No gallery photos yet</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {gallery.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-zoom-in"
+                      onClick={() => setLightboxIndex(idx)}
+                    >
+                      <SafeImage
+                        src={item.file_url}
+                        alt={item.caption || 'Boat photo'}
+                        className="w-full h-full object-cover pointer-events-none"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-between p-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleGalleryShare(item)}
+                          className="p-1 bg-white/90 dark:bg-gray-900/90 rounded text-gray-700 dark:text-gray-200"
+                          title="Share"
+                        >
+                          <Upload className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteGalleryItem(item.id)}
+                          className="p-1 bg-white/90 dark:bg-gray-900/90 rounded text-red-600 dark:text-red-400"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <span>{gallery.length}/{MAX_GALLERY_PHOTOS} photos</span>
+              </div>
+              {galleryNotice && (
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{galleryNotice}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Gallery Lightbox */}
+        {lightboxIndex !== null && gallery[lightboxIndex] && (
+          <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center" onClick={() => setLightboxIndex(null)}>
+            <button onClick={() => setLightboxIndex(null)} className="absolute top-4 right-4 p-2 text-white/80 hover:text-white" title="Close">
+              <X className="w-6 h-6" />
+            </button>
+            {gallery.length > 1 && (
+              <button onClick={(e) => { e.stopPropagation(); setLightboxIndex((lightboxIndex - 1 + gallery.length) % gallery.length); }} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 text-white/80 hover:text-white" title="Previous">
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+            )}
+            <div className="flex flex-col items-center max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+              <SafeImage
+                src={gallery[lightboxIndex].file_url}
+                alt={gallery[lightboxIndex].caption || 'Boat photo'}
+                className="max-w-full max-h-[82vh] object-contain rounded"
+              />
+              <div className="mt-3 flex items-center gap-3 text-white">
+                <span className="text-sm">{lightboxIndex + 1} / {gallery.length}</span>
+                <button onClick={() => handleGalleryShare(gallery[lightboxIndex])} className="p-1.5 text-white/80 hover:text-white" title="Share">
+                  <Upload className="w-5 h-5" />
+                </button>
+                <button onClick={() => handleDeleteGalleryItem(gallery[lightboxIndex].id)} className="p-1.5 text-red-400 hover:text-red-300" title="Delete">
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            {gallery.length > 1 && (
+              <button onClick={(e) => { e.stopPropagation(); setLightboxIndex((lightboxIndex + 1) % gallery.length); }} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-white/80 hover:text-white" title="Next">
+                <ChevronRight className="w-8 h-8" />
+              </button>
             )}
           </div>
-
-
+        )}
 
         {/* Engines Card */}
         {boat.engines && boat.engines.length > 0 && (
@@ -1117,6 +1224,15 @@ export default function BoatDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* Gallery Camera Capture */}
+      {showGalleryCamera && (
+        <CameraCapture
+          onCapture={handleGalleryCameraCapture}
+          onClose={() => setShowGalleryCamera(false)}
+          mode="photo"
+        />
+      )}
 
       {/* Add Component Modal (single component) */}
       <AddComponentModal

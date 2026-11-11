@@ -16,7 +16,8 @@ import {
   Plus,
   Settings,
   Share2,
-  Star
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -56,7 +57,7 @@ export default function GalleryPage() {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCameraCapture, setShowCameraCapture] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -112,7 +113,7 @@ export default function GalleryPage() {
 
       const { boat: updatedBoat } = await res.json();
       setBoat(updatedBoat);
-      setSelectedItem(null);
+      setLightboxIndex(null);
     } catch (err) {
       console.error('Set cover error:', err);
       setError('Failed to set cover photo');
@@ -358,7 +359,7 @@ export default function GalleryPage() {
       if (!res.ok) throw new Error('Failed to delete');
 
       setGallery(prev => prev.filter(g => g.id !== item.id));
-      setSelectedItem(null);
+      setLightboxIndex(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete');
     }
@@ -491,11 +492,11 @@ export default function GalleryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {gallery.map((item) => (
+            {gallery.map((item, idx) => (
               <div
                 key={item.id}
                 className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group bg-gray-200 dark:bg-gray-800"
-                onClick={() => setSelectedItem(item)}
+                onClick={() => setLightboxIndex(idx)}
               >
                 {item.file_type === 'video' ? (
                   <div className="w-full h-full flex items-center justify-center bg-gray-900">
@@ -540,98 +541,45 @@ export default function GalleryPage() {
           </div>
         )}
 
-        {/* Lightbox */}
-        {selectedItem && (
-          <div 
-            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-            onClick={() => setSelectedItem(null)}
-          >
-            <button
-              onClick={() => setSelectedItem(null)}
-              className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
-            >
+        {/* Lightbox (scrollable) */}
+        {lightboxIndex !== null && gallery[lightboxIndex] && (
+          <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setLightboxIndex(null)}>
+            <button onClick={() => setLightboxIndex(null)} className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors" title="Close">
               <X className="w-6 h-6" />
             </button>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(selectedItem);
-              }}
-              className="absolute top-4 left-4 p-2 text-white hover:bg-red-600 rounded-full transition-colors"
-              title="Delete"
-            >
+            <button onClick={(e) => { e.stopPropagation(); handleDelete(gallery[lightboxIndex]); }} className="absolute top-4 left-4 p-2 text-white hover:bg-red-600 rounded-full transition-colors" title="Delete">
               <Trash2 className="w-6 h-6" />
             </button>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                shareFile(selectedItem);
-              }}
-              disabled={sharing}
-              className="absolute top-4 left-16 p-2 text-white hover:bg-blue-600 rounded-full transition-colors disabled:opacity-50"
-              title="Share"
-            >
-              {sharing ? (
-                <Loader2 className="w-6 h-6 animate-spin" />
-              ) : (
-                <Share2 className="w-6 h-6" />
-              )}
+            <button onClick={(e) => { e.stopPropagation(); shareFile(gallery[lightboxIndex]); }} disabled={sharing} className="absolute top-4 left-16 p-2 text-white hover:bg-blue-600 rounded-full transition-colors disabled:opacity-50" title="Share">
+              {sharing ? <Loader2 className="w-6 h-6 animate-spin" /> : <Share2 className="w-6 h-6" />}
             </button>
 
-            {/* Set as Cover - only for images */}
-            {selectedItem.file_type === 'image' && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSetAsCover(selectedItem);
-                }}
-                disabled={settingCover || boat?.photo_url === selectedItem.file_url}
-                className={`absolute top-4 left-28 p-2 text-white rounded-full transition-colors disabled:opacity-50 ${
-                  boat?.photo_url === selectedItem.file_url 
-                    ? 'bg-amber-500 cursor-default' 
-                    : 'hover:bg-amber-600'
-                }`}
-                title={boat?.photo_url === selectedItem.file_url ? 'Current cover photo' : 'Set as cover photo'}
-              >
-                {settingCover ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  <Star className={`w-6 h-6 ${boat?.photo_url === selectedItem.file_url ? 'fill-current' : ''}`} />
-                )}
+            {gallery.length > 1 && (
+              <button onClick={(e) => { e.stopPropagation(); setLightboxIndex((lightboxIndex - 1 + gallery.length) % gallery.length); }} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 text-white hover:bg-white/20 rounded-full" title="Previous">
+                <ChevronLeft className="w-8 h-8" />
               </button>
             )}
 
-            <div 
-              className="max-w-5xl max-h-[90vh] w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {selectedItem.file_type === 'video' ? (
-                <video
-                  src={selectedItem.file_url}
-                  controls
-                  autoPlay
-                  className="w-full max-h-[85vh] object-contain rounded-lg"
-                />
+            <div className="max-w-5xl max-h-[90vh] w-full flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+              {gallery[lightboxIndex].file_type === 'video' ? (
+                <video src={gallery[lightboxIndex].file_url} controls autoPlay className="w-full max-h-[80vh] object-contain rounded-lg" />
               ) : (
-                <img
-                  src={selectedItem.file_url}
-                  alt={selectedItem.caption || 'Gallery image'}
-                  className="w-full max-h-[85vh] object-contain rounded-lg"
-                />
+                <img src={gallery[lightboxIndex].file_url} alt={gallery[lightboxIndex].caption || 'Gallery image'} className="w-full max-h-[80vh] object-contain rounded-lg" />
               )}
-
-              {/* Info bar */}
-              <div className="mt-3 flex items-center justify-between text-white text-sm">
-                <span>{formatDate(selectedItem.created_at)}</span>
-                {selectedItem.caption && (
-                  <span className="text-gray-300">{selectedItem.caption}</span>
-                )}
+              <div className="mt-3 flex items-center justify-between w-full text-white text-sm">
+                <span>{lightboxIndex + 1} / {gallery.length}</span>
+                <span>{formatDate(gallery[lightboxIndex].created_at)}</span>
               </div>
             </div>
+
+            {gallery.length > 1 && (
+              <button onClick={(e) => { e.stopPropagation(); setLightboxIndex((lightboxIndex + 1) % gallery.length); }} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-white hover:bg-white/20 rounded-full" title="Next">
+                <ChevronRight className="w-8 h-8" />
+              </button>
+            )}
           </div>
         )}
+
       </main>
     </div>
   );
