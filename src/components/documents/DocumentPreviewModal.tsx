@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Download, Share2, Pencil, Trash2, Loader2, FileText, AlertTriangle, Calendar } from 'lucide-react';
+import { X, Download, Share2, Pencil, Trash2, Loader2, FileText, AlertTriangle, Calendar, Eye, ExternalLink } from 'lucide-react';
 import { SafeImage } from '@/components/ui/SafeImage';
 import { Document } from '@/types/database';
 import { formatDueIn, calculateSeverity } from '@/lib/alerts';
@@ -38,11 +38,18 @@ function isPdfFile(fileType: string): boolean {
   return fileType === 'application/pdf';
 }
 
+function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /Android|iPhone|iPad|iPod|Mobile|webOS/i.test(navigator.userAgent) ||
+         (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches);
+}
+
 export function DocumentPreviewModal({ isOpen, onClose, document: doc, onEdit, onDelete }: DocumentPreviewModalProps) {
   const [sharing, setSharing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [pdfRequested, setPdfRequested] = useState(false);
 
   if (!isOpen || !doc) return null;
 
@@ -77,6 +84,11 @@ export function DocumentPreviewModal({ isOpen, onClose, document: doc, onEdit, o
     a.download = doc.name;
     a.target = '_blank';
     a.click();
+  };
+
+  const handleOpenPdf = () => {
+    // Open the PDF in the phone/desktop's own viewer (new tab), never an in-page frame.
+    window.open(doc.file_url, '_blank', 'noopener,noreferrer');
   };
 
   const handleDelete = async () => {
@@ -186,11 +198,33 @@ export function DocumentPreviewModal({ isOpen, onClose, document: doc, onEdit, o
               />
             </div>
           ) : isPdf ? (
-            <iframe
-              src={`${doc.file_url}#toolbar=0`}
-              className="w-full h-[calc(90vh-80px)]"
-              title={doc.name}
-            />
+            <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+              <FileText className="w-16 h-16 text-gray-500 mb-4" />
+              <h4 className="text-white font-medium mb-2">{doc.name}</h4>
+              <p className="text-gray-400 text-sm mb-4">
+                PDF document
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleOpenPdf}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                  Open PDF
+                </button>
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+              </div>
+              <p className="text-gray-500 text-xs mt-4 flex items-center gap-1">
+                <ExternalLink className="w-3 h-3" />
+                Opens in a new tab
+              </p>
+            </div>
           ) : (
             /* Fallback for non-previewable files */
             <div className="flex flex-col items-center justify-center h-full p-8 text-center">
